@@ -205,3 +205,4 @@ html,body{overscroll-behavior-y:contain}
 .myans+.result,.model.mine+.result{margin-top:12px}
 .quote{margin:0;border-left:3px solid var(--line);padding:2px 0 2px 10px;font-size:13px;color:var(--ink-2);line-height:1.55}
 .exp .quote{margin-top:8px}
+.quote{white-space:pre-line}
