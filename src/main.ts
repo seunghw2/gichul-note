@@ -1,7 +1,7 @@
 import "./style.css";
 import { BANKS } from "./data";
 import { I } from "./icons";
-import { loadPrefs, loadSubject, savePrefs, saveSubject, type SubjectState } from "./store";
+import { clearRun, loadPrefs, loadRun, loadSubject, savePrefs, saveRun, saveSubject, type SavedRun, type SubjectState } from "./store";
 import type { LoadedBank, Q } from "./types";
 
 type View = "home" | "subject" | "quiz" | "end" | "review";
@@ -103,6 +103,10 @@ function renderSubject() {
     const vol = Object.keys(bank.partOf).find((k) => bank.partOf[k] === p);
     return vol ? `${p} (${vol})` : p;
   };
+  const sub = (kind: Kind, base: string) => {
+    const p = runProgress(kind);
+    return p ? `<em class="resume">${p.done}/${p.total} 진행 중 · 이어서 풀 수 있어요</em>` : base;
+  };
   $app.innerHTML = `
     <div class="bar"><button class="icon-btn" data-act="home" aria-label="홈으로">${I.back}</button><h1>${esc(bank.title)}</h1></div>
     <div class="subject" style="cursor:default">
@@ -112,9 +116,9 @@ function renderSubject() {
 
     <div class="eyebrow">학습하기</div>
     <div class="modes">
-      <button class="mode primary" data-start="all"><span class="ic">${I.play}</span><span class="tx"><b>문제 풀기</b><small>한 문제씩 풀고 바로 정답·해설 확인</small></span><span class="cnt">${n}</span></button>
-      <button class="mode" data-start="wrong" ${s.wrong ? "" : "disabled"}><span class="ic">${I.redo}</span><span class="tx"><b>오답노트 다시 풀기</b><small>맞히면 오답노트에서 빠져요</small></span><span class="cnt">${s.wrong}</span></button>
-      <button class="mode" data-start="bm" ${s.bm ? "" : "disabled"}><span class="ic">${I.bm}</span><span class="tx"><b>북마크 풀기</b><small>다시 보고 싶은 문제만 모아 풀기</small></span><span class="cnt">${s.bm}</span></button>
+      <button class="mode primary" data-start="all"><span class="ic">${I.play}</span><span class="tx"><b>문제 풀기</b><small>${sub("all", "한 문제씩 풀고 바로 정답·해설 확인")}</small></span><span class="cnt">${n}</span></button>
+      <button class="mode" data-start="wrong" ${s.wrong ? "" : "disabled"}><span class="ic">${I.redo}</span><span class="tx"><b>오답노트 다시 풀기</b><small>${sub("wrong", "맞히면 오답노트에서 빠져요")}</small></span><span class="cnt">${s.wrong}</span></button>
+      <button class="mode" data-start="bm" ${s.bm ? "" : "disabled"}><span class="ic">${I.bm}</span><span class="tx"><b>북마크 풀기</b><small>${sub("bm", "다시 보고 싶은 문제만 모아 풀기")}</small></span><span class="cnt">${s.bm}</span></button>
       <button class="mode" data-act="review"><span class="ic">${I.book}</span><span class="tx"><b>해설 훑어보기</b><small>문제·정답·해설을 카드로 빠르게 읽기</small></span><span class="cnt">${s.total}</span></button>
     </div>
 
@@ -129,6 +133,71 @@ function renderSubject() {
 }
 
 /* ---------- 풀이 ---------- */
+/** 저장된 풀이를 현재 문항으로 복원. 문항이 사라졌으면 그 항목은 건너뛴다 */
+function restoreRun(kind: Kind): { kind: Kind; items: Item[]; i: number } | null {
+  const r = loadRun(bank.id, kind);
+  if (!r) return null;
+  const items: Item[] = [];
+  let i = 0;
+  r.ns.forEach((n, idx) => {
+    const q = bank.questions.find((x) => x.n === n);
+    if (!q) return;
+    if (idx === r.i) i = items.length;
+    items.push({ q, order: r.orders[idx], pick: r.picks[idx] });
+  });
+  // 하나도 안 풀었거나 다 풀었으면 이어 풀 것이 없다
+  if (items.every((it) => it.pick === null) || items.every((it) => it.pick !== null)) return null;
+  return { kind, items, i };
+}
+
+function runProgress(kind: Kind) {
+  const r = restoreRun(kind);
+  if (!r) return null;
+  return { done: r.items.filter((it) => it.pick !== null).length, total: r.items.length };
+}
+
+function persistRun() {
+  if (!session) return;
+  saveRun(bank.id, session.kind, {
+    ns: session.items.map((it) => it.q.n),
+    orders: session.items.map((it) => it.order),
+    picks: session.items.map((it) => it.pick),
+    i: session.i,
+  });
+}
+
+/** 진행 중인 풀이가 있으면 이어서/새로 고르는 시트를 띄운다 */
+function chooseSession(kind: Kind) {
+  const p = runProgress(kind);
+  if (!p) return startSession(kind);
+  const sheet = document.createElement("div");
+  sheet.className = "sheet-wrap";
+  sheet.innerHTML = `
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+      <div class="grab"></div>
+      <h3 id="sheet-title">${LABEL[kind]}</h3>
+      <p>지난번에 <b class="num">${p.total}</b>문제 중 <b class="num">${p.done}</b>문제까지 풀었어요.</p>
+      <div class="progress"><span style="width:${pct(p.done, p.total)}%"></span></div>
+      <button class="next" data-sheet="resume">이어서 풀기</button>
+      <button class="btn" data-sheet="new">처음부터 새로 풀기</button>
+    </div>`;
+  document.body.appendChild(sheet);
+  sheet.querySelector<HTMLButtonElement>('[data-sheet="resume"]')!.focus();
+  sheet.addEventListener("click", (e) => {
+    const b = (e.target as HTMLElement).closest<HTMLElement>("[data-sheet]");
+    if (!b && e.target !== sheet) return;
+    sheet.remove();
+    if (!b) return;
+    if (b.dataset.sheet === "resume") {
+      session = restoreRun(kind);
+      renderQuiz();
+    } else {
+      clearRun(bank.id, kind);
+      startSession(kind);
+    }
+  });
+}
+
 function startSession(kind: Kind) {
   let pool: Q[];
   if (kind === "wrong") pool = bank.questions.filter((q) => st.wrong.includes(q.n));
@@ -144,6 +213,7 @@ function startSession(kind: Kind) {
       return { q, order: q.type === "mc" && prefs.shuffleC ? shuffle(base) : base, pick: null };
     }),
   };
+  persistRun();
   renderQuiz();
 }
 
@@ -215,6 +285,7 @@ function pick(v: number) {
   if (!ok && !st.wrong.includes(q.n)) st.wrong.push(q.n);
   if (ok && session.kind === "wrong") st.wrong = st.wrong.filter((n) => n !== q.n);
   saveSubject(bank.id, st);
+  persistRun();
   renderQuiz();
   if (ok && session.kind === "wrong") toast("오답노트에서 뺐어요");
   const res = document.querySelector(".result");
@@ -262,6 +333,7 @@ function bindSwipe() {
 
 function renderEnd() {
   if (!session) return;
+  clearRun(bank.id, session.kind);
   view = "end";
   const items = session.items;
   const total = items.length;
@@ -354,11 +426,12 @@ $app.addEventListener("click", (e) => {
   if (d.act === "next" && session) {
     if (session.i < session.items.length - 1) {
       session.i++;
+      persistRun();
       return renderQuiz();
     }
     return renderEnd();
   }
-  if (d.start) return startSession(d.start as Kind);
+  if (d.start) return view === "end" ? startSession(d.start as Kind) : chooseSession(d.start as Kind);
   if (d.pref === "type" || d.pref === "part") {
     if (d.pref === "type") prefs.type = d.val as typeof prefs.type;
     else prefs.part = d.val!;

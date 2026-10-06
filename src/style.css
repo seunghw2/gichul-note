@@ -176,3 +176,13 @@ svg{display:block}
 .result{animation:pop .22s ease-out}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 .rcard .src{font-size:12.5px;color:var(--ink-3);display:flex;gap:6px;align-items:center}
+.mode small .resume{font-style:normal;font-weight:600;color:var(--brand)}
+.mode.primary small .resume{color:var(--brand-ink);opacity:1}
+.sheet-wrap{position:fixed;inset:0;z-index:30;background:rgba(10,20,18,.45);display:flex;align-items:flex-end;justify-content:center;animation:fade .18s ease-out}
+.sheet{width:100%;max-width:480px;background:var(--surface);border-radius:22px 22px 0 0;padding:10px 20px calc(20px + env(safe-area-inset-bottom,0px));display:grid;gap:12px;animation:up .22s ease-out}
+.sheet .grab{width:40px;height:4px;border-radius:4px;background:var(--line);margin:0 auto 4px}
+.sheet h3{margin:0;font-size:18px}
+.sheet p{margin:0;color:var(--ink-2);font-size:14.5px}
+.sheet .next,.sheet .btn{flex:none;height:50px;width:100%}
+@keyframes fade{from{opacity:0}}
+@keyframes up{from{transform:translateY(40px)}}

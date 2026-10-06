@@ -51,3 +51,23 @@ export function loadPrefs(): Prefs {
 }
 
 export const savePrefs = (p: Prefs) => write("gichul:prefs", p);
+
+/** 중간에 그만둔 풀이. 과목·모드(문제 풀기/오답/북마크)별로 하나씩 보관 */
+export interface SavedRun {
+  ns: number[];
+  orders: number[][];
+  picks: (number | null)[];
+  i: number;
+}
+
+const runKey = (id: string, kind: string) => `gichul:${id}:run:${kind}`;
+
+export const loadRun = (id: string, kind: string) => read<SavedRun>(runKey(id, kind));
+export const saveRun = (id: string, kind: string, r: SavedRun) => write(runKey(id, kind), r);
+export function clearRun(id: string, kind: string) {
+  try {
+    localStorage.removeItem(runKey(id, kind));
+  } catch {
+    /* 무시 */
+  }
+}
