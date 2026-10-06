@@ -18,4 +18,4 @@ npm run dev
 
 ## 배포
 
-`main`에 push하면 GitHub Actions가 GitHub Pages로 배포한다.
+`npm run deploy` — 빌드 결과를 `gh-pages` 브랜치로 푸시하면 GitHub Pages(https://seunghw2.github.io/gichul-note/)에 반영된다.
