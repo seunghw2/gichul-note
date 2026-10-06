@@ -1,0 +1,578 @@
+<title>기출노트</title>
+<meta name="theme-color" content="#0E3B36">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+:root{
+  --ground:#F2F4F1; --surface:#FFFFFF; --surface-2:#E8ECE7; --line:#D5DCD4;
+  --ink:#16211F; --ink-2:#4A5753; --ink-3:#7E8A86;
+  --brand:#0E3B36; --brand-ink:#FFFFFF; --brand-soft:#DCE8E3;
+  --mark:#E3A13A; --mark-soft:#FBEBD0;
+  --ok:#1C8A5E; --ok-soft:#DAF1E6; --bad:#C8463E; --bad-soft:#F8DEDB;
+  --shadow:0 1px 2px rgba(14,59,54,.06),0 6px 20px rgba(14,59,54,.07);
+  --sans:"IBM Plex Sans KR",-apple-system,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  color-scheme:dark;
+  --ground:#0D1513; --surface:#16211E; --surface-2:#1E2B28; --line:#2A3935;
+  --ink:#E7EEEB; --ink-2:#AEBBB6; --ink-3:#7C8B86;
+  --brand:#7FC8B4; --brand-ink:#0D1513; --brand-soft:#1D3530;
+  --mark:#F0B455; --mark-soft:#3A2E1A;
+  --ok:#4CC28E; --ok-soft:#173528; --bad:#EE7A70; --bad-soft:#3D1F1C;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.25);
+}}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --ground:#0D1513; --surface:#16211E; --surface-2:#1E2B28; --line:#2A3935;
+  --ink:#E7EEEB; --ink-2:#AEBBB6; --ink-3:#7C8B86;
+  --brand:#7FC8B4; --brand-ink:#0D1513; --brand-soft:#1D3530;
+  --mark:#F0B455; --mark-soft:#3A2E1A;
+  --ok:#4CC28E; --ok-soft:#173528; --bad:#EE7A70; --bad-soft:#3D1F1C;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.25);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--ground);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased;word-break:keep-all;overflow-wrap:anywhere}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;-webkit-tap-highlight-color:transparent}
+button:focus-visible,input:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+.app{max-width:480px;margin:0 auto;padding-inline:16px;padding-block:0 32px;min-height:100%;display:flex;flex-direction:column}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+svg{display:block}
+
+/* top bar */
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--ground);display:flex;align-items:center;gap:8px;padding-block:12px;margin-inline:-16px;padding-inline:16px}
+.bar h1{font-size:17px;font-weight:700;margin:0;flex:1;text-wrap:balance}
+.icon-btn{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;color:var(--ink-2)}
+.icon-btn:active{background:var(--surface-2)}
+.sync{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-2);background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px 10px 4px 8px}
+.sync i{width:7px;height:7px;border-radius:50%;background:var(--ok)}
+
+/* home */
+.brandline{display:flex;align-items:baseline;gap:8px}
+.logo{font-weight:700;font-size:22px;letter-spacing:-.02em;color:var(--ink)}
+.logo b{color:var(--brand)}
+.eyebrow{font-size:12px;font-weight:600;letter-spacing:.06em;color:var(--ink-3);margin:20px 0 10px}
+.subject{background:var(--surface);border-radius:20px;box-shadow:var(--shadow);padding:18px;display:grid;gap:14px;text-align:left;width:100%}
+.subject .top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.subject h2{margin:0;font-size:19px;font-weight:700;line-height:1.35}
+.subject .meta{font-size:13px;color:var(--ink-3);margin-top:2px}
+.badge{font-size:11px;font-weight:600;padding:3px 8px;border-radius:6px;background:var(--brand-soft);color:var(--brand);white-space:nowrap}
+.progress{height:6px;border-radius:99px;background:var(--surface-2);overflow:hidden}
+.progress>span{display:block;height:100%;background:var(--brand);border-radius:99px;transition:width .3s}
+.statrow{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat{display:grid;gap:0}
+.stat b{font-family:var(--mono);font-size:18px;font-weight:600;font-variant-numeric:tabular-nums}
+.stat span{font-size:12px;color:var(--ink-3)}
+.add-subject{border:1.5px dashed var(--line);border-radius:20px;padding:16px 18px;display:flex;gap:12px;align-items:center;color:var(--ink-2);margin-top:12px;width:100%;text-align:left}
+.add-subject .plus{width:36px;height:36px;border-radius:10px;background:var(--surface-2);display:grid;place-items:center;flex:none}
+.add-subject small{display:block;color:var(--ink-3);font-size:12px}
+.note{font-size:12px;color:var(--ink-3);margin-top:20px;line-height:1.5}
+
+/* subject screen */
+.modes{display:grid;gap:10px}
+.mode{display:flex;align-items:center;gap:14px;background:var(--surface);border-radius:16px;padding:16px;box-shadow:var(--shadow);text-align:left;width:100%}
+.mode.primary{background:var(--brand);color:var(--brand-ink)}
+.mode .ic{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:var(--surface-2);color:var(--brand);flex:none}
+.mode.primary .ic{background:rgba(255,255,255,.14);color:var(--brand-ink)}
+.mode .tx{flex:1;min-width:0}
+.mode .tx b{display:block;font-size:16px}
+.mode .tx small{display:block;font-size:12.5px;opacity:.72}
+.mode .cnt{font-family:var(--mono);font-size:14px;font-weight:600}
+.mode[disabled]{opacity:.45}
+.subgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.subgrid .mode{padding:14px}
+.subgrid .mode .ic{width:36px;height:36px}
+.filters{background:var(--surface);border-radius:16px;padding:14px 16px;display:grid;gap:12px;box-shadow:var(--shadow)}
+.frow{display:grid;gap:6px}
+.frow>label{font-size:12px;color:var(--ink-3);font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{padding:6px 12px;border-radius:999px;border:1px solid var(--line);font-size:13.5px;color:var(--ink-2);background:var(--surface)}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.toggle{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:14px;width:100%;text-align:left}
+.sw{width:42px;height:24px;border-radius:99px;background:var(--line);position:relative;flex:none;transition:background .2s}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform .2s;box-shadow:0 1px 2px rgba(0,0,0,.2)}
+.toggle[aria-pressed="true"] .sw{background:var(--brand)}
+.toggle[aria-pressed="true"] .sw::after{transform:translateX(18px)}
+.fcount{font-size:12.5px;color:var(--ink-2)}
+
+/* quiz */
+.qhead{display:flex;align-items:center;gap:10px}
+.qhead .progress{flex:1}
+.qtags{display:flex;gap:6px;flex-wrap:wrap;margin:16px 0 8px}
+.tag{font-size:11.5px;font-weight:600;padding:3px 8px;border-radius:6px;background:var(--surface-2);color:var(--ink-2)}
+.tag.type{background:var(--brand-soft);color:var(--brand)}
+.qno{font-family:var(--mono);color:var(--ink-3);font-size:13px}
+.qtext{font-size:18px;font-weight:600;line-height:1.55;margin:4px 0 18px;text-wrap:pretty}
+.choices{display:grid;gap:8px}
+.choice{display:flex;gap:12px;align-items:flex-start;text-align:left;background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:13px 14px;width:100%;font-size:15px;line-height:1.5;transition:border-color .15s,background .15s}
+.choice .k{width:24px;height:24px;border-radius:50%;border:1.5px solid var(--line);display:grid;place-items:center;font-family:var(--mono);font-size:12px;font-weight:600;flex:none;margin-top:1px;color:var(--ink-3)}
+.choice:active{background:var(--surface-2)}
+.choice.correct{border-color:var(--ok);background:var(--ok-soft)}
+.choice.correct .k{background:var(--ok);border-color:var(--ok);color:#fff}
+.choice.wrong{border-color:var(--bad);background:var(--bad-soft)}
+.choice.wrong .k{background:var(--bad);border-color:var(--bad);color:#fff}
+.choice.dim{opacity:.55}
+.choice[disabled]{cursor:default}
+
+/* OX swipe */
+.ox-stage{position:relative;height:200px;margin-bottom:12px;touch-action:pan-y}
+.ox-card{position:absolute;inset:0;border-radius:22px;background:var(--surface);box-shadow:var(--shadow);border:1.5px solid var(--line);display:grid;place-items:center;user-select:none;-webkit-user-select:none;touch-action:pan-y;cursor:grab}
+.ox-card .hint{display:flex;justify-content:space-between;width:100%;padding-inline:22px;color:var(--ink-3);font-size:13px;align-items:center}
+.ox-card .hint span{display:flex;align-items:center;gap:6px}
+.ox-card .mid{position:absolute;inset:auto 0 18px;text-align:center;font-size:12px;color:var(--ink-3)}
+.ox-stamp{position:absolute;top:18px;font-size:44px;font-weight:700;font-family:var(--sans);opacity:0;padding:0 14px;border:3px solid currentColor;border-radius:12px;line-height:1.2}
+.ox-stamp.o{left:22px;color:var(--ok);transform:rotate(-10deg)}
+.ox-stamp.x{right:22px;color:var(--bad);transform:rotate(10deg)}
+.ox-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ox-btn{height:64px;border-radius:16px;background:var(--surface);border:1.5px solid var(--line);font-family:var(--sans);font-size:30px;font-weight:700;display:grid;place-items:center}
+.ox-btn.o{color:var(--ok)} .ox-btn.x{color:var(--bad)}
+.ox-btn.correct{background:var(--ok-soft);border-color:var(--ok)}
+.ox-btn.wrong{background:var(--bad-soft);border-color:var(--bad)}
+.ox-btn[disabled]{cursor:default}
+
+.result{margin-top:16px;border-radius:16px;background:var(--surface);border:1px solid var(--line);overflow:hidden}
+.result .rh{display:flex;align-items:center;gap:8px;padding:12px 16px;font-weight:700}
+.result.ok .rh{background:var(--ok-soft);color:var(--ok)}
+.result.bad .rh{background:var(--bad-soft);color:var(--bad)}
+.result .rh .ans{margin-left:auto;font-size:13px;font-weight:600;color:var(--ink-2)}
+.result .rb{padding:14px 16px;display:grid;gap:10px;font-size:14.5px;color:var(--ink)}
+.result .src{font-size:12.5px;color:var(--ink-3);display:flex;align-items:center;gap:6px}
+.lbl{font-size:11.5px;font-weight:600;letter-spacing:.04em;color:var(--ink-3)}
+
+.qfoot{position:sticky;bottom:0;margin-top:auto;margin-inline:-16px;padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));background:linear-gradient(to top,var(--ground) 70%,transparent);display:flex;gap:8px;align-items:center}
+.pill-btn{display:flex;align-items:center;gap:6px;height:46px;padding:0 14px;border-radius:14px;background:var(--surface);border:1px solid var(--line);font-size:13.5px;color:var(--ink-2)}
+.pill-btn[aria-pressed="true"].bm{color:var(--brand);border-color:var(--brand);background:var(--brand-soft)}
+.pill-btn[aria-pressed="true"].un{color:#8A5A10;border-color:var(--mark);background:var(--mark-soft)}
+:root[data-theme="dark"] .pill-btn[aria-pressed="true"].un{color:var(--mark)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .pill-btn[aria-pressed="true"].un{color:var(--mark)}}
+.next{flex:1;height:46px;border-radius:14px;background:var(--brand);color:var(--brand-ink);font-weight:700;font-size:15px}
+.next[disabled]{background:var(--surface-2);color:var(--ink-3)}
+
+/* end */
+.score{background:var(--surface);border-radius:22px;padding:24px 20px;box-shadow:var(--shadow);text-align:center;margin-top:8px}
+.score .big{font-family:var(--mono);font-size:52px;font-weight:600;line-height:1.1;letter-spacing:-.02em}
+.score .big small{font-size:22px;color:var(--ink-3)}
+.score p{margin:6px 0 0;color:var(--ink-2);font-size:14px}
+.ring{width:120px;height:120px;margin:0 auto 10px}
+.wlist{display:grid;gap:8px;margin-top:8px}
+.witem{background:var(--surface);border-radius:14px;padding:12px 14px;display:flex;gap:10px;font-size:14px;align-items:flex-start;text-align:left;width:100%;border:1px solid var(--line)}
+.witem .qno{flex:none;min-width:28px}
+.btnrow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px}
+.btn{height:50px;border-radius:14px;font-weight:700;background:var(--surface);border:1px solid var(--line)}
+.btn.fill{background:var(--brand);color:var(--brand-ink);border-color:var(--brand)}
+
+/* review */
+.search{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:0 12px;height:44px;margin-bottom:10px}
+.search input{flex:1;border:0;background:none;font:inherit;color:var(--ink);outline:none;min-width:0}
+.rcard{background:var(--surface);border-radius:16px;padding:16px;box-shadow:var(--shadow);display:grid;gap:10px}
+.rcard .q{font-weight:600;font-size:15.5px;line-height:1.5}
+.rcard ol{margin:0;padding:0;list-style:none;display:grid;gap:4px}
+.rcard li{font-size:14px;color:var(--ink-2);display:flex;gap:8px;padding:4px 8px;border-radius:8px}
+.rcard li .k{font-family:var(--mono);font-size:12px;color:var(--ink-3);flex:none;padding-top:2px}
+.rcard li.ans{background:var(--ok-soft);color:var(--ink);font-weight:500}
+.rcard li.ans .k{color:var(--ok)}
+.rcard .exp{font-size:14px;background:var(--surface-2);border-radius:10px;padding:10px 12px}
+.rcard .rtop{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.rcard .rtop .flags{margin-left:auto;display:flex;gap:4px}
+.mini{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;color:var(--ink-3)}
+.mini[aria-pressed="true"].bm{color:var(--brand);background:var(--brand-soft)}
+.mini[aria-pressed="true"].un{color:var(--mark);background:var(--mark-soft)}
+.wrongmark{font-size:11px;font-weight:600;color:var(--bad);background:var(--bad-soft);padding:3px 7px;border-radius:6px}
+.rlist{display:grid;gap:12px}
+.blur .exp,.blur li.ans{filter:blur(5px);transition:filter .2s}
+.blur.revealed .exp,.blur.revealed li.ans{filter:none}
+
+.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:9px 16px;border-radius:999px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:20;white-space:nowrap}
+.toast.on{opacity:1}
+.empty{text-align:center;color:var(--ink-3);padding:40px 0;font-size:14px}
+@keyframes pop{from{transform:translateY(6px);opacity:.4}to{transform:none;opacity:1}}
+.result{animation:pop .22s ease-out}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="app" id="app"></div>
+<div class="toast" id="toast" role="status"></div>
+
+<!--
+  문제은행 데이터: 과목(subject) 단위 JSON.
+  새 PDF를 넣을 때는 이 형식의 블록을 하나 더 추가하면 홈에 과목 카드가 생긴다.
+  type: "ox"(진위형, answer 1=O 2=X) | "mc"(다지선다, answer=보기 번호 1부터)
+  part: 영역 필터용 라벨, src: 출제원(교재 권/페이지)
+-->
+<script type="application/json" class="bank">
+{
+  "id": "banca-fund-17",
+  "title": "방카슈랑스 · 펀드",
+  "org": "농협은행 직무과정 집합평가",
+  "round": "17기 기출",
+  "parts": ["펀드", "방카슈랑스"],
+  "partOf": {"1권": "펀드", "2권": "방카슈랑스"},
+  "questions": [
+    {"n":1,"type":"ox","q":"자본시장법상 증권이란 투자자의 최대손실이 투자원금으로 한정되는 금융투자상품을 의미한다.","answer":1,"exp":"자본시장법상 증권에 대한 맞는 설명이다.","src":"1권 9p"},
+    {"n":2,"type":"ox","q":"자본시장법은 금융투자상품을 원본초과 손실발생 가능성을 기준으로 증권과 파생상품으로 구분한다.","answer":1,"exp":"증권은 투자자의 최대손실이 투자원금으로 한정되는 금융투자상품을 말하며, 투자 원본초과손실이 가능한 상품은 파생상품으로 분류한다.","src":"1권 29p"},
+    {"n":3,"type":"ox","q":"성장주란 기업의 적정 내재가치에 비하여 시장에서 저평가된 가격에 거래되는 종목을 의미한다.","answer":2,"exp":"성장주가 아니라 가치주에 대한 설명이다.","src":"1권 80p"},
+    {"n":4,"type":"ox","q":"국내 주식형펀드에서 발생하는 소득 중에서 주식의 매매 또는 평가차익에 대하여는 과세하지 않는다.","answer":1,"exp":"맞는 설명이다. 나머지 소득은 모두 과세한다.","src":"1권 182-183p"},
+    {"n":5,"type":"ox","q":"집합투자업자의 보수나 수수료에 관한 사항은 투자광고에 반드시 포함시켜야 할 사항이다.","answer":2,"exp":"광고에 포함시킬 수 있는 사항이지 반드시 포함시켜야 할 사항은 아니다. 광고에 반드시 포함시켜야 할 사항은 투자원금손실가능성 및 손실의 투자자 귀속사실, 과거운용실적이 미래 수익률을 보장하지 않는다는 사실 등이 있다.","src":"1권 271p"},
+    {"n":6,"type":"ox","q":"법인도 보험차익에 대하여 비과세될 수 있다.","answer":2,"exp":"보험차익에 대한 비과세는 개인에게만 해당된다.","src":"2권 127p"},
+    {"n":7,"type":"ox","q":"법인이 보장성보험에 가입할 경우 납입한 보험료는 모두 비용으로 처리된다.","answer":2,"exp":"법인이 저축성보험 또는 보장성보험에 가입 시 납입한 보험료 중 사업비 및 위험보험료는 비용으로 처리하고, 적립되는 금액은 보험예금으로 처리하게 된다.","src":"2권 130p"},
+    {"n":8,"type":"ox","q":"변액보험판매관리사 자격증이 없어도 방카매니저가 될 수 있다.","answer":1,"exp":"변액보험판매관리사 자격증이 없는 직원도 보험대리점 유자격자면 방카매니저로 지정이 가능하다.","src":"2권 143p"},
+    {"n":9,"type":"ox","q":"단체여행자보험상품은 방카슈랑스에서 판매할 수 없다.","answer":1,"exp":"단체보험은 방카슈랑스 판매허용 상품이 아니다.","src":"2권 197p"},
+    {"n":10,"type":"ox","q":"원수보험료(direct premiums written)는 손해보험에서 사용하는 용어로 보험자가 보험계약을 체결하여 보험계약자로부터 직접 받은 보험료를 의미한다.","answer":1,"exp":"원수보험료는 손해보험에서 사용하는 용어로 보험자가 보험계약을 체결하여 보험계약자로부터 직접 받은 보험료를 의미한다.","src":"2권 3p"},
+    {"n":11,"type":"mc","q":"다음 투자상품 포트폴리오 구성방법에 대한 설명 중 틀린 것은?","choices":["기대수익률 극대화 방법은 가장 많이 사용된다.","최적화 포트폴리오 방법은 지배원리(dominance frontier)를 활용한다.","핵심-위성 포트폴리오 방법은 선진국에서는 잘 사용하지 않는 방법이다.","모델 포트폴리오 방법은 고객의 특이한 상황을 반영하기 어렵다."],"answer":3,"exp":"핵심-위성 포트폴리오 방법은 선진국에서 기본적으로 사용하는 방법이다.","src":"1권 111-115p"},
+    {"n":12,"type":"mc","q":"다음 중 채권형펀드의 환매(17:00 이전) 기준가 적용일로 옳은 것은?","choices":["당일","제2영업일","제3영업일","제4영업일"],"answer":3,"exp":"채권형 펀드 17시 경과 전 기준가 적용일: 제3영업일, 17시 경과 후 기준가 적용일: 제4영업일","src":"1권 158p"},
+    {"n":13,"type":"mc","q":"펀드 신규 시 기준가격이 1,000원이었는데 6개월이 지난 후 기준가격이 1,050원이었을 경우 단순수익률은?","choices":["5%","10%","15%","20%"],"answer":1,"exp":"{(1,050 − 1,000) ÷ 1,000} × 100 = 5%","src":"1권 167p"},
+    {"n":14,"type":"mc","q":"다음 펀드별 과세방법에 대한 설명 중 틀린 내용은?","choices":["주식의 매매 또는 평가차익은 과세되지 않는다.","주식 배당소득은 과세대상 소득이다.","채권의 매매 또는 평가차익은 과세되지 않는다.","채권이자는 과세대상 소득이다."],"answer":3,"exp":"주식 매매 또는 평가차익, 주식배당, 채권 매매 또는 평가차익, 채권이자소득 중에서 주식의 매매 또는 평가차익에 대하여는 과세하지 않고, 나머지 소득은 모두 과세한다.","src":"1권 183p"},
+    {"n":15,"type":"mc","q":"당행의 펀드수익률 통보서비스에 대한 설명 중 틀린 내용은?","choices":["평가금액이 100천원을 초과하는 계좌를 보유한 고객(법인고객 포함)에게 통보된다.","일반펀드의 경우 월말 기준 월 1회 통보된다.","연금펀드는 단순수익률을 기준으로 통보된다.","발송방법은 이메일 또는 SMS로 가능하다."],"answer":3,"exp":"연금펀드는 누적수익률을 기준으로 통보된다.","src":"1권 254p"},
+    {"n":16,"type":"mc","q":"다음 투자권유준칙 주요 내용에 대한 설명 중 틀린 것은?","choices":["투자자정보에 관한 정보 중 일부만을 제공한 고객에 대하여는 해당 고객이 제공한 정보의 범위 내에서 적합한 투자권유를 하여야 한다.","적정성의 원칙은 '파생상품 등'과 관련한 판매에 있어서의 '특칙'으로 이해할 수 있다.","금융투자상품의 매매 또는 계약체결의 권유가 수반되지 않은 정보제공 등도 투자권유로 볼 수 있다.","집합투자증권을 적립식으로 10년 이상 투자할 경우 해당 상품에 적용되는 위험도를 한 단계 하향하는 방법 등을 별도로 제정하여 제시할 수 있다."],"answer":3,"exp":"투자권유란 특정 투자자를 상대로 금융투자상품의 매매 또는 투자자문계약·투자일임계약·신탁계약의 체결을 권유하는 것을 의미하므로, 금융투자상품의 매매 또는 계약체결의 권유가 수반되지 않은 정보제공 등은 투자권유로 볼 수 없다.","src":"1권 261-264p"},
+    {"n":17,"type":"mc","q":"다음 중 투자광고에 반드시 포함시켜야 할 사항이 아닌 것은?","choices":["집합투자증권 취득 전에 투자설명서 또는 간이투자설명서를 읽어볼 것을 권고하는 내용","해당펀드의 투자운용인력에 관한 사항","투자원금손실가능성 및 손실의 투자자 귀속사실","과거운용실적이 미래 수익률을 보장하지 않는다는 사실"],"answer":2,"exp":"해당펀드의 투자운용인력에 관한 사항은 광고에 반드시 포함시켜야 할 사항이 아니라 포함시킬 수도 있는 사항이다.","src":"1권 271p"},
+    {"n":18,"type":"mc","q":"내부통제기준을 위반한 행위에 대하여 취해지는 제재가 아닌 것은?","choices":["형사벌칙","자율규제기관에 의한 제재","조정위원회의 회부","민사책임"],"answer":3,"exp":"조정위원회의 회부는 금융분쟁조정위원회 분쟁조정절차의 내용이다.","src":"1권 313p"},
+    {"n":19,"type":"mc","q":"다음 수익률 보장각서에 대한 설명 중 틀린 것은?","choices":["수익률 보장각서를 개별약정으로 본다면 실적배당원칙을 표명한 약관내용에 우선하여 보장각서가 적용된다고 볼 여지가 있는 것도 사실이다.","일반거래약관이든 개별약정이든 강행법규에 위반하는 내용은 무효이다.","판매회사 직원이 임의로 수익률 보장각서를 제공하는 것은 강행규정 위반행위로서 무효이다.","보장각서가 무효로 인정되면 직원이나 회사는 아무런 책임을 지지 않게 된다."],"answer":4,"exp":"아무런 책임을 지지 않는 것은 아니며, 제대로 설명하지 않는 등 불법행위 내용이 있었다면 민사상 손해배상 책임을 지게 된다.","src":"1권 314p"},
+    {"n":20,"type":"mc","q":"다음 중 집합투자기구(펀드)의 특징이 아닌 것은?","choices":["실적배당 원칙","투자자 평등의 원칙","펀드재산의 분리","집중투자"],"answer":4,"exp":"펀드는 투자위험을 줄이고 운용수익을 높이기 위하여 분산투자를 의무화하고 있다.","src":"1권 39-40p"},
+    {"n":21,"type":"mc","q":"다음 펀드 성격에 따른 분류에 대한 설명 중 틀린 내용은?","choices":["추가형, 단위형 구분은 펀드의 좌수를 추가로 설정할 수 있느냐에 따른 분류이다.","개방형 및 폐쇄형은 중도 환매를 가능하게 해주느냐에 따른 분류이다.","주식형펀드는 펀드재산의 50% 이상을 주식에 투자하는 펀드를 말한다.","증권형, 파생형의 구분은 펀드 자산의 일정 부분 이상을 파생상품에 투자할 수 있느냐에 의한 구분이다."],"answer":3,"exp":"주식형펀드는 펀드재산의 60% 이상을 주식에 투자하는 펀드를 말한다.","src":"1권 59-62p"},
+    {"n":22,"type":"mc","q":"다음 액티브 운용전략 펀드에 대한 설명 중 틀린 것은?","choices":["액티브 운용전략은 Bottom-up 접근방식과 Top-down 접근방식, 크게 둘로 나눌 수 있다.","시스템 펀드로 표현될 수 있다.","주식 운용에 있어 Bottom-up 접근방식은 투자대상 종목의 저평가 여부만을 투자의 기준으로 판단한다.","Top-down 접근방식은 경제 및 금융 동향의 변화에 따라 자산 간, 업종 간 투자비율을 탄력적으로 조절하게 된다."],"answer":2,"exp":"②는 패시브 운용전략에 대한 설명이다.","src":"1권 65-67p"},
+    {"n":23,"type":"mc","q":"다음 패시브운용전략 펀드에 대한 설명 중 틀린 것은?","choices":["펀드 운용에 있어 체계적인 거래 기법을 이용하여 운용되는 펀드를 가리킨다.","패시브펀드로 일반적으로 인덱스형, 시스템트레이드형 등을 예로 들 수 있다.","패시브운용 펀드매니저는 비교대상 수익률을 크게 초과하는 것이 운용 목표이다.","액티브로 운용하는 펀드의 보수보다 저렴한 경우가 많다."],"answer":3,"exp":"패시브운용전략은 비교대상 지수인 인덱스와 유사하거나 근접한 수익을 올리는 것을 목표로 하고 있다.","src":"1권 66p"},
+    {"n":24,"type":"mc","q":"다음 중 잔존만기별로 채권보유량을 동일하게 유지하여 채권가격 변동에 따른 투자위험을 평준화하는 채권형펀드 운영전략은?","choices":["금리예측전략","스프레드운용전략","만기보유전략","사다리형 전략"],"answer":4,"exp":"사다리형 전략에 대한 설명이다.","src":"1권 88-91p"},
+    {"n":25,"type":"mc","q":"다음 ELS(주가연계증권)에 대한 설명 중 틀린 것은?","choices":["발행회사: 증권사","형태: 유가증권","예금자보호: 보호(5천만원까지)","소득과세: 배당소득 과세"],"answer":3,"exp":"ELD의 경우 5천만원까지 예금자보호가 되며 ELS는 예금자보호가 되지 않는다.","src":"1권 96p"},
+    {"n":26,"type":"mc","q":"다음 보험계약변경 내용 중 저축성보험 비과세와 관련하여 기산일을 재산정하는 경우로 가장 적절한 것은?","choices":["보험계약자 변경","저축성을 보장성으로 변경","보험수익자 변경","기본 보험료의 감액"],"answer":1,"exp":"저축성보험 비과세와 관련하여 아래의 계약변경 시 그 변경일을 기산일로 한다. ① 계약자 명의 변경(사망으로 인한 변경 제외) ② 보장성을 저축성으로 변경(연금 전환 등) ③ 최초 기본 보험료의 1배 초과 증액","src":"2권 102p"},
+    {"n":27,"type":"mc","q":"방카매니저가 겸직할 수 있는 업무는?","choices":["대출심사","대출서류접수","신용공여업무","신용카드 발행업무"],"answer":4,"exp":"대출 등(대출심사 및 대출서류 접수 등 단순업무 포함) 불공정 모집 우려가 있는 업무(은행업감독규정 별표2에서 정한 신용공여 범위에 해당하는 업무)를 취급하는 담당자는 방카매니저로 지정할 수 없으며, 단, 불공정 모집의 우려가 없는 신용카드 발행업무는 겸직이 가능하다.","src":"2권 141p"},
+    {"n":28,"type":"mc","q":"2003년 1월에 발표된 단계별 금융기관보험대리점 판매가능 보험상품과 관련하여 보험회사들이 제1단계를 환영한 이유로 가장 적절하지 않은 것은?","choices":["금융소비자에게 저렴한 보험료와 원스톱 쇼핑의 편의를 제공할 수 있다.","보험회사는 판매비용을 절감할 수 있는 새로운 보험판매채널을 확보할 수 있다.","은행의 보험전문성이 충분하여 금융소비자가 보호된다.","은행은 보험상품의 판매에 따르는 수수료수입을 얻을 수 있어 수익을 제공하는 한편으로 수익원을 다원화할 수 있다."],"answer":3,"exp":"①, ② 및 ④는 금융겸업의 긍정적인 효과에 해당하나, 은행의 보험전문성이 충분하다고 할 수 없다.","src":"2권 17p"},
+    {"n":29,"type":"mc","q":"다음 중 지급면책 해지의 사유로 가장 적절하지 않은 것은?","choices":["피보험자가 고의로 자신을 해친 경우","보험계약자가 고의로 보험수익자를 해친 경우","보험수익자가 고의로 피보험자를 해친 경우","보험계약자가 고의로 피보험자를 해친 경우"],"answer":2,"exp":"지급면책 해지 사유: ① 피보험자(보험대상자)가 고의로 자신을 해친 경우 ② 보험수익자(보험금을 받는 자)가 고의로 피보험자(보험대상자)를 해친 경우 ③ 계약자가 고의로 피보험자를 해친 경우","src":"2권 186p"},
+    {"n":30,"type":"mc","q":"방카슈랑스 초회보험료 자동출금에 대한 다음 설명 중 가장 적절하지 않은 것은?","choices":["보험계약자와 자동이체 출금계좌 예금주는 동일하여야 한다.","초회보험료 자동출금계좌와 자동이체 출금계좌는 동일하여야 한다.","타행 계좌 거래도 가능하다.","초회보험료 자동출금을 신청하는 경우 청약서 출력 후에 초회 납입 희망란에 자필서명을 수령하여야 한다."],"answer":3,"exp":"타행계좌 거래는 불가하다.","src":"2권 207p"},
+    {"n":31,"type":"mc","q":"손해보험의 경우 보험계약관계자에 대한 다음 설명 중 가장 적절한 것은?","choices":["보험계약자와 보험수익자는 같아야 한다.","보험계약자와 보험수익자는 달라야 한다.","피보험자와 보험수익자는 같아야 한다.","피보험자와 보험수익자는 달라야 한다."],"answer":3,"exp":"손해보험의 경우 피보험자와 보험수익자는 항상 일치하지만 보험계약자는 다를 수 있다.","src":"2권 25p"},
+    {"n":32,"type":"mc","q":"자동차보험에 가입한 후 자동차사고가 발생할 경우 보험자는 누구에게 보험금 등을 지급해야 하는가?","choices":["보험계약자","피보험자","자동차 소유자","자동차 운전자"],"answer":2,"exp":"보험사고가 발생할 경우 보험자는 피보험자(손해보험) 또는 보험수익자(생명보험)에게 약정한 보험금 등을 지급해야 한다.","src":"2권 28p"},
+    {"n":33,"type":"mc","q":"다음 중 타인을 위한 보험계약에서 타인에게 당연하게 부여되는 의무로 가장 적절하지 않은 것은?","choices":["고지의무","보험료납입의무","통지의무","위험유지의무"],"answer":2,"exp":"타인을 위한 보험계약의 경우 타인은 고지의무, 통지의무, 위험유지의무 등을 부담해야 한다. 그러나 타인은 보험계약자가 보험료납입을 하지 않을 경우에만 2차적으로 보험료 납입의무를 부담한다.","src":"2권 29p"},
+    {"n":34,"type":"mc","q":"통지의무 및 위험유지의무에 대한 다음 설명 중 가장 적절한 것은?","choices":["보험사고발생의 통지의무를 위반하면 보험자는 손해를 보상할 책임이 없다.","위험변경증가의 통지의무를 위반할 경우 보험자는 보험계약을 해지한다.","위험유지의무를 위반할 경우 보험자는 보험계약을 해지한다.","위험변경증가의 통지의무는 고의나 중과실이 아닌 경우에 해당하고 고의 또는 중과실의 경우는 위험유지의무에 해당한다."],"answer":4,"exp":"보험사고발생의 통지의무를 위반하여 증가된 손해를 보상할 책임이 없다. 위험변경증가의 통지의무를 위반하거나 위험유지의무를 위반할 경우 보험자는 보험계약을 해지할 수 있다.","src":"2권 31p"},
+    {"n":35,"type":"mc","q":"다음 중 보험가액과 보험금액에 대한 설명 중 가장 적절한 것은?","choices":["보험금액은 보험계약법상의 최고한도금액이다.","보험가액은 보험계약상의 최고한도금액이다.","보험가액은 보험사고로 보험계약의 목적에 발생할 수 있는 최고손해금액이다.","보험가액이 보험금액보다 큰 경우를 초과보험이라고 한다."],"answer":3,"exp":"보험계약상의 최고한도금액이 보험금액이다. 한편 보험가액은 보험사고로 보험의 목적에 발생할 수 있는 최대손해금액이다. 따라서 보험가액은 보험자가 지급할 수 있는 보험계약법상의 최고한도액을 의미한다. 보험가액이 보험금액보다 큰 경우를 일부보험이라고 한다.","src":"2권 32-33p"},
+    {"n":36,"type":"mc","q":"금융기관보험대리점 등이 보험계약의 체결을 대리할 때에 보험계약자에게 설명해야 하는 사항으로 가장 적절하지 않은 것은?","choices":["보험계약의 주요 보장 내용","보험계약의 환급금","모집수수료율","불완전 판매를 방지하기 위하여 필요한 경우로서 금융위원회가 정하여 고시하는 사항"],"answer":3,"exp":"금융기관보험대리점 등이 보험계약의 체결을 대리할 때에는 금융위원회가 정하여 고시하는 바에 따라 ① 대리하는 보험계약의 주요 보장 내용 ② 대리하는 보험계약의 환급금 ③ 그 밖에 불완전 판매를 방지하기 위하여 필요한 경우로서 금융위원회가 정하여 고시하는 사항을 보험계약자에게 설명하여야 한다. 모집수수료율은 모집하는 점포의 창구 및 인터넷 홈페이지에 공시하는 것으로 충분하다.","src":"2권 40p"},
+    {"n":37,"type":"mc","q":"고지수령권자에 대한 설명 중 가장 적절한 것은?","choices":["보험자, 보험대리점, 보험설계사 모두가 고지수령권자이다.","보험자와 보험대리점이 고지수령권자이다.","보험자와 보험설계사가 고지수령권자이다.","보험대리점과 보험설계사가 고지수령권자이다."],"answer":2,"exp":"보험자와 보험대리점의 고지수령권은 인정되나 보험설계사의 고지수령권은 인정되지 않는다.","src":"2권 49p"},
+    {"n":38,"type":"mc","q":"장기간병보험에서 일상생활장해 상태 중 하나에 포함되지 않는 것은?","choices":["식사하기","목욕하기","화장실이용","눕기"],"answer":4,"exp":"일상생활장해는 일상생활에 필요한 이동하기, 식사하기, 화장실이용, 목욕하기, 착탈의 중 한 가지가 불가능한 상태를 말한다.","src":"2권 89p"},
+    {"n":39,"type":"mc","q":"금융종합소득에 관한 다음 설명 중 가장 적절한 것은?","choices":["1년간의 금융소득이 4천만 원을 초과하는 경우가 금융종합소득과세의 대상이다.","금융소득종합과세 시 부동산 양도소득도 합산하여 신고해야 한다.","원천징수 후의 실수령액이 금융소득의 기준이 된다.","금융소득이 금융소득종합과세 기준을 초과하는 경우는 타 소득이 없어도 종합소득세 확정신고를 해야 한다."],"answer":4,"exp":"① 1년(1월 1일~12월 31일)간의 금융소득이 2천만원을 초과하는 경우가 금융종합소득의 대상이다. ② 양도소득은 합산하지 않는다. ③ 원천징수 전의 금액이 금융소득의 기준이 된다. ④ 금융소득이 2천만원을 초과한 거주자(개인)는 타 종합소득 유무를 떠나서 다음해 5월에 종합소득세 확정신고 의무가 있다.","src":"2권 96-97p"},
+    {"n":40,"type":"mc","q":"다음 종합소득세 과세표준에 따른 종합소득 산출세액 중 틀린 것은?","choices":["과세표준 1,200만원 이하: 과세표준 × 0.06","과세표준 4,600만원 이하: 과세표준 × 0.15 − 1,080천원","과세표준 8,800만원 이하: 과세표준 × 0.24 − 5,220천원","과세표준 3억원 초과: 과세표준 × 0.38 − 19,400천원"],"answer":4,"exp":"과세표준이 1억 5천만원을 초과할 경우 종합소득 산출세액은 과세표준 × 0.38 − 19,400천원이다.","src":"2권 99p"}
+  ]
+}
+</script>
+
+<script>
+(function(){
+"use strict";
+const $app = document.getElementById("app");
+const BANKS = [...document.querySelectorAll("script.bank")].map(s => {
+  const b = JSON.parse(s.textContent);
+  b.questions.forEach(q => { q.part = b.partOf[q.src.split(" ")[0]] || "기타"; });
+  return b;
+});
+
+/* ---------- 저장 (목업: 기기 저장 / 실제: 계정 서버) ---------- */
+const KEY = id => "gichul:" + id;
+function load(id){
+  try { const v = JSON.parse(localStorage.getItem(KEY(id))); if (v) return v; } catch(e){}
+  return { rec:{}, bm:[], un:[], wrong:[] };
+}
+function save(id, st){ try { localStorage.setItem(KEY(id), JSON.stringify(st)); } catch(e){} }
+let prefs = { type:"all", part:"all", shuffleQ:false, shuffleC:false };
+try { Object.assign(prefs, JSON.parse(localStorage.getItem("gichul:prefs")) || {}); } catch(e){}
+const savePrefs = () => { try { localStorage.setItem("gichul:prefs", JSON.stringify(prefs)); } catch(e){} };
+
+/* ---------- 아이콘 ---------- */
+const I = {
+  back:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>',
+  close:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  play:'<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l10.5-6.5z"/></svg>',
+  redo:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>',
+  book:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5"/><path d="M9 8h6"/></svg>',
+  bm:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M6 3h12v18l-6-4.5L6 21z"/></svg>',
+  bmOn:'<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M6 3h12v18l-6-4.5L6 21z"/></svg>',
+  un:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.3a2.6 2.6 0 0 1 5 1c0 1.7-2.5 2.2-2.5 3.7"/><path d="M12 17.3v.01"/></svg>',
+  plus:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+  pg:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/></svg>',
+  search:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>',
+  arrowL:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>',
+  arrowR:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
+  check:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg>',
+  x:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>'
+};
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const KNUM = ["①","②","③","④","⑤"];
+const shuffle = a => { a = a.slice(); for (let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; };
+let toastT;
+function toast(msg){ const t=document.getElementById("toast"); t.textContent=msg; t.classList.add("on"); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove("on"),1400); }
+
+/* ---------- 상태 ---------- */
+let bank = null, st = null, view = "home", session = null, reviewOpts = { q:"", hide:false, only:"all" };
+
+function stats(b, s){
+  const total = b.questions.length;
+  const done = Object.keys(s.rec).length;
+  const ok = Object.values(s.rec).filter(r => r.last).length;
+  return { total, done, rate: done ? Math.round(ok/done*100) : null, wrong: s.wrong.length, bm: s.bm.length, un: s.un.length };
+}
+function filtered(){
+  return bank.questions.filter(q =>
+    (prefs.type==="all" || q.type===prefs.type) && (prefs.part==="all" || q.part===prefs.part));
+}
+
+/* ---------- 화면: 홈 ---------- */
+function renderHome(){
+  view = "home";
+  const cards = BANKS.map(b => {
+    const s = stats(b, load(b.id));
+    return `<button class="subject" data-open="${b.id}">
+      <div class="top"><div><h2>${esc(b.title)}</h2><div class="meta">${esc(b.org)} · ${s.total}문항</div></div><span class="badge">${esc(b.round)}</span></div>
+      <div class="progress" aria-label="진도"><span style="width:${s.done/s.total*100}%"></span></div>
+      <div class="statrow">
+        <div class="stat"><b>${s.done}<span class="num" style="font-size:13px;color:var(--ink-3)">/${s.total}</span></b><span>푼 문제</span></div>
+        <div class="stat"><b>${s.rate===null?"–":s.rate+"%"}</b><span>정답률</span></div>
+        <div class="stat"><b>${s.wrong}</b><span>오답노트</span></div>
+      </div>
+    </button>`;
+  }).join("");
+  $app.innerHTML = `
+    <div class="bar"><div class="brandline" style="flex:1"><span class="logo">기출<b>노트</b></span></div>
+      <span class="sync" title="목업에서는 이 기기에만 저장됩니다"><i></i>계정 동기화</span></div>
+    <div class="eyebrow">내 과목</div>
+    ${cards}
+    <button class="add-subject" data-act="add"><span class="plus">${I.plus}</span><span>새 기출 과목 추가<small>다른 PDF를 문제은행으로 변환해 등록</small></span></button>
+    <p class="note">목업 안내: 기록은 지금은 이 브라우저에만 저장됩니다. 실제 버전에서는 로그인한 계정에 저장되어 폰·PC 어디서든 이어서 풀 수 있습니다.</p>`;
+}
+
+/* ---------- 화면: 과목 ---------- */
+function renderSubject(){
+  view = "subject";
+  const s = stats(bank, st);
+  const n = filtered().length;
+  const chip = (k, v, label) => `<button class="chip" data-pref="${k}" data-val="${v}" aria-pressed="${prefs[k]===v}">${label}</button>`;
+  const tog = (k, label) => `<button class="toggle" data-tog="${k}" aria-pressed="${prefs[k]}"><span>${label}</span><span class="sw"></span></button>`;
+  $app.innerHTML = `
+    <div class="bar"><button class="icon-btn" data-act="home" aria-label="홈으로">${I.back}</button><h1>${esc(bank.title)}</h1></div>
+    <div class="subject" style="cursor:default">
+      <div class="progress"><span style="width:${s.done/s.total*100}%"></span></div>
+      <div class="statrow">
+        <div class="stat"><b>${s.done}/${s.total}</b><span>푼 문제</span></div>
+        <div class="stat"><b>${s.rate===null?"–":s.rate+"%"}</b><span>정답률</span></div>
+        <div class="stat"><b>${s.wrong}</b><span>남은 오답</span></div>
+      </div>
+    </div>
+
+    <div class="eyebrow">학습하기</div>
+    <div class="modes">
+      <button class="mode primary" data-start="all"><span class="ic">${I.play}</span><span class="tx"><b>문제 풀기</b><small>한 문제씩 풀고 바로 정답·해설 확인</small></span><span class="cnt">${n}</span></button>
+      <button class="mode" data-start="wrong" ${s.wrong?"":"disabled"}><span class="ic">${I.redo}</span><span class="tx"><b>오답노트 다시 풀기</b><small>맞히면 오답노트에서 빠져요</small></span><span class="cnt">${s.wrong}</span></button>
+      <button class="mode" data-act="review"><span class="ic">${I.book}</span><span class="tx"><b>해설 훑어보기</b><small>문제·정답·해설을 카드로 빠르게 읽기</small></span><span class="cnt">${s.total}</span></button>
+      <div class="subgrid">
+        <button class="mode" data-start="bm" ${s.bm?"":"disabled"}><span class="ic">${I.bm}</span><span class="tx"><b>북마크</b><small>${s.bm}문제</small></span></button>
+        <button class="mode" data-start="un" ${s.un?"":"disabled"}><span class="ic" style="color:var(--mark)">${I.un}</span><span class="tx"><b>헷갈림</b><small>${s.un}문제</small></span></button>
+      </div>
+    </div>
+
+    <div class="eyebrow">출제 범위</div>
+    <div class="filters">
+      <div class="frow"><label>유형</label><div class="chips">${chip("type","all","전체")}${chip("type","ox","OX 진위형")}${chip("type","mc","4지선다")}</div></div>
+      <div class="frow"><label>영역</label><div class="chips">${chip("part","all","전체")}${bank.parts.map(p=>chip("part",p,p+(p==="펀드"?" (1권)":" (2권)"))).join("")}</div></div>
+      ${tog("shuffleQ","문제 순서 섞기")}
+      ${tog("shuffleC","보기 순서 섞기")}
+      <div class="fcount">선택한 범위: <b class="num">${n}</b>문항</div>
+    </div>`;
+}
+
+/* ---------- 풀이 세션 ---------- */
+function startSession(kind){
+  let pool;
+  if (kind==="wrong") pool = bank.questions.filter(q => st.wrong.includes(q.n));
+  else if (kind==="bm") pool = bank.questions.filter(q => st.bm.includes(q.n));
+  else if (kind==="un") pool = bank.questions.filter(q => st.un.includes(q.n));
+  else pool = filtered();
+  if (!pool.length){ toast("선택한 범위에 문제가 없어요"); return; }
+  if (prefs.shuffleQ) pool = shuffle(pool);
+  session = { kind, items: pool.map(q => ({ q, order: q.type==="mc" && prefs.shuffleC ? shuffle([1,2,3,4]) : [1,2,3,4], pick:null })), i:0 };
+  renderQuiz();
+}
+const LABEL = { all:"문제 풀기", wrong:"오답노트", bm:"북마크", un:"헷갈림" };
+
+function renderQuiz(){
+  view = "quiz";
+  const it = session.items[session.i], q = it.q, done = it.pick!==null;
+  const total = session.items.length;
+  const correct = done && it.pick===q.answer;
+  let body;
+  if (q.type==="ox"){
+    const cls = v => !done ? "" : (v===q.answer ? "correct" : (v===it.pick ? "wrong" : ""));
+    body = `
+      ${done ? "" : `<div class="ox-stage"><div class="ox-card" id="oxcard">
+        <span class="ox-stamp o">O</span><span class="ox-stamp x">X</span>
+        <div class="hint"><span>${I.arrowL} X 틀림</span><span>맞음 O ${I.arrowR}</span></div>
+        <div class="mid">카드를 좌우로 밀어서 답하기</div></div></div>`}
+      <div class="ox-btns">
+        <button class="ox-btn o ${cls(1)}" data-pick="1" ${done?"disabled":""} aria-label="O 맞음">O</button>
+        <button class="ox-btn x ${cls(2)}" data-pick="2" ${done?"disabled":""} aria-label="X 틀림">X</button>
+      </div>`;
+  } else {
+    body = `<div class="choices">${it.order.map((orig, idx) => {
+      let c = "";
+      if (done){ c = orig===q.answer ? "correct" : (orig===it.pick ? "wrong" : "dim"); }
+      return `<button class="choice ${c}" data-pick="${orig}" ${done?"disabled":""}><span class="k">${idx+1}</span><span>${esc(q.choices[orig-1])}</span></button>`;
+    }).join("")}</div>`;
+  }
+  const ansText = q.type==="ox" ? (q.answer===1?"O":"X") : KNUM[it.order.indexOf(q.answer)];
+  const isBm = st.bm.includes(q.n), isUn = st.un.includes(q.n);
+  $app.innerHTML = `
+    <div class="bar">
+      <button class="icon-btn" data-act="quit" aria-label="그만 풀기">${I.close}</button>
+      <div class="qhead" style="flex:1"><div class="progress"><span style="width:${(session.i+(done?1:0))/total*100}%"></span></div><span class="num" style="font-size:13px;color:var(--ink-2)">${session.i+1}/${total}</span></div>
+    </div>
+    <div class="qtags"><span class="tag type">${q.type==="ox"?"OX 진위형":"4지선다"}</span><span class="tag">${esc(q.part)}</span>${session.kind!=="all"?`<span class="tag">${LABEL[session.kind]}</span>`:""}</div>
+    <div class="qno">문제 ${q.n}</div>
+    <div class="qtext">${esc(q.q)}</div>
+    ${body}
+    ${done ? `<div class="result ${correct?"ok":"bad"}">
+      <div class="rh">${correct?I.check+" 정답":I.x+" 오답"}<span class="ans">정답 ${ansText}</span></div>
+      <div class="rb"><div><div class="lbl">해설</div>${esc(q.exp)}</div>
+      <div class="src">${I.pg} 출제원 ${esc(q.src)}</div></div></div>` : ""}
+    <div class="qfoot">
+      <button class="pill-btn bm" data-flag="bm" aria-pressed="${isBm}">${isBm?I.bmOn:I.bm}북마크</button>
+      <button class="pill-btn un" data-flag="un" aria-pressed="${isUn}">${I.un}헷갈림</button>
+      <button class="next" data-act="next" ${done?"":"disabled"}>${session.i===total-1?"결과 보기":"다음 문제"}</button>
+    </div>`;
+  if (q.type==="ox" && !done) bindSwipe();
+  window.scrollTo(0,0);
+}
+
+function pick(v){
+  const it = session.items[session.i];
+  if (it.pick!==null) return;
+  it.pick = v;
+  const q = it.q, ok = v===q.answer;
+  const r = st.rec[q.n] || { tries:0, miss:0 };
+  r.tries++; if (!ok) r.miss++; r.last = ok; st.rec[q.n] = r;
+  if (!ok && !st.wrong.includes(q.n)) st.wrong.push(q.n);
+  if (ok && session.kind==="wrong") st.wrong = st.wrong.filter(n => n!==q.n);
+  save(bank.id, st);
+  renderQuiz();
+  if (ok && session.kind==="wrong") toast("오답노트에서 뺐어요");
+  const res = document.querySelector(".result");
+  if (res) setTimeout(()=>res.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block:"nearest" }), 30);
+}
+
+function bindSwipe(){
+  const card = document.getElementById("oxcard");
+  const so = card.querySelector(".ox-stamp.o"), sx = card.querySelector(".ox-stamp.x");
+  let x0=null, dx=0, id=null;
+  card.addEventListener("pointerdown", e => { x0=e.clientX; dx=0; id=e.pointerId; card.setPointerCapture(id); card.style.transition="none"; card.style.cursor="grabbing"; });
+  card.addEventListener("pointermove", e => {
+    if (x0===null) return;
+    dx = e.clientX - x0;
+    card.style.transform = `translateX(${dx}px) rotate(${dx/18}deg)`;
+    so.style.opacity = Math.max(0, Math.min(1, dx/90));
+    sx.style.opacity = Math.max(0, Math.min(1, -dx/90));
+  });
+  const end = () => {
+    if (x0===null) return; x0=null; card.style.cursor="";
+    card.style.transition="transform .25s ease, opacity .25s";
+    if (Math.abs(dx) > 90){
+      card.style.transform = `translateX(${dx>0?480:-480}px) rotate(${dx>0?20:-20}deg)`;
+      card.style.opacity = "0";
+      setTimeout(()=>pick(dx>0?1:2), 180);
+    } else { card.style.transform=""; so.style.opacity=0; sx.style.opacity=0; }
+  };
+  card.addEventListener("pointerup", end);
+  card.addEventListener("pointercancel", end);
+}
+
+function renderEnd(){
+  view = "end";
+  const items = session.items, ok = items.filter(it => it.pick===it.q.answer).length, total = items.length;
+  const wrongs = items.filter(it => it.pick!==null && it.pick!==it.q.answer);
+  const pct = total ? ok/total : 0, R = 52, C = 2*Math.PI*R;
+  $app.innerHTML = `
+    <div class="bar"><button class="icon-btn" data-act="subject" aria-label="과목으로">${I.back}</button><h1>${LABEL[session.kind]} 결과</h1></div>
+    <div class="score">
+      <svg class="ring" viewBox="0 0 120 120"><circle cx="60" cy="60" r="${R}" fill="none" stroke="var(--surface-2)" stroke-width="10"/>
+      <circle cx="60" cy="60" r="${R}" fill="none" stroke="var(--brand)" stroke-width="10" stroke-linecap="round" stroke-dasharray="${C*pct} ${C}" transform="rotate(-90 60 60)"/>
+      <text x="60" y="68" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="24" font-weight="600" fill="var(--ink)">${Math.round(pct*100)}%</text></svg>
+      <div class="big num">${ok}<small>/${total}</small></div>
+      <p>${wrongs.length ? `틀린 ${wrongs.length}문제는 오답노트에 담겼어요` : "모두 맞혔어요"}</p>
+    </div>
+    ${wrongs.length ? `<div class="eyebrow">틀린 문제</div><div class="wlist">${wrongs.map(it=>`<div class="witem"><span class="qno">${it.q.n}</span><span>${esc(it.q.q)}</span></div>`).join("")}</div>` : ""}
+    <div class="btnrow">
+      <button class="btn" data-act="subject">과목으로</button>
+      <button class="btn fill" data-start="${wrongs.length && st.wrong.length ? "wrong" : session.kind}">${wrongs.length && st.wrong.length ? "오답만 다시" : "한 번 더"}</button>
+    </div>`;
+  window.scrollTo(0,0);
+}
+
+/* ---------- 화면: 훑어보기 ---------- */
+function renderReview(keepFocus){
+  view = "review";
+  const term = reviewOpts.q.trim();
+  let list = filtered();
+  if (reviewOpts.only==="wrong") list = list.filter(q => st.wrong.includes(q.n));
+  if (reviewOpts.only==="bm") list = list.filter(q => st.bm.includes(q.n));
+  if (reviewOpts.only==="un") list = list.filter(q => st.un.includes(q.n));
+  if (term) list = list.filter(q => (q.q + " " + (q.choices||[]).join(" ") + " " + q.exp).includes(term));
+  const only = (v,l) => `<button class="chip" data-only="${v}" aria-pressed="${reviewOpts.only===v}">${l}</button>`;
+  const cards = list.map(q => {
+    const isBm = st.bm.includes(q.n), isUn = st.un.includes(q.n);
+    const opts = q.type==="ox"
+      ? `<ol><li class="${q.answer===1?"ans":""}"><span class="k">O</span>맞다</li><li class="${q.answer===2?"ans":""}"><span class="k">X</span>틀리다</li></ol>`
+      : `<ol>${q.choices.map((c,i)=>`<li class="${i+1===q.answer?"ans":""}"><span class="k">${KNUM[i]}</span><span>${esc(c)}</span></li>`).join("")}</ol>`;
+    return `<article class="rcard ${reviewOpts.hide?"blur":""}" data-reveal>
+      <div class="rtop"><span class="qno">${q.n}</span><span class="tag type">${q.type==="ox"?"OX":"4지"}</span><span class="tag">${esc(q.part)}</span>${st.wrong.includes(q.n)?'<span class="wrongmark">오답</span>':""}
+        <span class="flags"><button class="mini bm" data-rflag="bm" data-n="${q.n}" aria-pressed="${isBm}" aria-label="북마크">${isBm?I.bmOn:I.bm}</button><button class="mini un" data-rflag="un" data-n="${q.n}" aria-pressed="${isUn}" aria-label="헷갈림">${I.un}</button></span></div>
+      <div class="q">${esc(q.q)}</div>${opts}
+      <div class="exp"><div class="lbl">해설</div>${esc(q.exp)}</div>
+      <div class="src" style="font-size:12.5px;color:var(--ink-3);display:flex;gap:6px;align-items:center">${I.pg} ${esc(q.src)}</div>
+    </article>`;
+  }).join("");
+  $app.innerHTML = `
+    <div class="bar"><button class="icon-btn" data-act="subject" aria-label="과목으로">${I.back}</button><h1>해설 훑어보기</h1></div>
+    <label class="search">${I.search}<input id="rsearch" type="search" placeholder="키워드 검색 (예: 보험가액, ELS)" value="${esc(reviewOpts.q)}"></label>
+    <div class="chips" style="margin-bottom:8px">${only("all","전체")}${only("wrong","오답")}${only("bm","북마크")}${only("un","헷갈림")}</div>
+    <button class="toggle" data-hide aria-pressed="${reviewOpts.hide}" style="margin:6px 0 14px"><span style="font-size:13.5px">정답·해설 가리기 <span style="color:var(--ink-3)">(카드를 눌러 확인)</span></span><span class="sw"></span></button>
+    <div class="rlist">${cards || '<div class="empty">조건에 맞는 문제가 없어요</div>'}</div>`;
+  if (keepFocus){ const i=document.getElementById("rsearch"); i.focus(); i.setSelectionRange(i.value.length,i.value.length); }
+}
+
+/* ---------- 이벤트 ---------- */
+function toggleFlag(kind, n){
+  const arr = st[kind], on = !arr.includes(n);
+  st[kind] = on ? arr.concat(n) : arr.filter(x => x!==n);
+  save(bank.id, st);
+  toast(on ? (kind==="bm" ? "북마크했어요" : "헷갈림으로 표시했어요") : "표시를 해제했어요");
+}
+$app.addEventListener("click", e => {
+  const t = e.target.closest("button, [data-reveal]");
+  if (!t) return;
+  const d = t.dataset;
+  if (d.open){ bank = BANKS.find(b => b.id===d.open); st = load(bank.id); renderSubject(); window.scrollTo(0,0); return; }
+  if (d.act==="home"){ renderHome(); return; }
+  if (d.act==="add"){ toast("다음 단계: PDF 업로드 → 문제 자동 추출"); return; }
+  if (d.act==="subject"){ renderSubject(); window.scrollTo(0,0); return; }
+  if (d.act==="review"){ renderReview(); window.scrollTo(0,0); return; }
+  if (d.act==="quit"){ renderSubject(); return; }
+  if (d.act==="next"){ if (session.i < session.items.length-1){ session.i++; renderQuiz(); } else renderEnd(); return; }
+  if (d.start){ startSession(d.start); return; }
+  if (d.pref){ prefs[d.pref] = d.val; savePrefs(); renderSubject(); return; }
+  if (d.tog){ prefs[d.tog] = !prefs[d.tog]; savePrefs(); renderSubject(); return; }
+  if (d.pick){ pick(+d.pick); return; }
+  if (d.flag){ toggleFlag(d.flag, session.items[session.i].q.n); renderQuiz(); return; }
+  if (d.rflag){ e.stopPropagation(); toggleFlag(d.rflag, +d.n); renderReview(); return; }
+  if (d.only){ reviewOpts.only = d.only; renderReview(); return; }
+  if ("hide" in d){ reviewOpts.hide = !reviewOpts.hide; renderReview(); return; }
+  if ("reveal" in d){ t.classList.toggle("revealed"); return; }
+});
+$app.addEventListener("input", e => { if (e.target.id==="rsearch"){ reviewOpts.q = e.target.value; renderReview(true); } });
+document.addEventListener("keydown", e => {
+  if (view!=="quiz" || e.target.tagName==="INPUT") return;
+  const it = session.items[session.i];
+  if (it.pick===null){
+    if (it.q.type==="ox"){ if (e.key==="o"||e.key==="ArrowRight") pick(1); if (e.key==="x"||e.key==="ArrowLeft") pick(2); }
+    else if (/^[1-4]$/.test(e.key)) pick(it.order[+e.key-1]);
+  } else if (e.key==="Enter"||e.key===" "){ e.preventDefault(); document.querySelector('[data-act="next"]').click(); }
+});
+
+/* 첫 화면: 과목이 하나뿐인 지금은 바로 과목 홈을 열어 둔다 */
+bank = BANKS[0]; st = load(bank.id);
+renderHome();
+})();
+</script>

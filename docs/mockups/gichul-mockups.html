@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=Gowun+Batang:wght@400;700&family=Nanum+Pen+Script&family=Noto+Sans+KR:wght@400;500;700;900&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#ECEDEA;font-family:"IBM Plex Sans KR",sans-serif;color:#1a1a1a;width:1300px;padding:36px 40px}
+.sheet-title{font-size:26px;font-weight:700;margin-bottom:6px}
+.sheet-sub{font-size:14px;color:#666;margin-bottom:28px}
+.ver{display:flex;gap:28px;padding:28px 0;border-top:2px solid #cfd2cc}
+.ver:first-of-type{border-top:0;padding-top:4px}
+.vlabel{width:200px;flex:none;padding-top:30px}
+.vlabel .tag{display:inline-block;font-size:13px;font-weight:700;background:#1a1a1a;color:#fff;padding:3px 10px;border-radius:6px}
+.vlabel h2{font-size:24px;line-height:1.3;margin:12px 0 10px;word-break:keep-all}
+.vlabel p{font-size:13px;color:#555;line-height:1.6;word-break:keep-all}
+.screens{display:flex;gap:26px}
+.cap{font-size:13px;font-weight:600;color:#444;margin-bottom:8px;text-align:center}
+.phone{width:300px;height:620px;border-radius:38px;background:#111;padding:9px;box-shadow:0 10px 30px rgba(0,0,0,.18)}
+.scr{width:100%;height:100%;border-radius:30px;overflow:hidden;position:relative;display:flex;flex-direction:column}
+.status{height:34px;flex:none;display:flex;justify-content:space-between;align-items:center;padding:0 22px;font-size:12px;font-weight:600}
+.status i{font-style:normal;letter-spacing:1px}
+.body{flex:1;overflow:hidden;position:relative}
+
+/* ========== A: 카드 스택 ========== */
+.A{background:#F4F6F5;color:#15201E;font-family:"IBM Plex Sans KR",sans-serif}
+.A .pad{padding:6px 16px}
+.A h3{font-size:22px;font-weight:700;margin:4px 0 14px}
+.A .hello{font-size:13px;color:#6B7875}
+.A .scard{background:#0E3B36;color:#fff;border-radius:22px;padding:18px;margin-bottom:12px;position:relative;overflow:hidden}
+.A .scard .t{font-size:18px;font-weight:700}
+.A .scard .m{font-size:12px;opacity:.7;margin-top:2px}
+.A .scard .ring{position:absolute;right:16px;top:16px;width:58px;height:58px}
+.A .scard .row{display:flex;gap:18px;margin-top:22px}
+.A .scard .row b{display:block;font-family:"IBM Plex Mono";font-size:18px}
+.A .scard .row span{font-size:11px;opacity:.7}
+.A .scard .go{margin-top:16px;background:#fff;color:#0E3B36;border-radius:14px;text-align:center;font-weight:700;padding:11px;font-size:14px}
+.A .add{border:1.5px dashed #C6CFCB;border-radius:18px;padding:14px;font-size:13px;color:#6B7875;display:flex;gap:10px;align-items:center}
+.A .add .p{width:30px;height:30px;border-radius:9px;background:#E3E8E6;display:grid;place-items:center;font-size:18px}
+.A .mini{background:#fff;border-radius:18px;padding:11px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;box-shadow:0 2px 10px rgba(14,59,54,.06)}
+.A .mini .ic{width:38px;height:38px;border-radius:12px;background:#DCE8E3;color:#0E3B36;display:grid;place-items:center;font-weight:700}
+.A .mini b{font-size:14px;display:block}.A .mini small{font-size:11.5px;color:#7E8A86}
+.A .mini .n{margin-left:auto;font-family:"IBM Plex Mono";font-weight:600;font-size:14px}
+.A .chips{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 12px}
+.A .chip{font-size:12px;border:1px solid #D5DCD4;border-radius:99px;padding:5px 11px;background:#fff;color:#4A5753}
+.A .chip.on{background:#15201E;color:#fff;border-color:#15201E}
+.A .lbl{font-size:11.5px;font-weight:600;color:#7E8A86;letter-spacing:.04em;margin:14px 0 6px}
+.A .qtop{display:flex;align-items:center;gap:10px;padding:4px 16px 0}
+.A .bar{flex:1;height:6px;background:#E3E8E6;border-radius:9px}.A .bar span{display:block;height:100%;width:30%;background:#0E3B36;border-radius:9px}
+.A .stack{position:relative;height:330px;margin:22px 16px 0}
+.A .card{position:absolute;inset:0;background:#fff;border-radius:26px;box-shadow:0 8px 30px rgba(14,59,54,.12);padding:22px}
+.A .card.b2{transform:translateY(16px) scale(.92);opacity:.6}
+.A .card.b1{transform:translateY(8px) scale(.96);opacity:.85}
+.A .card.top{transform:translateX(46px) rotate(7deg);border:2px solid #1C8A5E}
+.A .card .tg{font-size:11px;font-weight:600;background:#DCE8E3;color:#0E3B36;padding:3px 8px;border-radius:6px;display:inline-block}
+.A .card .q{font-size:18px;font-weight:600;line-height:1.55;margin-top:14px}
+.A .stamp{position:absolute;top:20px;right:20px;color:#1C8A5E;border:3px solid #1C8A5E;border-radius:12px;font-size:34px;font-weight:700;padding:0 12px;transform:rotate(-12deg)}
+.A .hint{position:absolute;bottom:18px;left:22px;right:22px;display:flex;justify-content:space-between;font-size:12px;color:#7E8A86}
+.A .oxb{display:flex;gap:10px;margin:30px 16px 0}
+.A .oxb div{flex:1;height:58px;border-radius:18px;background:#fff;display:grid;place-items:center;font-size:28px;font-weight:700;box-shadow:0 2px 10px rgba(0,0,0,.05)}
+.A .tabs{position:absolute;bottom:0;left:0;right:0;height:62px;background:#fff;display:flex;justify-content:space-around;align-items:center;font-size:10.5px;color:#9AA5A1;border-top:1px solid #E3E8E6}
+.A .tabs div{text-align:center}.A .tabs .on{color:#0E3B36;font-weight:700}
+.A .tabs i{display:block;width:20px;height:20px;border-radius:6px;background:currentColor;margin:0 auto 3px;opacity:.85}
+
+/* ========== B: 시험지 노트 ========== */
+.B{background:#FBF8F1;color:#222;font-family:"Gowun Batang",serif}
+.B .status{color:#222}
+.B .pad{padding:4px 18px}
+.B .head{border-bottom:2px solid #222;padding-bottom:8px;margin-bottom:12px}
+.B .head .s{font-size:11px;letter-spacing:.12em;color:#8a7f6a;font-family:"IBM Plex Sans KR"}
+.B .head h3{font-size:24px;font-weight:700;margin-top:2px}
+.B .toc{border-bottom:1px solid #d9d1bf;padding:12px 0;display:flex;gap:12px;align-items:baseline}
+.B .toc .no{font-family:"IBM Plex Mono";font-size:12px;color:#B23A2E;width:22px}
+.B .toc .t{flex:1}.B .toc .t b{font-size:16px;display:block}.B .toc .t small{font-size:11.5px;color:#8a7f6a;font-family:"IBM Plex Sans KR"}
+.B .toc .sc{font-family:"Nanum Pen Script";font-size:24px;color:#B23A2E}
+.B .toc.dim{opacity:.45}
+.B .omr-h{display:flex;justify-content:space-between;align-items:baseline;margin:6px 0 10px}
+.B .omr-h b{font-size:15px}.B .omr-h span{font-size:11px;color:#8a7f6a;font-family:"IBM Plex Sans KR"}
+.B .grid{display:grid;grid-template-columns:repeat(8,1fr);gap:5px}
+.B .cell{aspect-ratio:1;border:1px solid #cfc6b2;border-radius:6px;display:grid;place-items:center;font-family:"IBM Plex Mono";font-size:11px;color:#8a7f6a;background:#fff}
+.B .cell.ok{background:#E3EEE6;border-color:#9cc3a8;color:#2E6B45}
+.B .cell.ng{background:#F6DEDA;border-color:#d79a92;color:#B23A2E;font-weight:600}
+.B .cell.bm{box-shadow:inset 0 -3px 0 #D9A23A}
+.B .legend{display:flex;gap:10px;font-size:10.5px;color:#8a7f6a;margin:10px 0 14px;font-family:"IBM Plex Sans KR"}
+.B .legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:3px;vertical-align:-1px}
+.B .btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.B .btn{border:1.5px solid #222;text-align:center;padding:10px 0;font-size:14px;font-weight:700;border-radius:4px}
+.B .btn.fill{background:#222;color:#FBF8F1}
+.B .filt{font-size:11.5px;color:#555;margin-top:12px;font-family:"IBM Plex Sans KR";line-height:1.7}
+.B .filt u{text-decoration:none;border-bottom:1.5px solid #B23A2E;color:#222;font-weight:600}
+.B .qn{font-family:"IBM Plex Mono";font-size:12px;color:#8a7f6a;display:flex;justify-content:space-between}
+.B .qtext{font-size:17px;font-weight:700;line-height:1.6;margin:8px 0 12px;position:relative}
+.B .opt{font-size:14px;line-height:1.55;padding:6px 0 6px 26px;position:relative;border-bottom:1px dotted #d9d1bf}
+.B .opt .k{position:absolute;left:0;top:6px;font-family:"IBM Plex Mono";font-size:13px}
+.B .opt.pick .k::after{content:"";position:absolute;left:-5px;top:-3px;width:22px;height:22px;border:2px solid #B23A2E;border-radius:50%}
+.B .opt.ans{background:linear-gradient(transparent 55%,#F3E1A6 55%)}
+.B .redx{position:absolute;right:-6px;top:-34px;font-family:"Nanum Pen Script";font-size:44px;color:#B23A2E;line-height:1}
+.B .memo{margin-top:14px;background:#fff;border-left:3px solid #B23A2E;padding:10px 12px;font-size:13px;line-height:1.6;font-family:"IBM Plex Sans KR"}
+.B .memo b{font-family:"Nanum Pen Script";font-size:22px;color:#B23A2E;font-weight:400;display:block;line-height:1}
+.B .memo small{display:block;color:#8a7f6a;margin-top:6px;font-size:11px}
+.B .foot{position:absolute;bottom:0;left:0;right:0;padding:12px 18px 16px;display:flex;gap:8px;background:#FBF8F1;border-top:1px solid #d9d1bf;font-family:"IBM Plex Sans KR"}
+.B .foot div{font-size:12.5px;border:1px solid #cfc6b2;padding:9px 11px;border-radius:4px}
+.B .foot .nx{flex:1;background:#222;color:#FBF8F1;text-align:center;font-weight:700;border-color:#222}
+
+/* ========== C: 다크 코치 대시보드 ========== */
+.C{background:#0F1115;color:#E9ECF1;font-family:"Noto Sans KR",sans-serif}
+.C .pad{padding:4px 16px}
+.C .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.C .top b{font-size:17px;font-weight:900;letter-spacing:-.02em}.C .top b em{font-style:normal;color:#8EF0C6}
+.C .av{width:30px;height:30px;border-radius:50%;background:#2A2F3A;display:grid;place-items:center;font-size:12px}
+.C .switch{display:flex;gap:6px;margin-bottom:12px}
+.C .switch div{font-size:12px;padding:6px 12px;border-radius:99px;background:#1A1E26;color:#9AA3B2}
+.C .switch .on{background:#E9ECF1;color:#0F1115;font-weight:700}
+.C .today{background:linear-gradient(140deg,#1D3B33,#16202A);border-radius:20px;padding:16px;margin-bottom:12px}
+.C .today small{font-size:11px;color:#8EF0C6;font-weight:700;letter-spacing:.06em}
+.C .today h4{font-size:18px;margin:6px 0 4px;line-height:1.35}
+.C .today p{font-size:12px;color:#AEB7C4}
+.C .today .go{margin-top:12px;background:#8EF0C6;color:#0F1115;font-weight:900;text-align:center;padding:10px;border-radius:12px;font-size:14px}
+.C .panel{background:#171A21;border-radius:18px;padding:14px;margin-bottom:10px}
+.C .panel h5{font-size:12px;color:#9AA3B2;font-weight:500;margin-bottom:10px;display:flex;justify-content:space-between}
+.C .hb{display:flex;align-items:center;gap:8px;font-size:12px;margin-bottom:8px}
+.C .hb span:first-child{width:70px;color:#C9D0DB}
+.C .hb .tr{flex:1;height:8px;background:#232833;border-radius:9px}.C .hb .tr i{display:block;height:100%;border-radius:9px}
+.C .hb .v{width:34px;text-align:right;font-family:"IBM Plex Mono"}
+.C .kpi{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+.C .kpi div{background:#171A21;border-radius:14px;padding:10px}
+.C .kpi b{font-family:"IBM Plex Mono";font-size:18px;display:block}.C .kpi span{font-size:10.5px;color:#9AA3B2}
+.C .tabs{position:absolute;bottom:0;left:0;right:0;height:62px;background:#14171D;display:flex;justify-content:space-around;align-items:center;font-size:10.5px;color:#6C7586;border-top:1px solid #222731}
+.C .tabs div{text-align:center}.C .tabs .on{color:#8EF0C6;font-weight:700}
+.C .tabs i{display:block;width:20px;height:20px;border-radius:6px;background:currentColor;margin:0 auto 3px}
+.C .qbar{display:flex;gap:3px;margin:4px 0 14px}.C .qbar i{flex:1;height:4px;border-radius:2px;background:#2A2F3A}
+.C .qbar i.o{background:#8EF0C6}.C .qbar i.x{background:#FF7A7A}.C .qbar i.c{background:#E9ECF1}
+.C .qmeta{font-size:11px;color:#9AA3B2;display:flex;gap:6px;margin-bottom:6px}
+.C .qmeta span{background:#1A1E26;padding:2px 7px;border-radius:5px}
+.C .qtext{font-size:16.5px;font-weight:700;line-height:1.55;margin-bottom:14px}
+.C .opt{background:#171A21;border:1.5px solid #232833;border-radius:14px;padding:11px 12px;font-size:13px;margin-bottom:7px;display:flex;gap:9px;line-height:1.45}
+.C .opt .k{font-family:"IBM Plex Mono";color:#6C7586}
+.C .opt.x{border-color:#FF7A7A;background:#2A1719}.C .opt.o{border-color:#8EF0C6;background:#12261F}
+.C .dim{position:absolute;inset:0;background:rgba(0,0,0,.45)}
+.C .sheetb{position:absolute;left:0;right:0;bottom:0;background:#1B1F27;border-radius:24px 24px 0 0;padding:10px 18px 20px}
+.C .grab{width:40px;height:4px;background:#3A404C;border-radius:4px;margin:0 auto 12px}
+.C .res{display:flex;align-items:center;gap:8px;font-weight:900;font-size:17px;color:#FF7A7A}
+.C .res small{margin-left:auto;font-size:12px;color:#9AA3B2;font-weight:500}
+.C .sheetb p{font-size:13px;line-height:1.65;color:#D3D9E2;margin:10px 0}
+.C .src{font-size:11px;color:#9AA3B2}
+.C .acts{display:flex;gap:8px;margin-top:14px}
+.C .acts div{font-size:12px;background:#232833;padding:10px 12px;border-radius:12px}
+.C .acts .nx{flex:1;text-align:center;background:#8EF0C6;color:#0F1115;font-weight:900}
+.C .acts .un{color:#FFC861}
+</style></head><body>
+<div class="sheet-title">기출노트 · 디자인 방향 3안</div>
+<div class="sheet-sub">방카슈랑스 · 펀드 17기 기출 (40문항) — 홈 / 과목 / 문제풀이 화면</div>
+
+<!-- ================= A ================= -->
+<section class="ver">
+  <div class="vlabel"><span class="tag">A안</span><h2>카드 스택</h2><p>한 장씩 넘기는 플래시카드. OX는 스와이프가 주인공, 큰 버튼 위주로 손가락 하나로 끝내는 앱 감성.</p></div>
+  <div class="screens">
+    <div><div class="cap">홈 · 과목 선택</div><div class="phone"><div class="scr A"><div class="status"><span>9:41</span><i>●●●</i></div><div class="body pad">
+      <div class="hello">오늘도 한 세트 해볼까요</div><h3>내 기출 과목</h3>
+      <div class="scard"><svg class="ring" viewBox="0 0 60 60"><circle cx="30" cy="30" r="24" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="7"/><circle cx="30" cy="30" r="24" fill="none" stroke="#8EE0C0" stroke-width="7" stroke-linecap="round" stroke-dasharray="105 151" transform="rotate(-90 30 30)"/><text x="30" y="35" text-anchor="middle" fill="#fff" font-size="13" font-family="IBM Plex Mono" font-weight="600">70%</text></svg>
+        <div class="t">방카슈랑스 · 펀드</div><div class="m">농협 직무과정 17기 · 40문항</div>
+        <div class="row"><div><b>28/40</b><span>푼 문제</span></div><div><b>82%</b><span>정답률</span></div><div><b>5</b><span>오답</span></div></div>
+        <div class="go">이어서 풀기 · 29번부터</div></div>
+      <div class="mini"><div class="ic">퇴</div><div><b>퇴직연금 모집인</b><small>준비 중 · 0/60</small></div></div>
+      <div class="add"><div class="p">+</div><div>새 기출 PDF 추가<br><small>문제은행으로 변환해 등록</small></div></div>
+      </div>
+      <div class="tabs"><div class="on"><i></i>홈</div><div><i></i>오답</div><div><i></i>훑어보기</div><div><i></i>내 정보</div></div>
+    </div></div></div>
+
+    <div><div class="cap">과목 홈 · 모드와 범위</div><div class="phone"><div class="scr A"><div class="status"><span>9:41</span><i>●●●</i></div><div class="body pad">
+      <h3 style="margin-bottom:10px">방카슈랑스 · 펀드</h3>
+      <div class="mini" style="background:#0E3B36;color:#fff"><div class="ic" style="background:rgba(255,255,255,.15);color:#fff">▶</div><div><b>문제 풀기</b><small style="color:#BFD6CF">풀자마자 정답·해설</small></div><div class="n">40</div></div>
+      <div class="mini"><div class="ic">↻</div><div><b>오답노트 다시 풀기</b><small>맞히면 빠져요</small></div><div class="n">5</div></div>
+      <div class="mini"><div class="ic">≡</div><div><b>해설 훑어보기</b><small>검색 · 정답 가리기</small></div><div class="n">40</div></div>
+      <div style="display:flex;gap:10px"><div class="mini" style="flex:1"><div class="ic">★</div><div><b>북마크</b><small>3문제</small></div></div><div class="mini" style="flex:1"><div class="ic" style="background:#FBEBD0;color:#B87A1A">?</div><div><b>헷갈림</b><small>4문제</small></div></div></div>
+      <div class="lbl">유형</div><div class="chips"><span class="chip on">전체</span><span class="chip">OX 진위형</span><span class="chip">4지선다</span></div>
+      <div class="lbl" style="margin-top:0">영역</div><div class="chips"><span class="chip">전체</span><span class="chip on">펀드 (1권)</span><span class="chip">방카 (2권)</span></div>
+      </div>
+      <div class="tabs"><div class="on"><i></i>홈</div><div><i></i>오답</div><div><i></i>훑어보기</div><div><i></i>내 정보</div></div>
+    </div></div></div>
+
+    <div><div class="cap">OX 스와이프 중 (오른쪽 = O)</div><div class="phone"><div class="scr A"><div class="status"><span>9:41</span><i>●●●</i></div><div class="body">
+      <div class="qtop"><span style="font-size:20px;color:#7E8A86">✕</span><div class="bar"><span></span></div><span style="font-family:IBM Plex Mono;font-size:12px;color:#4A5753">12/40</span></div>
+      <div class="stack"><div class="card b2"></div><div class="card b1"></div>
+        <div class="card top"><span class="tg">OX · 펀드</span><div class="q">자본시장법은 금융투자상품을 원본초과 손실발생 가능성을 기준으로 증권과 파생상품으로 구분한다.</div><div class="stamp">O</div><div class="hint"><span>← X 틀림</span><span>맞음 O →</span></div></div>
+      </div>
+      <div class="oxb"><div style="color:#1C8A5E">O</div><div style="color:#C8463E">X</div></div>
+      <div style="display:flex;justify-content:center;gap:16px;margin-top:16px;font-size:12.5px;color:#7E8A86"><span>★ 북마크</span><span>? 헷갈림</span></div>
+    </div></div></div></div>
+  </div>
+</section>
+
+<!-- ================= B ================= -->
+<section class="ver">
+  <div class="vlabel"><span class="tag">B안</span><h2>시험지 노트</h2><p>종이 시험지·OMR 답안지 은유. 40문항 전체를 격자로 한눈에 보고, 채점은 빨간펜과 형광펜 해설 메모로.</p></div>
+  <div class="screens">
+    <div><div class="cap">홈 · 과목 목차</div><div class="phone"><div class="scr B"><div class="status"><span>9:41</span><i>●●●</i></div><div class="body pad">
+      <div class="head"><div class="s">기출노트 · 내 시험지</div><h3>과목 목차</h3></div>
+      <div class="toc"><span class="no">01</span><div class="t"><b>방카슈랑스 · 펀드</b><small>17기 기출 · 40문항 · 1권 펀드 / 2권 방카</small></div><span class="sc">82점</span></div>
+      <div class="toc dim"><span class="no">02</span><div class="t"><b>퇴직연금 모집인</b><small>PDF 변환 대기</small></div><span class="sc" style="color:#8a7f6a">—</span></div>
+      <div class="toc dim"><span class="no">03</span><div class="t"><b>+ 새 기출 추가</b><small>PDF를 올리면 문항으로 정리</small></div></div>
+      <div style="margin-top:22px;font-size:12px;color:#8a7f6a;font-family:IBM Plex Sans KR;line-height:1.7">최근 응시 · 10월 6일 · 28문항 풀이<br>계정에 저장됨</div>
+    </div></div></div></div>
+
+    <div><div class="cap">과목 홈 · OMR 진도 격자</div><div class="phone"><div class="scr B"><div class="status"><span>9:41</span><i>●●●</i></div><div class="body pad">
+      <div class="head"><div class="s">01 · 17기 기출</div><h3>방카슈랑스 · 펀드</h3></div>
+      <div class="omr-h"><b>답안지</b><span>28/40 풀이 · 정답률 82%</span></div>
+      <div class="grid" id="omr"></div>
+      <div class="legend"><span><i style="background:#E3EEE6;border:1px solid #9cc3a8"></i>정답</span><span><i style="background:#F6DEDA;border:1px solid #d79a92"></i>오답</span><span><i style="background:#fff;border:1px solid #cfc6b2"></i>안 품</span><span><i style="background:#D9A23A"></i>북마크</span></div>
+      <div class="btns"><div class="btn fill">이어서 풀기</div><div class="btn">오답 5문항</div><div class="btn">해설 읽기</div><div class="btn">헷갈림 4</div></div>
+      <div class="filt">범위 <u>전체 유형</u> · <u>펀드(1권)</u> · <u>순서 섞기 켬</u><br>격자 번호를 누르면 그 문제로 바로 이동</div>
+    </div></div></div></div>
+
+    <div><div class="cap">4지선다 채점 후 · 빨간펜 해설</div><div class="phone"><div class="scr B"><div class="status"><span>9:41</span><i>●●●</i></div><div class="body pad">
+      <div class="qn"><span>문제 21 · 4지선다 · 펀드</span><span>21/40</span></div>
+      <div class="qtext">다음 펀드 성격에 따른 분류에 대한 설명 중 틀린 내용은?<span class="redx">✗</span></div>
+      <div class="opt pick"><span class="k">①</span>추가형, 단위형 구분은 펀드의 좌수를 추가로 설정할 수 있느냐에 따른 분류이다.</div>
+      <div class="opt"><span class="k">②</span>개방형 및 폐쇄형은 중도 환매를 가능하게 해주느냐에 따른 분류이다.</div>
+      <div class="opt ans"><span class="k">③</span>주식형펀드는 펀드재산의 50% 이상을 주식에 투자하는 펀드를 말한다.</div>
+      <div class="memo"><b>정답 ③</b>주식형펀드는 펀드재산의 <u>60% 이상</u>을 주식에 투자하는 펀드를 말한다.<small>출제원 · 1권 59-62p</small></div>
+      <div class="foot"><div>☆</div><div>헷갈림</div><div class="nx">다음 문항</div></div>
+    </div></div></div></div>
+  </div>
+</section>
+
+<!-- ================= C ================= -->
+<section class="ver">
+  <div class="vlabel"><span class="tag">C안</span><h2>다크 코치</h2><p>약점 분석 대시보드가 먼저. 영역별 정답률로 "오늘의 세트"를 추천하고, 해설은 아래에서 올라오는 시트로.</p></div>
+  <div class="screens">
+    <div><div class="cap">홈 · 오늘의 추천 세트</div><div class="phone"><div class="scr C"><div class="status"><span>9:41</span><i>●●●</i></div><div class="body pad">
+      <div class="top"><b>기출<em>코치</em></b><div class="av">나</div></div>
+      <div class="switch"><div class="on">방카 · 펀드</div><div>퇴직연금</div><div>+ 추가</div></div>
+      <div class="today"><small>오늘의 세트</small><h4>약점 집중 10문항</h4><p>오답 5 + 헷갈림 3 + 방카 과세 2</p><div class="go">시작하기</div></div>
+      <div class="kpi"><div><b>28<span style="font-size:11px;color:#6C7586">/40</span></b><span>푼 문제</span></div><div><b>82%</b><span>정답률</span></div><div><b>4일</b><span>연속 학습</span></div></div>
+      <div class="panel"><h5><span>영역별 정답률</span><span>약한 순</span></h5>
+        <div class="hb"><span>방카 과세</span><div class="tr"><i style="width:55%;background:#FF7A7A"></i></div><span class="v">55%</span></div>
+        <div class="hb"><span>투자권유</span><div class="tr"><i style="width:72%;background:#FFC861"></i></div><span class="v">72%</span></div>
+        <div class="hb"><span>펀드 일반</span><div class="tr"><i style="width:91%;background:#8EF0C6"></i></div><span class="v">91%</span></div>
+      </div>
+      </div>
+      <div class="tabs"><div class="on"><i></i>코치</div><div><i></i>풀기</div><div><i></i>오답</div><div><i></i>훑어보기</div></div>
+    </div></div></div>
+
+    <div><div class="cap">문제풀이 · 진행 막대</div><div class="phone"><div class="scr C"><div class="status"><span>9:41</span><i>●●●</i></div><div class="body pad">
+      <div class="qbar"><i class="o"></i><i class="o"></i><i class="x"></i><i class="o"></i><i class="c"></i><i></i><i></i><i></i><i></i><i></i></div>
+      <div class="qmeta"><span>5/10</span><span>4지선다</span><span>방카</span><span>지난번 오답</span></div>
+      <div class="qtext">다음 중 보험가액과 보험금액에 대한 설명 중 가장 적절한 것은?</div>
+      <div class="opt"><span class="k">1</span>보험금액은 보험계약법상의 최고한도금액이다.</div>
+      <div class="opt"><span class="k">2</span>보험가액은 보험계약상의 최고한도금액이다.</div>
+      <div class="opt"><span class="k">3</span>보험가액은 보험사고로 보험계약의 목적에 발생할 수 있는 최고손해금액이다.</div>
+      <div class="opt"><span class="k">4</span>보험가액이 보험금액보다 큰 경우를 초과보험이라고 한다.</div>
+      <div style="font-size:11.5px;color:#6C7586;text-align:center;margin-top:12px">보기를 누르면 바로 채점돼요</div>
+    </div></div></div></div>
+
+    <div><div class="cap">오답 · 해설 시트 열림</div><div class="phone"><div class="scr C"><div class="status"><span>9:41</span><i>●●●</i></div><div class="body pad">
+      <div class="qbar"><i class="o"></i><i class="o"></i><i class="x"></i><i class="o"></i><i class="x"></i><i></i><i></i><i></i><i></i><i></i></div>
+      <div class="qtext">다음 중 보험가액과 보험금액에 대한 설명 중 가장 적절한 것은?</div>
+      <div class="opt x"><span class="k">1</span>보험금액은 보험계약법상의 최고한도금액이다.</div>
+      <div class="opt"><span class="k">2</span>보험가액은 보험계약상의 최고한도금액이다.</div>
+      <div class="opt o"><span class="k">3</span>보험가액은 보험사고로 … 최고손해금액이다.</div>
+      <div class="dim"></div>
+      <div class="sheetb"><div class="grab"></div>
+        <div class="res">✕ 오답<small>정답 3번</small></div>
+        <p>보험계약상의 최고한도금액이 보험금액이다. 보험가액은 보험사고로 보험의 목적에 발생할 수 있는 최대손해금액이며, 보험가액이 보험금액보다 큰 경우는 일부보험이다.</p>
+        <div class="src">출제원 · 2권 32-33p · 오답노트에 담음</div>
+        <div class="acts"><div>★</div><div class="un">? 헷갈림</div><div class="nx">다음</div></div>
+      </div>
+    </div></div></div></div>
+  </div>
+</section>
+<script>
+const g=document.getElementById("omr");const ng=[5,6,14,20,24],bm=[11,25,35];
+for(let i=1;i<=40;i++){const c=document.createElement("div");c.className="cell"+(i<=28?(ng.includes(i)?" ng":" ok"):"")+(bm.includes(i)?" bm":"");c.textContent=i;g.appendChild(c);}
+</script>
+</body></html>
