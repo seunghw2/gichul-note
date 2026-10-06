@@ -148,16 +148,26 @@ function renderSubject() {
 function restoreRun(kind: Kind): { kind: Kind; items: Item[]; i: number } | null {
   const r = loadRun(bank.id, kind);
   if (!r) return null;
+  // '문제 풀기'는 지금 출제 범위에 맞춘다: 범위 밖 문항은 빼고, 새로 생긴 문항(문항 추가·범위 변경)은 뒤에 붙인다
+  const pool = kind === "all" ? new Set(filtered().map((q) => q.n)) : null;
   const items: Item[] = [];
-  let i = 0;
+  let i = -1;
   r.ns.forEach((n, idx) => {
     const q = bank.questions.find((x) => x.n === n);
-    if (!q) return;
+    if (!q || (pool && !pool.has(n))) return;
     if (idx === r.i) i = items.length;
     const pick = r.picks[idx];
     const ok = r.oks?.[idx] ?? (pick === null ? null : pick === q.answer);
     items.push({ q, order: r.orders[idx], pick, ok, text: r.texts?.[idx] ?? null });
   });
+  if (pool) {
+    const have = new Set(items.map((it) => it.q.n));
+    let added = filtered().filter((q) => !have.has(q.n));
+    if (prefs.shuffleQ) added = shuffle(added);
+    items.push(...added.map(newItem));
+  }
+  // 멈췄던 문항이 범위에서 빠졌으면 처음 안 푼 문항부터
+  if (i < 0) i = Math.max(0, items.findIndex((it) => it.ok === null));
   // 하나도 안 풀었거나 다 풀었으면 이어 풀 것이 없다
   if (items.every((it) => it.ok === null) || items.every((it) => it.ok !== null)) return null;
   return { kind, items, i };
@@ -213,6 +223,11 @@ function chooseSession(kind: Kind) {
   });
 }
 
+function newItem(q: Q): Item {
+  const base = (q.choices ?? []).map((_, i) => i + 1);
+  return { q, order: q.type === "mc" && prefs.shuffleC ? shuffle(base) : base, pick: null, ok: null, text: null };
+}
+
 function startSession(kind: Kind) {
   let pool: Q[];
   if (kind === "wrong") pool = bank.questions.filter((q) => st.wrong.includes(q.n));
@@ -223,10 +238,7 @@ function startSession(kind: Kind) {
   session = {
     kind,
     i: 0,
-    items: pool.map((q) => {
-      const base = (q.choices ?? []).map((_, i) => i + 1);
-      return { q, order: q.type === "mc" && prefs.shuffleC ? shuffle(base) : base, pick: null, ok: null, text: null };
-    }),
+    items: pool.map(newItem),
   };
   persistRun();
   enterQuiz();
