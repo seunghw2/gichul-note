@@ -14,6 +14,7 @@ npm run dev
 `src/data/banks/`에 JSON 파일을 하나 넣으면 홈에 과목이 생긴다. 형식은 `src/types.ts`의 `Bank` 참고.
 
 - `type`: `"ox"`(answer 1=O, 2=X) 또는 `"mc"`(answer=보기 번호, 1부터)
+- `source`: 문제 출처(원본 PDF 이름). 문항에 따로 넣으면 그 값이 우선
 - `src`: 출제원(예: `"1권 9p"`). 앞부분이 `partOf`로 영역(펀드/방카슈랑스 등)에 매핑된다.
 
 ## 배포

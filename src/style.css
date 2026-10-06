@@ -177,3 +177,4 @@ svg{display:block}
 .sheet .next,.sheet .btn{flex:none;height:50px;width:100%}
 @keyframes fade{from{opacity:0}}
 @keyframes up{from{transform:translateY(40px)}}
+.qno .qsrc{font-family:var(--sans);font-size:12.5px}

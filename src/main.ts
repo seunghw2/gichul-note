@@ -78,7 +78,7 @@ function renderHome() {
   const cards = BANKS.map((b) => {
     const s = stats(b, loadSubject(b.id));
     return `<button class="subject" data-open="${esc(b.id)}">
-      <div class="top"><div><h2>${esc(b.title)}</h2><div class="meta">${esc(b.org)} · ${s.total}문항</div></div><span class="badge">${esc(b.round)}</span></div>
+      <div class="top"><div><h2>${esc(b.title)}</h2><div class="meta">${esc(b.org)} · ${s.total}문항</div><div class="meta">출처 ${esc(b.source)}</div></div><span class="badge">${esc(b.round)}</span></div>
       <div class="progress" aria-label="진도"><span style="width:${pct(s.done, s.total)}%"></span></div>
       ${statRow(s, "오답노트")}
     </button>`;
@@ -251,13 +251,13 @@ function renderQuiz() {
       <div class="qhead" style="flex:1"><div class="progress"><span style="width:${pct(session.i + (done ? 1 : 0), total)}%"></span></div><span class="num" style="font-size:13px;color:var(--ink-2)">${session.i + 1}/${total}</span></div>
     </div>
     <div class="qtags"><span class="tag type">${q.type === "ox" ? "OX 진위형" : "4지선다"}</span><span class="tag">${esc(q.part)}</span>${session.kind !== "all" ? `<span class="tag">${LABEL[session.kind]}</span>` : ""}</div>
-    <div class="qno">문제 ${q.n}</div>
+    <div class="qno">문제 ${q.n} <span class="qsrc">· ${esc(q.source)}</span></div>
     <div class="qtext">${esc(q.q)}</div>
     ${body}
     ${done ? `<div class="result ${correct ? "ok" : "bad"}">
       <div class="rh">${correct ? I.check + " 정답" : I.x + " 오답"}<span class="ans">정답 ${ansText}</span></div>
       <div class="rb"><div><div class="lbl">해설</div>${esc(q.exp)}</div>
-      <div class="src">${I.pg} 출제원 ${esc(q.src)}</div></div></div>` : ""}
+      <div class="src">${I.pg} ${esc(q.source)} · 출제원 ${esc(q.src)}</div></div></div>` : ""}
     <div class="qfoot">
       <button class="pill-btn bm" data-flag aria-pressed="${isBm}">${isBm ? I.bmOn : I.bm}북마크</button>
       <button class="next" data-act="next" ${done ? "" : "disabled"}>${session.i === total - 1 ? "결과 보기" : "다음 문제"}</button>
@@ -337,7 +337,7 @@ function renderReview(keepFocus = false) {
           <span class="flags"><button class="mini bm" data-rflag="${q.n}" aria-pressed="${isBm}" aria-label="북마크">${isBm ? I.bmOn : I.bm}</button></span></div>
         <div class="q">${esc(q.q)}</div>${opts}
         <div class="exp"><div class="lbl">해설</div>${esc(q.exp)}</div>
-        <div class="src">${I.pg} ${esc(q.src)}</div>
+        <div class="src">${I.pg} ${esc(q.source)} · ${esc(q.src)}</div>
       </article>`;
     })
     .join("");

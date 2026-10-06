@@ -6,6 +6,10 @@ const modules = import.meta.glob<Bank>("./banks/*.json", { eager: true, import: 
 export const BANKS: LoadedBank[] = Object.values(modules)
   .map((b) => ({
     ...b,
-    questions: b.questions.map((q) => ({ ...q, part: b.partOf[q.src.split(" ")[0]] ?? "기타" })),
+    questions: b.questions.map((q) => ({
+      ...q,
+      part: b.partOf[q.src.split(" ")[0]] ?? "기타",
+      source: q.source ?? b.source,
+    })),
   }))
   .sort((a, b) => a.title.localeCompare(b.title, "ko"));
