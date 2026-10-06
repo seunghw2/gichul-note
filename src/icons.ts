@@ -13,8 +13,6 @@ export const I = {
   bmOn: s(bmPath, 18, 'fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round"'),
   pg: s('<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/>', 14),
   search: s('<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>', 18),
-  arrowL: s('<path d="M19 12H5M11 6l-6 6 6 6"/>', 16),
-  arrowR: s('<path d="M5 12h14M13 6l6 6-6 6"/>', 16),
   check: s('<path d="M5 12.5l4.5 4.5L19 7"/>', 18, 'fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"'),
   x: s('<path d="M6 6l12 12M18 6L6 18"/>', 18, 'fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"'),
 };

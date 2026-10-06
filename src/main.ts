@@ -230,10 +230,6 @@ function renderQuiz() {
   if (q.type === "ox") {
     const cls = (v: number) => (!done ? "" : v === q.answer ? "correct" : v === it.pick ? "wrong" : "");
     body = `
-      ${done ? "" : `<div class="ox-stage"><div class="ox-card" id="oxcard">
-        <span class="ox-stamp o">O</span><span class="ox-stamp x">X</span>
-        <div class="hint"><span>${I.arrowL} X 틀림</span><span>맞음 O ${I.arrowR}</span></div>
-        <div class="mid">카드를 좌우로 밀어서 답하기</div></div></div>`}
       <div class="ox-btns">
         <button class="ox-btn o ${cls(1)}" data-pick="1" ${done ? "disabled" : ""} aria-label="O 맞음">O</button>
         <button class="ox-btn x ${cls(2)}" data-pick="2" ${done ? "disabled" : ""} aria-label="X 틀림">X</button>
@@ -266,7 +262,6 @@ function renderQuiz() {
       <button class="pill-btn bm" data-flag aria-pressed="${isBm}">${isBm ? I.bmOn : I.bm}북마크</button>
       <button class="next" data-act="next" ${done ? "" : "disabled"}>${session.i === total - 1 ? "결과 보기" : "다음 문제"}</button>
     </div>`;
-  if (q.type === "ox" && !done) bindSwipe();
   window.scrollTo(0, 0);
 }
 
@@ -290,45 +285,6 @@ function pick(v: number) {
   if (ok && session.kind === "wrong") toast("오답노트에서 뺐어요");
   const res = document.querySelector(".result");
   if (res) setTimeout(() => res.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "nearest" }), 30);
-}
-
-function bindSwipe() {
-  const card = document.getElementById("oxcard")!;
-  const so = card.querySelector<HTMLElement>(".ox-stamp.o")!;
-  const sx = card.querySelector<HTMLElement>(".ox-stamp.x")!;
-  let x0: number | null = null;
-  let dx = 0;
-  card.addEventListener("pointerdown", (e) => {
-    x0 = e.clientX;
-    dx = 0;
-    card.setPointerCapture(e.pointerId);
-    card.style.transition = "none";
-    card.style.cursor = "grabbing";
-  });
-  card.addEventListener("pointermove", (e) => {
-    if (x0 === null) return;
-    dx = e.clientX - x0;
-    card.style.transform = `translateX(${dx}px) rotate(${dx / 18}deg)`;
-    so.style.opacity = String(Math.max(0, Math.min(1, dx / 90)));
-    sx.style.opacity = String(Math.max(0, Math.min(1, -dx / 90)));
-  });
-  const end = () => {
-    if (x0 === null) return;
-    x0 = null;
-    card.style.cursor = "";
-    card.style.transition = "transform .25s ease, opacity .25s";
-    if (Math.abs(dx) > 90) {
-      card.style.transform = `translateX(${dx > 0 ? 480 : -480}px) rotate(${dx > 0 ? 20 : -20}deg)`;
-      card.style.opacity = "0";
-      setTimeout(() => pick(dx > 0 ? 1 : 2), 180);
-    } else {
-      card.style.transform = "";
-      so.style.opacity = "0";
-      sx.style.opacity = "0";
-    }
-  };
-  card.addEventListener("pointerup", end);
-  card.addEventListener("pointercancel", end);
 }
 
 function renderEnd() {
@@ -476,8 +432,8 @@ document.addEventListener("keydown", (e) => {
   const it = session.items[session.i];
   if (it.pick === null) {
     if (it.q.type === "ox") {
-      if (e.key === "o" || e.key === "ArrowRight") pick(1);
-      if (e.key === "x" || e.key === "ArrowLeft") pick(2);
+      if (e.key === "o" || e.key === "ArrowLeft") pick(1);
+      if (e.key === "x" || e.key === "ArrowRight") pick(2);
     } else if (/^[1-4]$/.test(e.key)) pick(it.order[Number(e.key) - 1]);
   } else if (e.key === "Enter" || e.key === " ") {
     e.preventDefault();
