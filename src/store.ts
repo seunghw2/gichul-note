@@ -11,8 +11,9 @@ export interface SubjectState {
 }
 
 export interface Prefs {
-  type: "all" | "ox" | "mc";
-  part: string;
+  type: "all" | "ox" | "mc" | "short" | "essay";
+  /** 출처(PDF) 필터 */
+  source: string;
   shuffleQ: boolean;
   shuffleC: boolean;
 }
@@ -47,7 +48,7 @@ export function loadSubject(id: string): SubjectState {
 export const saveSubject = (id: string, s: SubjectState) => write(key(id), s);
 
 export function loadPrefs(): Prefs {
-  return { type: "all", part: "all", shuffleQ: false, shuffleC: false, ...read<Partial<Prefs>>("gichul:prefs") };
+  return { type: "all", source: "all", shuffleQ: false, shuffleC: false, ...read<Partial<Prefs>>("gichul:prefs") };
 }
 
 export const savePrefs = (p: Prefs) => write("gichul:prefs", p);
@@ -57,6 +58,9 @@ export interface SavedRun {
   ns: number[];
   orders: number[][];
   picks: (number | null)[];
+  /** 채점 결과(단답·약술형 포함). 예전 기록엔 없을 수 있다 */
+  oks?: (boolean | null)[];
+  texts?: (string | null)[];
   i: number;
 }
 

@@ -11,11 +11,11 @@ npm run dev
 
 ## 과목 추가
 
-`src/data/banks/`에 JSON 파일을 하나 넣으면 홈에 과목이 생긴다. 형식은 `src/types.ts`의 `Bank` 참고.
+`src/data/banks/`에 JSON 파일을 하나 넣으면 홈에 과목이 생긴다. 형식은 `src/types.ts`의 `Bank` 참고. 기존 과목에 문항을 더할 때는 `n`을 이어서 붙인다(풀이 기록이 `n` 기준이라 기존 번호는 바꾸지 않는다).
 
-- `type`: `"ox"`(answer 1=O, 2=X) 또는 `"mc"`(answer=보기 번호, 1부터)
-- `source`: 문제 출처(원본 PDF 이름). 문항에 따로 넣으면 그 값이 우선
-- `src`: 출제원(예: `"1권 9p"`). 앞부분이 `partOf`로 영역(펀드/방카슈랑스 등)에 매핑된다.
+- `type`: `"ox"`(answer 1=O, 2=X) · `"mc"`(answer=보기 번호, 1부터) · `"short"`(accept=인정 답 목록, 띄어쓰기 무시 자동 채점) · `"essay"`(exp=모범답안, 스스로 채점)
+- `sources`: 문제 출처(원본 PDF 이름). 여러 PDF에 나온 문제는 모두 적는다 → 출처 필터에 쓰인다
+- `src`: 출제원(교재 쪽수)
 
 ## 배포
 

@@ -12,6 +12,12 @@ interface Item {
   q: Q;
   order: number[];
   pick: number | null;
+  /** 채점 결과. null이면 아직 안 풂 */
+  ok: boolean | null;
+  /** 단답형에 입력한 답 */
+  text: string | null;
+  /** 약술형 모범답안을 펼쳤는지 */
+  shown?: boolean;
 }
 
 const $app = document.getElementById("app")!;
@@ -19,6 +25,15 @@ const $toast = document.getElementById("toast")!;
 
 const KNUM = ["①", "②", "③", "④", "⑤"];
 const LABEL: Record<Kind, string> = { all: "문제 풀기", wrong: "오답노트", bm: "북마크" };
+const TYPE_LABEL: Record<Q["type"], string> = { ox: "OX 진위형", mc: "4지선다", short: "단답형", essay: "약술형" };
+const TYPE_SHORT: Record<Q["type"], string> = { ox: "OX", mc: "4지", short: "단답", essay: "약술" };
+
+/** 단답형 비교용: 띄어쓰기·기호를 지우고 비교 */
+const norm = (s: string) => s.replace(/[\s.,·()\[\]'"]/g, "").toLowerCase();
+const isAccepted = (q: Q, text: string) => !!norm(text) && (q.accept ?? []).some((a) => norm(a) === norm(text));
+const srcText = (q: Q) => q.sources.join(", ");
+/** 해설·모범답안: ①②③ 앞에서 줄바꿈 */
+const expHtml = (t: string) => esc(t).replace(/\s+(?=[①-⑨])/g, "<br>");
 const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 const esc = (s: string | number) =>
@@ -59,7 +74,7 @@ function stats(b: LoadedBank, s: SubjectState) {
 
 const filtered = () =>
   bank.questions.filter(
-    (q) => (prefs.type === "all" || q.type === prefs.type) && (prefs.part === "all" || q.part === prefs.part),
+    (q) => (prefs.type === "all" || q.type === prefs.type) && (prefs.source === "all" || q.sources.includes(prefs.source)),
   );
 
 const pct = (a: number, b: number) => (b ? (a / b) * 100 : 0);
@@ -78,7 +93,7 @@ function renderHome() {
   const cards = BANKS.map((b) => {
     const s = stats(b, loadSubject(b.id));
     return `<button class="subject" data-open="${esc(b.id)}">
-      <div class="top"><div><h2>${esc(b.title)}</h2><div class="meta">${esc(b.org)} · ${s.total}문항</div><div class="meta">출처 ${esc(b.source)}</div></div><span class="badge">${esc(b.round)}</span></div>
+      <div class="top"><div><h2>${esc(b.title)}</h2><div class="meta">${esc(b.org)} · ${s.total}문항</div><div class="meta">출처 ${esc(b.sourceList.join(", "))}</div></div><span class="badge">${esc(b.round)}</span></div>
       <div class="progress" aria-label="진도"><span style="width:${pct(s.done, s.total)}%"></span></div>
       ${statRow(s, "오답노트")}
     </button>`;
@@ -95,14 +110,10 @@ function renderSubject() {
   view = "subject";
   const s = stats(bank, st);
   const n = filtered().length;
-  const chip = (k: "type" | "part", v: string, label: string) =>
+  const chip = (k: "type" | "source", v: string, label: string) =>
     `<button class="chip" data-pref="${k}" data-val="${esc(v)}" aria-pressed="${prefs[k] === v}">${esc(label)}</button>`;
   const tog = (k: "shuffleQ" | "shuffleC", label: string) =>
     `<button class="toggle" data-tog="${k}" aria-pressed="${prefs[k]}"><span>${label}</span><span class="sw"></span></button>`;
-  const partLabel = (p: string) => {
-    const vol = Object.keys(bank.partOf).find((k) => bank.partOf[k] === p);
-    return vol ? `${p} (${vol})` : p;
-  };
   const sub = (kind: Kind, base: string) => {
     const p = runProgress(kind);
     return p ? `<em class="resume">${p.done}/${p.total} 진행 중 · 이어서 풀 수 있어요</em>` : base;
@@ -124,8 +135,8 @@ function renderSubject() {
 
     <div class="eyebrow">출제 범위</div>
     <div class="filters">
-      <div class="frow"><label>유형</label><div class="chips">${chip("type", "all", "전체")}${chip("type", "ox", "OX 진위형")}${chip("type", "mc", "4지선다")}</div></div>
-      <div class="frow"><label>영역</label><div class="chips">${chip("part", "all", "전체")}${bank.parts.map((p) => chip("part", p, partLabel(p))).join("")}</div></div>
+      <div class="frow"><label>유형</label><div class="chips">${chip("type", "all", "전체")}${(["ox", "mc", "short", "essay"] as const).filter((t) => bank.questions.some((q) => q.type === t)).map((t) => chip("type", t, TYPE_LABEL[t])).join("")}</div></div>
+      <div class="frow"><label>출처</label><div class="chips">${chip("source", "all", "전체")}${bank.sourceList.map((x) => chip("source", x, x)).join("")}</div></div>
       ${tog("shuffleQ", "문제 순서 섞기")}
       ${tog("shuffleC", "보기 순서 섞기")}
       <div class="fcount">선택한 범위: <b class="num">${n}</b>문항</div>
@@ -143,17 +154,19 @@ function restoreRun(kind: Kind): { kind: Kind; items: Item[]; i: number } | null
     const q = bank.questions.find((x) => x.n === n);
     if (!q) return;
     if (idx === r.i) i = items.length;
-    items.push({ q, order: r.orders[idx], pick: r.picks[idx] });
+    const pick = r.picks[idx];
+    const ok = r.oks?.[idx] ?? (pick === null ? null : pick === q.answer);
+    items.push({ q, order: r.orders[idx], pick, ok, text: r.texts?.[idx] ?? null });
   });
   // 하나도 안 풀었거나 다 풀었으면 이어 풀 것이 없다
-  if (items.every((it) => it.pick === null) || items.every((it) => it.pick !== null)) return null;
+  if (items.every((it) => it.ok === null) || items.every((it) => it.ok !== null)) return null;
   return { kind, items, i };
 }
 
 function runProgress(kind: Kind) {
   const r = restoreRun(kind);
   if (!r) return null;
-  return { done: r.items.filter((it) => it.pick !== null).length, total: r.items.length };
+  return { done: r.items.filter((it) => it.ok !== null).length, total: r.items.length };
 }
 
 function persistRun() {
@@ -162,6 +175,8 @@ function persistRun() {
     ns: session.items.map((it) => it.q.n),
     orders: session.items.map((it) => it.order),
     picks: session.items.map((it) => it.pick),
+    oks: session.items.map((it) => it.ok),
+    texts: session.items.map((it) => it.text),
     i: session.i,
   });
 }
@@ -210,7 +225,7 @@ function startSession(kind: Kind) {
     i: 0,
     items: pool.map((q) => {
       const base = (q.choices ?? []).map((_, i) => i + 1);
-      return { q, order: q.type === "mc" && prefs.shuffleC ? shuffle(base) : base, pick: null };
+      return { q, order: q.type === "mc" && prefs.shuffleC ? shuffle(base) : base, pick: null, ok: null, text: null };
     }),
   };
   persistRun();
@@ -222,9 +237,9 @@ function renderQuiz() {
   view = "quiz";
   const it = session.items[session.i];
   const q = it.q;
-  const done = it.pick !== null;
+  const done = it.ok !== null;
   const total = session.items.length;
-  const correct = done && it.pick === q.answer;
+  const correct = it.ok === true;
 
   let body: string;
   if (q.type === "ox") {
@@ -234,6 +249,22 @@ function renderQuiz() {
         <button class="ox-btn o ${cls(1)}" data-pick="1" ${done ? "disabled" : ""} aria-label="O 맞음">O</button>
         <button class="ox-btn x ${cls(2)}" data-pick="2" ${done ? "disabled" : ""} aria-label="X 틀림">X</button>
       </div>`;
+  } else if (q.type === "short") {
+    body = done
+      ? `<div class="myans ${correct ? "ok" : "bad"}"><span class="lbl">내 답</span>${esc(it.text || "(빈칸)")}</div>`
+      : `<form class="short" id="shortForm" autocomplete="off">
+          <input id="shortInput" type="text" placeholder="정답을 입력하세요" enterkeyhint="done" aria-label="정답 입력">
+          <button class="next" type="submit">채점</button>
+        </form>`;
+  } else if (q.type === "essay") {
+    body = done
+      ? ""
+      : it.shown
+        ? `<div class="model"><div class="lbl">모범답안</div>${expHtml(q.exp)}</div>
+           <p class="selfq">내 답과 비교해 보세요. 핵심을 다 떠올렸나요?</p>
+           <div class="ox-btns self"><button class="ox-btn o" data-self="1">맞았어요</button><button class="ox-btn x" data-self="0">틀렸어요</button></div>`
+        : `<textarea id="essayDraft" class="draft" rows="5" placeholder="머릿속으로 답해보거나 여기에 적어보세요 (저장되지 않아요)"></textarea>
+           <button class="next wide" data-show>모범답안 보기</button>`;
   } else {
     body = `<div class="choices">${it.order
       .map((orig, idx) => {
@@ -243,35 +274,44 @@ function renderQuiz() {
       .join("")}</div>`;
   }
 
-  const ansText = q.type === "ox" ? (q.answer === 1 ? "O" : "X") : KNUM[it.order.indexOf(q.answer)];
+  const ansText =
+    q.type === "ox" ? (q.answer === 1 ? "O" : "X") : q.type === "mc" ? KNUM[it.order.indexOf(q.answer!)] : q.type === "short" ? (q.accept ?? []).join(" / ") : "";
   const isBm = st.bm.includes(q.n);
   $app.innerHTML = `
     <div class="bar">
       <button class="icon-btn" data-act="subject" aria-label="그만 풀기">${I.close}</button>
       <div class="qhead" style="flex:1"><div class="progress"><span style="width:${pct(session.i + (done ? 1 : 0), total)}%"></span></div><span class="num" style="font-size:13px;color:var(--ink-2)">${session.i + 1}/${total}</span></div>
     </div>
-    <div class="qtags"><span class="tag type">${q.type === "ox" ? "OX 진위형" : "4지선다"}</span><span class="tag">${esc(q.part)}</span>${session.kind !== "all" ? `<span class="tag">${LABEL[session.kind]}</span>` : ""}</div>
-    <div class="qno">문제 ${q.n} <span class="qsrc">· ${esc(q.source)}</span></div>
+    <div class="qtags"><span class="tag type">${TYPE_LABEL[q.type]}</span>${session.kind !== "all" ? `<span class="tag">${LABEL[session.kind]}</span>` : ""}</div>
+    <div class="qno">문제 ${q.n} <span class="qsrc">· ${esc(srcText(q))}</span></div>
     <div class="qtext">${esc(q.q)}</div>
     ${body}
     ${done ? `<div class="result ${correct ? "ok" : "bad"}">
-      <div class="rh">${correct ? I.check + " 정답" : I.x + " 오답"}<span class="ans">정답 ${ansText}</span></div>
-      <div class="rb"><div><div class="lbl">해설</div>${esc(q.exp)}</div>
-      <div class="src">${I.pg} ${esc(q.source)} · 출제원 ${esc(q.src)}</div></div></div>` : ""}
+      <div class="rh">${correct ? I.check + " 정답" : I.x + " 오답"}${ansText ? `<span class="ans">정답 ${esc(ansText)}</span>` : ""}</div>
+      <div class="rb"><div><div class="lbl">${q.type === "essay" ? "모범답안" : "해설"}</div>${expHtml(q.exp)}</div>
+      <div class="src">${I.pg} ${esc(srcText(q))} · 출제원 ${esc(q.src)}</div></div></div>` : ""}
     <div class="qfoot">
       <button class="pill-btn bm" data-flag aria-pressed="${isBm}">${isBm ? I.bmOn : I.bm}북마크</button>
       <button class="next" data-act="next" ${done ? "" : "disabled"}>${session.i === total - 1 ? "결과 보기" : "다음 문제"}</button>
     </div>`;
   window.scrollTo(0, 0);
+  if (q.type === "short" && !done) document.getElementById("shortInput")?.focus();
 }
 
 function pick(v: number) {
   if (!session) return;
   const it = session.items[session.i];
-  if (it.pick !== null) return;
+  if (it.ok !== null) return;
   it.pick = v;
+  grade(v === it.q.answer);
+}
+
+function grade(ok: boolean) {
+  if (!session) return;
+  const it = session.items[session.i];
+  if (it.ok !== null) return;
+  it.ok = ok;
   const q = it.q;
-  const ok = v === q.answer;
   const r = st.rec[q.n] ?? { tries: 0, miss: 0, last: false };
   r.tries++;
   if (!ok) r.miss++;
@@ -293,8 +333,8 @@ function renderEnd() {
   view = "end";
   const items = session.items;
   const total = items.length;
-  const ok = items.filter((it) => it.pick === it.q.answer).length;
-  const wrongs = items.filter((it) => it.pick !== null && it.pick !== it.q.answer);
+  const ok = items.filter((it) => it.ok === true).length;
+  const wrongs = items.filter((it) => it.ok === false);
   const ratio = total ? ok / total : 0;
   const R = 52;
   const C = 2 * Math.PI * R;
@@ -323,7 +363,7 @@ function renderReview(keepFocus = false) {
   let list = filtered();
   if (reviewOpts.only === "wrong") list = list.filter((q) => st.wrong.includes(q.n));
   if (reviewOpts.only === "bm") list = list.filter((q) => st.bm.includes(q.n));
-  if (term) list = list.filter((q) => `${q.q} ${(q.choices ?? []).join(" ")} ${q.exp}`.includes(term));
+  if (term) list = list.filter((q) => `${q.q} ${(q.choices ?? []).join(" ")} ${(q.accept ?? []).join(" ")} ${q.exp}`.includes(term));
   const only = (v: Only, l: string) => `<button class="chip" data-only="${v}" aria-pressed="${reviewOpts.only === v}">${l}</button>`;
   const cards = list
     .map((q) => {
@@ -331,13 +371,17 @@ function renderReview(keepFocus = false) {
       const opts =
         q.type === "ox"
           ? `<ol><li class="${q.answer === 1 ? "ans" : ""}"><span class="k">O</span>맞다</li><li class="${q.answer === 2 ? "ans" : ""}"><span class="k">X</span>틀리다</li></ol>`
-          : `<ol>${q.choices!.map((c, i) => `<li class="${i + 1 === q.answer ? "ans" : ""}"><span class="k">${KNUM[i]}</span><span>${esc(c)}</span></li>`).join("")}</ol>`;
+          : q.type === "mc"
+            ? `<ol>${q.choices!.map((c, i) => `<li class="${i + 1 === q.answer ? "ans" : ""}"><span class="k">${KNUM[i]}</span><span>${esc(c)}</span></li>`).join("")}</ol>`
+            : q.type === "short"
+              ? `<div class="ansline"><span class="lbl">정답</span>${esc((q.accept ?? []).join(" / "))}</div>`
+              : "";
       return `<article class="rcard ${reviewOpts.hide ? "blur" : ""}" data-reveal>
-        <div class="rtop"><span class="qno">${q.n}</span><span class="tag type">${q.type === "ox" ? "OX" : "4지"}</span><span class="tag">${esc(q.part)}</span>${st.wrong.includes(q.n) ? '<span class="wrongmark">오답</span>' : ""}
+        <div class="rtop"><span class="qno">${q.n}</span><span class="tag type">${TYPE_SHORT[q.type]}</span>${st.wrong.includes(q.n) ? '<span class="wrongmark">오답</span>' : ""}
           <span class="flags"><button class="mini bm" data-rflag="${q.n}" aria-pressed="${isBm}" aria-label="북마크">${isBm ? I.bmOn : I.bm}</button></span></div>
         <div class="q">${esc(q.q)}</div>${opts}
-        <div class="exp"><div class="lbl">해설</div>${esc(q.exp)}</div>
-        <div class="src">${I.pg} ${esc(q.source)} · ${esc(q.src)}</div>
+        <div class="exp"><div class="lbl">${q.type === "essay" ? "모범답안" : "해설"}</div>${expHtml(q.exp)}</div>
+        <div class="src">${I.pg} ${esc(srcText(q))} · ${esc(q.src)}</div>
       </article>`;
     })
     .join("");
@@ -388,9 +432,9 @@ $app.addEventListener("click", (e) => {
     return renderEnd();
   }
   if (d.start) return view === "end" ? startSession(d.start as Kind) : chooseSession(d.start as Kind);
-  if (d.pref === "type" || d.pref === "part") {
+  if (d.pref === "type" || d.pref === "source") {
     if (d.pref === "type") prefs.type = d.val as typeof prefs.type;
-    else prefs.part = d.val!;
+    else prefs.source = d.val!;
     savePrefs(prefs);
     return renderSubject();
   }
@@ -400,6 +444,11 @@ $app.addEventListener("click", (e) => {
     return renderSubject();
   }
   if (d.pick) return pick(Number(d.pick));
+  if ("show" in d && session) {
+    session.items[session.i].shown = true;
+    return renderQuiz();
+  }
+  if (d.self) return grade(d.self === "1");
   if ("flag" in d && session) {
     toggleBookmark(session.items[session.i].q.n);
     return renderQuiz();
@@ -419,6 +468,14 @@ $app.addEventListener("click", (e) => {
   if ("reveal" in d) t.classList.toggle("revealed");
 });
 
+$app.addEventListener("submit", (e) => {
+  if ((e.target as HTMLElement).id !== "shortForm" || !session) return;
+  e.preventDefault();
+  const it = session.items[session.i];
+  it.text = (document.getElementById("shortInput") as HTMLInputElement).value.trim();
+  grade(isAccepted(it.q, it.text));
+});
+
 $app.addEventListener("input", (e) => {
   const el = e.target as HTMLInputElement;
   if (el.id === "rsearch") {
@@ -428,9 +485,9 @@ $app.addEventListener("input", (e) => {
 });
 
 document.addEventListener("keydown", (e) => {
-  if (view !== "quiz" || !session || (e.target as HTMLElement).tagName === "INPUT") return;
+  if (view !== "quiz" || !session || ["INPUT", "TEXTAREA"].includes((e.target as HTMLElement).tagName)) return;
   const it = session.items[session.i];
-  if (it.pick === null) {
+  if (it.ok === null) {
     if (it.q.type === "ox") {
       if (e.key === "o" || e.key === "ArrowLeft") pick(1);
       if (e.key === "x" || e.key === "ArrowRight") pick(2);
