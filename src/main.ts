@@ -72,10 +72,12 @@ function stats(b: LoadedBank, s: SubjectState) {
   return { total, done, rate: done ? Math.round((ok / done) * 100) : null, wrong: s.wrong.length, bm: s.bm.length };
 }
 
-const filtered = () =>
-  bank.questions.filter(
+const filtered = () => {
+  if (prefs.source !== "all" && !bank.sourceList.includes(prefs.source)) prefs.source = "all";
+  return bank.questions.filter(
     (q) => (prefs.type === "all" || q.type === prefs.type) && (prefs.source === "all" || q.sources.includes(prefs.source)),
   );
+};
 
 const pct = (a: number, b: number) => (b ? (a / b) * 100 : 0);
 
@@ -130,7 +132,7 @@ function renderSubject() {
       <button class="mode primary" data-start="all"><span class="ic">${I.play}</span><span class="tx"><b>문제 풀기</b><small>${sub("all", "한 문제씩 풀고 바로 정답·해설 확인")}</small></span><span class="cnt">${n}</span></button>
       <button class="mode" data-start="wrong" ${s.wrong ? "" : "disabled"}><span class="ic">${I.redo}</span><span class="tx"><b>오답노트 다시 풀기</b><small>${sub("wrong", "맞히면 오답노트에서 빠져요")}</small></span><span class="cnt">${s.wrong}</span></button>
       <button class="mode" data-start="bm" ${s.bm ? "" : "disabled"}><span class="ic">${I.bm}</span><span class="tx"><b>북마크 풀기</b><small>${sub("bm", "다시 보고 싶은 문제만 모아 풀기")}</small></span><span class="cnt">${s.bm}</span></button>
-      <button class="mode" data-act="review"><span class="ic">${I.book}</span><span class="tx"><b>해설 훑어보기</b><small>문제·정답·해설을 카드로 빠르게 읽기</small></span><span class="cnt">${s.total}</span></button>
+      <button class="mode" data-act="review"><span class="ic">${I.book}</span><span class="tx"><b>해설 훑어보기</b><small>문제·정답·해설을 카드로 빠르게 읽기</small></span><span class="cnt">${n}</span></button>
     </div>
 
     <div class="eyebrow">출제 범위</div>
@@ -215,6 +217,7 @@ function chooseSession(kind: Kind) {
     if (!b) return;
     if (b.dataset.sheet === "resume") {
       session = restoreRun(kind);
+      persistRun();
       enterQuiz();
     } else {
       clearRun(bank.id, kind);
@@ -259,7 +262,7 @@ function enterQuiz() {
 }
 
 /** 기록에 남은 화면을 그린다. 풀이·결과는 다시 그릴 수 없어서 과목 화면으로 보낸다 */
-function showRoute(r: Route | null) {
+function showRoute(r: Route | null, fromPop = false) {
   document.querySelector(".sheet-wrap")?.remove();
   const b = r?.bank ? BANKS.find((x) => x.id === r.bank) : undefined;
   if (!r || r.view === "home" || !b) {
@@ -271,6 +274,11 @@ function showRoute(r: Route | null) {
     st = loadSubject(bank.id);
   }
   if (r.view === "review") return go(renderReview);
+  if (r.view === "quiz" || r.view === "end") {
+    // 앞으로 가기로 풀이 화면에 돌아온 경우: 풀던 내용이 남아 있으면 다시 보여주고, 없으면 그 기록은 건너뛴다
+    if (fromPop && session) return r.view === "quiz" ? renderQuiz() : renderEnd();
+    if (fromPop) return history.back();
+  }
   replaceRoute("subject");
   go(renderSubject);
 }
@@ -306,12 +314,12 @@ function renderQuiz() {
         </form>`;
   } else if (q.type === "essay") {
     body = done
-      ? ""
+      ? myEssay(it)
       : it.shown
-        ? `<div class="model"><div class="lbl">모범답안</div>${expHtml(q.exp)}</div>
+        ? `${myEssay(it)}<div class="model"><div class="lbl">모범답안</div>${expHtml(q.exp)}</div>
            <p class="selfq">내 답과 비교해 보세요. 핵심을 다 떠올렸나요?</p>
            <div class="ox-btns self"><button class="ox-btn o" data-self="1">맞았어요</button><button class="ox-btn x" data-self="0">틀렸어요</button></div>`
-        : `<textarea id="essayDraft" class="draft" rows="5" placeholder="머릿속으로 답해보거나 여기에 적어보세요 (저장되지 않아요)"></textarea>
+        : `<textarea id="essayDraft" class="draft" rows="5" placeholder="머릿속으로 답해보거나 여기에 적어보세요">${esc(it.text ?? "")}</textarea>
            <button class="next wide" data-show>모범답안 보기</button>`;
   } else {
     body = `<div class="choices">${it.order
@@ -345,6 +353,10 @@ function renderQuiz() {
   window.scrollTo(0, 0);
   if (q.type === "short" && !done) document.getElementById("shortInput")?.focus();
 }
+
+/** 약술형에 적어 둔 내 답안 */
+const myEssay = (it: Item) =>
+  it.text?.trim() ? `<div class="model mine"><div class="lbl">내 답안</div>${esc(it.text.trim())}</div>` : "";
 
 function pick(v: number) {
   if (!session) return;
@@ -405,14 +417,12 @@ function renderEnd() {
 }
 
 /* ---------- 해설 훑어보기 ---------- */
-function renderReview(keepFocus = false) {
-  view = "review";
+function reviewCards() {
   const term = reviewOpts.q.trim();
   let list = filtered();
   if (reviewOpts.only === "wrong") list = list.filter((q) => st.wrong.includes(q.n));
   if (reviewOpts.only === "bm") list = list.filter((q) => st.bm.includes(q.n));
   if (term) list = list.filter((q) => `${q.q} ${(q.choices ?? []).join(" ")} ${(q.accept ?? []).join(" ")} ${q.exp}`.includes(term));
-  const only = (v: Only, l: string) => `<button class="chip" data-only="${v}" aria-pressed="${reviewOpts.only === v}">${l}</button>`;
   const cards = list
     .map((q) => {
       const isBm = st.bm.includes(q.n);
@@ -433,17 +443,18 @@ function renderReview(keepFocus = false) {
       </article>`;
     })
     .join("");
+  return cards || '<div class="empty">조건에 맞는 문제가 없어요</div>';
+}
+
+function renderReview() {
+  view = "review";
+  const only = (v: Only, l: string) => `<button class="chip" data-only="${v}" aria-pressed="${reviewOpts.only === v}">${l}</button>`;
   $app.innerHTML = `
     <div class="bar"><button class="icon-btn" data-act="subject" aria-label="과목으로">${I.back}</button><h1>해설 훑어보기</h1></div>
     <label class="search">${I.search}<input id="rsearch" type="search" placeholder="키워드 검색 (예: 보험가액, ELS)" value="${esc(reviewOpts.q)}"></label>
     <div class="chips" style="margin-bottom:8px">${only("all", "전체")}${only("wrong", "오답")}${only("bm", "북마크")}</div>
     <button class="toggle" data-hide aria-pressed="${reviewOpts.hide}" style="margin:6px 0 14px"><span style="font-size:13.5px">정답·해설 가리기 <span style="color:var(--ink-3)">(카드를 눌러 확인)</span></span><span class="sw"></span></button>
-    <div class="rlist">${cards || '<div class="empty">조건에 맞는 문제가 없어요</div>'}</div>`;
-  if (keepFocus) {
-    const i = document.getElementById("rsearch") as HTMLInputElement;
-    i.focus();
-    i.setSelectionRange(i.value.length, i.value.length);
-  }
+    <div class="rlist">${reviewCards()}</div>`;
 }
 
 /* ---------- 이벤트 ---------- */
@@ -507,7 +518,10 @@ $app.addEventListener("click", (e) => {
   }
   if (d.rflag) {
     toggleBookmark(Number(d.rflag));
-    return renderReview();
+    const on = st.bm.includes(Number(d.rflag));
+    t.setAttribute("aria-pressed", String(on));
+    t.innerHTML = on ? I.bmOn : I.bm;
+    return;
   }
   if (d.only) {
     reviewOpts.only = d.only as Only;
@@ -524,16 +538,19 @@ $app.addEventListener("submit", (e) => {
   if ((e.target as HTMLElement).id !== "shortForm" || !session) return;
   e.preventDefault();
   const it = session.items[session.i];
-  it.text = (document.getElementById("shortInput") as HTMLInputElement).value.trim();
-  grade(isAccepted(it.q, it.text));
+  const text = (document.getElementById("shortInput") as HTMLInputElement).value.trim();
+  if (!text) return toast("답을 입력하세요");
+  it.text = text;
+  grade(isAccepted(it.q, text));
 });
 
 $app.addEventListener("input", (e) => {
   const el = e.target as HTMLInputElement;
   if (el.id === "rsearch") {
     reviewOpts.q = el.value;
-    renderReview(true);
+    document.querySelector(".rlist")!.innerHTML = reviewCards();
   }
+  if (el.id === "essayDraft" && session) session.items[session.i].text = el.value;
 });
 
 document.addEventListener("keydown", (e) => {
@@ -550,7 +567,10 @@ document.addEventListener("keydown", (e) => {
   }
 });
 
-window.addEventListener("popstate", (e) => showRoute(e.state as Route | null));
+window.addEventListener("popstate", (e) => {
+  popAt = Date.now();
+  showRoute(e.state as Route | null, true);
+});
 
 /* ---------- 제스처: 왼쪽 가장자리에서 오른쪽으로 밀면 뒤로, 맨 위에서 당기면 새로고침 ---------- */
 const EDGE = 28; // 왼쪽 가장자리 인식 폭(px)
@@ -558,6 +578,10 @@ const BACK_AT = 80; // 이만큼 밀면 뒤로
 const PULL_AT = 70; // 이만큼 당기면 새로고침
 const $edge = document.getElementById("edge")!;
 const $ptr = document.getElementById("ptr")!;
+const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+const standalone = (navigator as Navigator & { standalone?: boolean }).standalone === true || matchMedia("(display-mode: standalone)").matches;
+const customBack = !(isIOS && !standalone);
+let popAt = 0;
 let g: { x: number; y: number; mode: "back" | "pull" | null; d: number } | null = null;
 
 document.addEventListener(
@@ -565,7 +589,8 @@ document.addEventListener(
   (e) => {
     if (e.touches.length !== 1 || document.querySelector(".sheet-wrap")) return (g = null);
     const t = e.touches[0];
-    const mode = t.clientX <= EDGE && view !== "home" ? "back" : window.scrollY <= 0 ? "pull" : null;
+    const inField = !!(e.target as HTMLElement).closest?.("input, textarea");
+    const mode = customBack && t.clientX <= EDGE && view !== "home" ? "back" : window.scrollY <= 0 && !inField ? "pull" : null;
     g = mode ? { x: t.clientX, y: t.clientY, mode, d: 0 } : null;
   },
   { passive: true },
@@ -606,7 +631,11 @@ document.addEventListener("touchend", () => {
   if (!g) return;
   const { mode, d } = g;
   resetGesture();
-  if (mode === "back" && d >= BACK_AT) goBack();
+  if (mode === "back" && d >= BACK_AT) {
+    // 브라우저 기본 뒤로가기도 같이 일어났으면 한 번만 뒤로
+    const at = Date.now();
+    setTimeout(() => popAt < at && goBack(), 250);
+  }
   if (mode === "pull" && d >= PULL_AT) {
     $ptr.classList.add("spin");
     location.reload();

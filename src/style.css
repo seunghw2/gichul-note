@@ -201,3 +201,5 @@ html,body{overscroll-behavior-y:contain}
 .edge-back.ready,.ptr.ready{background:var(--brand);color:var(--brand-ink)}
 .ptr.spin{transform:translate(-50%,24px)!important;animation:spin .7s linear infinite}
 @keyframes spin{to{rotate:360deg}}
+.model.mine{margin-bottom:10px;background:var(--surface-2);border-style:dashed;white-space:pre-wrap}
+.myans+.result,.model.mine+.result{margin-top:12px}
