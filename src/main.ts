@@ -205,7 +205,7 @@ function chooseSession(kind: Kind) {
     if (!b) return;
     if (b.dataset.sheet === "resume") {
       session = restoreRun(kind);
-      renderQuiz();
+      enterQuiz();
     } else {
       clearRun(bank.id, kind);
       startSession(kind);
@@ -229,7 +229,43 @@ function startSession(kind: Kind) {
     }),
   };
   persistRun();
+  enterQuiz();
+}
+
+/* ---------- 화면 기록 ----------
+   화면 이동을 브라우저 기록에 남겨서 뒤로가기(제스처·버튼)가 앱 안에서 동작하게 한다.
+   깊이: 홈 → 과목 → (풀이 | 결과 | 훑어보기) */
+type Route = { view: View; bank?: string };
+const pushRoute = (v: View) => history.pushState({ view: v, bank: bank.id } satisfies Route, "");
+const replaceRoute = (v: View) => history.replaceState({ view: v, bank: bank.id } satisfies Route, "");
+
+function enterQuiz() {
+  // 과목 화면에서 시작하면 한 단계 깊어지고, 결과 화면에서 다시 풀면 같은 깊이를 유지
+  if (view === "subject") pushRoute("quiz");
+  else replaceRoute("quiz");
   renderQuiz();
+}
+
+/** 기록에 남은 화면을 그린다. 풀이·결과는 다시 그릴 수 없어서 과목 화면으로 보낸다 */
+function showRoute(r: Route | null) {
+  document.querySelector(".sheet-wrap")?.remove();
+  const b = r?.bank ? BANKS.find((x) => x.id === r.bank) : undefined;
+  if (!r || r.view === "home" || !b) {
+    history.replaceState({ view: "home" } satisfies Route, "");
+    return go(renderHome);
+  }
+  if (b !== bank) {
+    bank = b;
+    st = loadSubject(bank.id);
+  }
+  if (r.view === "review") return go(renderReview);
+  replaceRoute("subject");
+  go(renderSubject);
+}
+
+/** 앱 안에서 한 단계 뒤로 */
+function goBack() {
+  if (view !== "home") history.back();
 }
 
 function renderQuiz() {
@@ -418,17 +454,21 @@ $app.addEventListener("click", (e) => {
   if (d.open) {
     bank = BANKS.find((b) => b.id === d.open)!;
     st = loadSubject(bank.id);
+    pushRoute("subject");
     return go(renderSubject);
   }
-  if (d.act === "home") return go(renderHome);
-  if (d.act === "subject") return go(renderSubject);
-  if (d.act === "review") return go(renderReview);
+  if (d.act === "home" || d.act === "subject") return goBack();
+  if (d.act === "review") {
+    pushRoute("review");
+    return go(renderReview);
+  }
   if (d.act === "next" && session) {
     if (session.i < session.items.length - 1) {
       session.i++;
       persistRun();
       return renderQuiz();
     }
+    replaceRoute("end");
     return renderEnd();
   }
   if (d.start) return view === "end" ? startSession(d.start as Kind) : chooseSession(d.start as Kind);
@@ -498,4 +538,68 @@ document.addEventListener("keydown", (e) => {
   }
 });
 
-renderHome();
+window.addEventListener("popstate", (e) => showRoute(e.state as Route | null));
+
+/* ---------- 제스처: 왼쪽 가장자리에서 오른쪽으로 밀면 뒤로, 맨 위에서 당기면 새로고침 ---------- */
+const EDGE = 28; // 왼쪽 가장자리 인식 폭(px)
+const BACK_AT = 80; // 이만큼 밀면 뒤로
+const PULL_AT = 70; // 이만큼 당기면 새로고침
+const $edge = document.getElementById("edge")!;
+const $ptr = document.getElementById("ptr")!;
+let g: { x: number; y: number; mode: "back" | "pull" | null; d: number } | null = null;
+
+document.addEventListener(
+  "touchstart",
+  (e) => {
+    if (e.touches.length !== 1 || document.querySelector(".sheet-wrap")) return (g = null);
+    const t = e.touches[0];
+    const mode = t.clientX <= EDGE && view !== "home" ? "back" : window.scrollY <= 0 ? "pull" : null;
+    g = mode ? { x: t.clientX, y: t.clientY, mode, d: 0 } : null;
+  },
+  { passive: true },
+);
+
+document.addEventListener(
+  "touchmove",
+  (e) => {
+    if (!g) return;
+    const t = e.touches[0];
+    const dx = t.clientX - g.x;
+    const dy = t.clientY - g.y;
+    if (g.mode === "back") {
+      if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 12) return resetGesture();
+      g.d = Math.max(0, dx);
+      $edge.style.transform = `translate(${Math.min(g.d, BACK_AT) - 48}px, -50%)`;
+      $edge.classList.toggle("ready", g.d >= BACK_AT);
+    } else {
+      if (window.scrollY > 0 || dy <= 0 || Math.abs(dx) > dy) return resetGesture();
+      g.d = dy * 0.5; // 손가락보다 덜 따라오게
+      if (e.cancelable) e.preventDefault(); // 브라우저 기본 당김 동작과 겹치지 않게
+      $ptr.style.transform = `translate(-50%, ${Math.min(g.d, PULL_AT + 20) - 44}px) rotate(${g.d * 3}deg)`;
+      $ptr.classList.toggle("ready", g.d >= PULL_AT);
+    }
+  },
+  { passive: false },
+);
+
+function resetGesture() {
+  g = null;
+  $edge.style.transform = "";
+  $edge.classList.remove("ready");
+  $ptr.style.transform = "";
+  $ptr.classList.remove("ready");
+}
+
+document.addEventListener("touchend", () => {
+  if (!g) return;
+  const { mode, d } = g;
+  resetGesture();
+  if (mode === "back" && d >= BACK_AT) goBack();
+  if (mode === "pull" && d >= PULL_AT) {
+    $ptr.classList.add("spin");
+    location.reload();
+  }
+});
+document.addEventListener("touchcancel", resetGesture);
+
+showRoute(history.state as Route | null);

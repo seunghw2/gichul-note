@@ -194,3 +194,10 @@ svg{display:block}
 .ansline{display:flex;gap:10px;align-items:baseline;background:var(--ok-soft);border-radius:8px;padding:6px 10px;font-size:14px;font-weight:600}
 .blur .ansline{filter:blur(5px);transition:filter .2s}
 .blur.revealed .ansline{filter:none}
+html,body{overscroll-behavior-y:contain}
+.edge-back,.ptr{position:fixed;z-index:40;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:var(--surface);color:var(--ink-2);box-shadow:var(--shadow);pointer-events:none;transition:background .15s,color .15s}
+.edge-back{left:0;top:50%;transform:translate(-48px,-50%)}
+.ptr{left:50%;top:calc(env(safe-area-inset-top,0px) + 4px);transform:translate(-50%,-44px)}
+.edge-back.ready,.ptr.ready{background:var(--brand);color:var(--brand-ink)}
+.ptr.spin{transform:translate(-50%,24px)!important;animation:spin .7s linear infinite}
+@keyframes spin{to{rotate:360deg}}
