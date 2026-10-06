@@ -32,6 +32,8 @@ const TYPE_SHORT: Record<Q["type"], string> = { ox: "OX", mc: "4지", short: "�
 const norm = (s: string) => s.replace(/[\s.,·()\[\]'"]/g, "").toLowerCase();
 const isAccepted = (q: Q, text: string) => !!norm(text) && (q.accept ?? []).some((a) => norm(a) === norm(text));
 const srcText = (q: Q) => q.sources.join(", ");
+const shortAnswer = (q: Q) => q.answerText ?? (q.accept ?? []).join(" / ");
+const quoteHtml = (q: Q) => (q.quote ? `<blockquote class="quote"><div class="lbl">원문 인용</div>${esc(q.quote)}</blockquote>` : "");
 /** 해설·모범답안: ①②③ 앞에서 줄바꿈 */
 const expHtml = (t: string) => esc(t).replace(/\s+(?=[①-⑨])/g, "<br>");
 const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -331,7 +333,7 @@ function renderQuiz() {
   }
 
   const ansText =
-    q.type === "ox" ? (q.answer === 1 ? "O" : "X") : q.type === "mc" ? KNUM[it.order.indexOf(q.answer!)] : q.type === "short" ? (q.accept ?? []).join(" / ") : "";
+    q.type === "ox" ? (q.answer === 1 ? "O" : "X") : q.type === "mc" ? KNUM[it.order.indexOf(q.answer!)] : q.type === "short" ? shortAnswer(q) : "";
   const isBm = st.bm.includes(q.n);
   $app.innerHTML = `
     <div class="bar">
@@ -344,7 +346,7 @@ function renderQuiz() {
     ${body}
     ${done ? `<div class="result ${correct ? "ok" : "bad"}">
       <div class="rh">${correct ? I.check + " 정답" : I.x + " 오답"}${ansText ? `<span class="ans">정답 ${esc(ansText)}</span>` : ""}</div>
-      <div class="rb"><div><div class="lbl">${q.type === "essay" ? "모범답안" : "해설"}</div>${expHtml(q.exp)}</div>
+      <div class="rb"><div><div class="lbl">${q.type === "essay" ? "모범답안" : "해설"}</div>${expHtml(q.exp)}</div>${quoteHtml(q)}
       <div class="src">${I.pg} ${esc(srcText(q))} · 출제원 ${esc(q.src)}</div></div></div>` : ""}
     <div class="qfoot">
       <button class="pill-btn bm" data-flag aria-pressed="${isBm}">${isBm ? I.bmOn : I.bm}북마크</button>
@@ -422,7 +424,7 @@ function reviewCards() {
   let list = filtered();
   if (reviewOpts.only === "wrong") list = list.filter((q) => st.wrong.includes(q.n));
   if (reviewOpts.only === "bm") list = list.filter((q) => st.bm.includes(q.n));
-  if (term) list = list.filter((q) => `${q.q} ${(q.choices ?? []).join(" ")} ${(q.accept ?? []).join(" ")} ${q.exp}`.includes(term));
+  if (term) list = list.filter((q) => `${q.q} ${(q.choices ?? []).join(" ")} ${(q.accept ?? []).join(" ")} ${q.exp} ${q.quote ?? ""}`.includes(term));
   const cards = list
     .map((q) => {
       const isBm = st.bm.includes(q.n);
@@ -432,13 +434,13 @@ function reviewCards() {
           : q.type === "mc"
             ? `<ol>${q.choices!.map((c, i) => `<li class="${i + 1 === q.answer ? "ans" : ""}"><span class="k">${KNUM[i]}</span><span>${esc(c)}</span></li>`).join("")}</ol>`
             : q.type === "short"
-              ? `<div class="ansline"><span class="lbl">정답</span>${esc((q.accept ?? []).join(" / "))}</div>`
+              ? `<div class="ansline"><span class="lbl">정답</span>${esc(shortAnswer(q))}</div>`
               : "";
       return `<article class="rcard ${reviewOpts.hide ? "blur" : ""}" data-reveal>
         <div class="rtop"><span class="qno">${q.n}</span><span class="tag type">${TYPE_SHORT[q.type]}</span>${st.wrong.includes(q.n) ? '<span class="wrongmark">오답</span>' : ""}
           <span class="flags"><button class="mini bm" data-rflag="${q.n}" aria-pressed="${isBm}" aria-label="북마크">${isBm ? I.bmOn : I.bm}</button></span></div>
         <div class="q">${esc(q.q)}</div>${opts}
-        <div class="exp"><div class="lbl">${q.type === "essay" ? "모범답안" : "해설"}</div>${expHtml(q.exp)}</div>
+        <div class="exp"><div class="lbl">${q.type === "essay" ? "모범답안" : "해설"}</div>${expHtml(q.exp)}${quoteHtml(q)}</div>
         <div class="src">${I.pg} ${esc(srcText(q))} · ${esc(q.src)}</div>
       </article>`;
     })

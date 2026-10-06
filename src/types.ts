@@ -11,8 +11,12 @@ export interface Question {
   answer?: number;
   /** short 전용. 인정하는 답(띄어쓰기·기호 무시하고 비교) */
   accept?: string[];
+  /** short 전용. 정답 표시용 문구(없으면 accept를 이어 붙여 보여준다) */
+  answerText?: string;
   /** 해설. essay는 모범답안 */
   exp: string;
+  /** 해설에 덧붙이는 교재 원문 인용(정답지 자료) */
+  quote?: string;
   /** 출제원(교재 장·절·쪽) */
   src: string;
   /** 문제 출처(원본 PDF 이름). 여러 PDF에 나온 문제는 모두 적는다 */
