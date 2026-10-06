@@ -206,3 +206,6 @@ html,body{overscroll-behavior-y:contain}
 .quote{margin:0;border-left:3px solid var(--line);padding:2px 0 2px 10px;font-size:13px;color:var(--ink-2);line-height:1.55}
 .exp .quote{margin-top:8px}
 .quote{white-space:pre-line}
+/* 홈 화면 앱(전체화면)에서 상태바 아래로 내용이 들어가지 않게 */
+.app{padding-top:env(safe-area-inset-top,0px)}
+body::before{content:"";position:fixed;left:0;right:0;top:0;height:env(safe-area-inset-top,0px);background:var(--ground);z-index:6}
