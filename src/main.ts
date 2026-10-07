@@ -271,9 +271,10 @@ function startSession(kind: Kind) {
 /* ---------- 화면 기록 ----------
    화면 이동을 브라우저 기록에 남겨서 뒤로가기(제스처·버튼)가 앱 안에서 동작하게 한다.
    깊이: 홈 → 과목 → (풀이 | 결과 | 훑어보기) */
-type Route = { view: View; bank?: string };
-const pushRoute = (v: View) => history.pushState({ view: v, bank: bank.id } satisfies Route, "");
-const replaceRoute = (v: View) => history.replaceState({ view: v, bank: bank.id } satisfies Route, "");
+type Route = { view: View; bank?: string; kind?: Kind; tab?: string };
+const route = (v: View): Route => ({ view: v, bank: bank.id, ...(v === "quiz" && session ? { kind: session.kind, tab: tab() } : {}) });
+const pushRoute = (v: View) => history.pushState(route(v), "");
+const replaceRoute = (v: View) => history.replaceState(route(v), "");
 
 function enterQuiz() {
   // 과목 화면에서 시작하면 한 단계 깊어지고, 결과 화면에서 다시 풀면 같은 깊이를 유지
@@ -295,6 +296,12 @@ function showRoute(r: Route | null, fromPop = false) {
     st = loadSubject(bank.id);
   }
   if (r.view === "review") return go(renderReview);
+  // 새로고침: 풀던 문제는 저장된 진행 상태로 그대로 다시 연다
+  if (!fromPop && r.view === "quiz" && r.kind) {
+    if (r.tab) prefs.tab = r.tab === "book" ? "book" : "exam";
+    session = restoreRun(r.kind);
+    if (session) return go(renderQuiz);
+  }
   if (r.view === "quiz" || r.view === "end") {
     // 앞으로 가기로 풀이 화면에 돌아온 경우: 풀던 내용이 남아 있으면 다시 보여주고, 없으면 그 기록은 건너뛴다
     if (fromPop && session) return r.view === "quiz" ? renderQuiz() : renderEnd();
@@ -629,7 +636,10 @@ document.addEventListener("keydown", (e) => {
 
 window.addEventListener("popstate", (e) => {
   popAt = Date.now();
-  showRoute(e.state as Route | null, true);
+  const r = e.state as Route | null;
+  // 새로고침으로 같은 과목 화면 기록이 두 번 쌓인 경우: 한 번 더 뒤로 가서 항상 이전 화면으로
+  if (view === "subject" && r?.view === "subject" && r.bank === bank.id) return history.back();
+  showRoute(r, true);
 });
 
 /* ---------- 제스처: 왼쪽 가장자리에서 오른쪽으로 밀면 뒤로, 맨 위에서 당기면 새로고침 ---------- */
