@@ -12,12 +12,10 @@ export interface SubjectState {
 
 export interface Prefs {
   type: "all" | "ox" | "mc" | "short" | "essay";
-  /** 출처(PDF) 필터 */
-  source: string;
+  /** 과목 화면 탭: 온라인 시험 기출 / 교재 문항 (마지막으로 본 탭 기억) */
+  tab: "exam" | "book";
   shuffleQ: boolean;
   shuffleC: boolean;
-  /** 교재 연습문제(교재에만 있는 문항) 포함 여부. 기본 꺼짐 */
-  book: boolean;
 }
 
 const key = (id: string) => `gichul:${id}`;
@@ -50,7 +48,7 @@ export function loadSubject(id: string): SubjectState {
 export const saveSubject = (id: string, s: SubjectState) => write(key(id), s);
 
 export function loadPrefs(): Prefs {
-  return { type: "all", source: "all", shuffleQ: false, shuffleC: false, book: false, ...read<Partial<Prefs>>("gichul:prefs") };
+  return { type: "all", tab: "exam", shuffleQ: false, shuffleC: false, ...read<Partial<Prefs>>("gichul:prefs") };
 }
 
 export const savePrefs = (p: Prefs) => write("gichul:prefs", p);

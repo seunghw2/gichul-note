@@ -1,0 +1,114 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<style>
+:root{--ground:#F2F4F1;--surface:#FFF;--surface-2:#E8ECE7;--line:#D5DCD4;--ink:#16211F;--ink-2:#4A5753;--ink-3:#7E8A86;--brand:#0E3B36;--brand-soft:#DCE8E3;--mark:#E3A13A;--mark-soft:#FBEBD0;--ok:#1C8A5E;--ok-soft:#DAF1E6;--bad:#C8463E;--bad-soft:#F8DEDB;--shadow:0 1px 2px rgba(14,59,54,.06),0 6px 20px rgba(14,59,54,.07)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#E4E7E2;font-family:"Pretendard Variable",Pretendard,sans-serif;color:var(--ink);width:960px;padding:32px 36px;word-break:keep-all}
+h1{font-size:24px}.sub{font-size:14px;color:#555;margin:4px 0 20px}
+.ver{display:flex;gap:24px;padding:26px 0;border-top:2px solid #c9cec7}
+.vl{width:190px;flex:none;padding-top:28px}
+.vl .t{display:inline-block;font-size:13px;font-weight:700;background:var(--brand);color:#fff;padding:3px 10px;border-radius:6px}
+.vl h2{font-size:22px;line-height:1.3;margin:10px 0 8px}.vl p{font-size:13px;color:#555;line-height:1.6}
+.screens{display:flex;gap:22px}.cap{font-size:13px;font-weight:600;color:#444;text-align:center;margin-bottom:8px}
+.phone{width:300px;height:600px;border-radius:38px;background:#111;padding:9px}
+.scr{height:100%;border-radius:30px;overflow:hidden;background:var(--ground);padding:0 16px;position:relative}
+.st{height:34px;display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:600;padding:0 8px}
+.hd{display:flex;align-items:center;gap:8px;margin:8px 0 12px}.hd b{font-size:19px}.hd .bk{font-size:20px;color:var(--ink-2)}
+.logo{font-size:22px;font-weight:700;margin:10px 0 2px}.eb{font-size:12px;font-weight:600;letter-spacing:.06em;color:var(--ink-3);margin:14px 0 8px}
+.card{background:var(--surface);border-radius:16px;box-shadow:var(--shadow);padding:14px;margin-bottom:10px}
+.card h3{font-size:16.5px}.meta{font-size:12.5px;color:var(--ink-3);margin-top:2px}
+.badge{font-size:11px;font-weight:700;padding:3px 7px;border-radius:6px;background:var(--brand-soft);color:var(--brand)}
+.badge.b{background:var(--mark-soft);color:#9A6312}
+.top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.pg{height:6px;border-radius:9px;background:var(--surface-2);margin:10px 0;overflow:hidden}.pg span{display:block;height:100%;background:var(--brand)}
+.pg.b span{background:var(--mark)}
+.sr{display:flex;gap:6px}.sr div{flex:1;background:var(--surface-2);border-radius:10px;padding:6px 8px}.sr b{font-size:15px;display:block}.sr span{font-size:11px;color:var(--ink-3)}
+.mode{display:flex;align-items:center;gap:10px;background:var(--surface);border-radius:14px;padding:11px 12px;margin-bottom:8px;box-shadow:var(--shadow)}
+.mode .ic{width:32px;height:32px;border-radius:10px;background:var(--brand-soft);display:grid;place-items:center;font-size:15px}
+.mode.b .ic{background:var(--mark-soft)}
+.mode b{font-size:14.5px;display:block}.mode small{font-size:11.5px;color:var(--ink-3)}.mode .c{margin-left:auto;font-weight:700;font-size:14px;color:var(--ink-2)}
+.seg{display:flex;background:var(--surface-2);border-radius:12px;padding:3px;margin-bottom:12px}
+.seg div{flex:1;text-align:center;font-size:13.5px;font-weight:600;padding:8px 0;border-radius:9px;color:var(--ink-3)}
+.seg .on{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
+.big{border-radius:18px;padding:16px;margin-bottom:10px;color:#fff;background:var(--brand)}
+.big.b{background:var(--surface);color:var(--ink);box-shadow:var(--shadow);border:2px solid var(--mark)}
+.big h3{font-size:17px}.big p{font-size:12.5px;opacity:.85;margin-top:3px}
+.big .row{display:flex;justify-content:space-between;margin-top:10px;font-size:12.5px;font-weight:600}
+.ch{display:flex;align-items:center;gap:10px;background:var(--surface);border-radius:12px;padding:10px 12px;margin-bottom:6px}
+.ch .no{font-size:11px;font-weight:700;color:var(--ink-3);width:30px}.ch b{font-size:13.5px;flex:1}
+.ch .p{font-size:12px;color:var(--ink-2);font-weight:600}.ch .ok{color:var(--ok)}
+.ring{width:22px;height:22px;border-radius:50%;border:3px solid var(--surface-2);flex:none}
+.ring.h{border-color:var(--mark);border-right-color:var(--surface-2)}.ring.f{border-color:var(--ok)}
+.note{font-size:11.5px;color:var(--ink-3);line-height:1.5;margin-top:6px}
+.chips{display:flex;gap:6px;margin-bottom:10px}.chip{font-size:12.5px;padding:5px 10px;border-radius:99px;border:1px solid var(--line);background:var(--surface);color:var(--ink-2)}.chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+</style></head><body>
+<h1>온라인 시험 기출 · 교재 문항 분리 — 3가지 방향</h1>
+<div class="sub">온라인 시험 기출 159문항 / 교재 연습문제 105문항 (17문항은 양쪽 공통)</div>
+
+<!-- A -->
+<section class="ver"><div class="vl"><span class="t">A안</span><h2>과목을 두 개로</h2><p>홈에서 아예 별개의 과목 카드 2장. 진도·정답률·오답노트·북마크가 완전히 따로 쌓임. 지금 과목 화면 구조 그대로 재사용.</p></div>
+<div class="screens">
+<div><div class="cap">홈 — 카드 2장</div><div class="phone"><div class="scr"><div class="st"><span>9:41</span><span>●●●</span></div>
+<div class="logo">기출노트</div><div class="eb">과목</div>
+<div class="card"><div class="top"><div><h3>방카·펀드 온라인 시험 기출</h3><div class="meta">농협은행 직무과정 · 159문항</div></div><span class="badge">시험</span></div><div class="pg"><span style="width:62%"></span></div><div class="sr"><div><b>98</b><span>푼 문제</span></div><div><b>81%</b><span>정답률</span></div><div><b>12</b><span>오답노트</span></div></div></div>
+<div class="card"><div class="top"><div><h3>방카·펀드 교재 연습문제</h3><div class="meta">교재 1·2권 단원 확인문제 · 105문항</div></div><span class="badge b">교재</span></div><div class="pg b"><span style="width:18%"></span></div><div class="sr"><div><b>19</b><span>푼 문제</span></div><div><b>74%</b><span>정답률</span></div><div><b>5</b><span>오답노트</span></div></div></div>
+</div></div></div>
+<div><div class="cap">교재 과목 화면</div><div class="phone"><div class="scr"><div class="st"><span>9:41</span><span>●●●</span></div>
+<div class="hd"><span class="bk">‹</span><b>교재 연습문제</b></div>
+<div class="sr" style="margin-bottom:12px"><div><b>19/105</b><span>푼 문제</span></div><div><b>74%</b><span>정답률</span></div><div><b>5</b><span>오답노트</span></div></div>
+<div class="mode b"><span class="ic">▶</span><span><b>문제 풀기</b><small>교재 확인문제 전체</small></span><span class="c">105</span></div>
+<div class="mode b"><span class="ic">✕</span><span><b>오답노트</b><small>교재에서 틀린 문제만</small></span><span class="c">5</span></div>
+<div class="mode b"><span class="ic">★</span><span><b>북마크</b><small>표시해 둔 문제</small></span><span class="c">3</span></div>
+<div class="mode b"><span class="ic">≡</span><span><b>해설 훑어보기</b><small>검색·정답 가리기</small></span></div>
+<div class="eb">필터</div><div class="chips"><span class="chip on">전체</span><span class="chip">OX</span><span class="chip">객관식</span><span class="chip">단답</span></div>
+</div></div></div>
+</div></section>
+
+<!-- B -->
+<section class="ver"><div class="vl"><span class="t">B안</span><h2>과목 안에서 탭 전환</h2><p>홈은 과목 하나. 과목 화면 맨 위 탭으로 온라인 기출 ↔ 교재를 바꾸면 통계·모드·오답노트가 통째로 바뀜. 출처 칩·교재 토글은 없어짐.</p></div>
+<div class="screens">
+<div><div class="cap">온라인 기출 탭</div><div class="phone"><div class="scr"><div class="st"><span>9:41</span><span>●●●</span></div>
+<div class="hd"><span class="bk">‹</span><b>방카슈랑스 · 펀드</b></div>
+<div class="seg"><div class="on">온라인 시험 기출</div><div>교재 문항</div></div>
+<div class="sr" style="margin-bottom:12px"><div><b>98/159</b><span>푼 문제</span></div><div><b>81%</b><span>정답률</span></div><div><b>12</b><span>오답노트</span></div></div>
+<div class="mode"><span class="ic">▶</span><span><b>문제 풀기</b><small>온라인 시험 기출 전체</small></span><span class="c">159</span></div>
+<div class="mode"><span class="ic">✕</span><span><b>오답노트</b><small>기출에서 틀린 문제</small></span><span class="c">12</span></div>
+<div class="mode"><span class="ic">↻</span><span><b>자주 틀린 문제</b><small>2번 이상 틀림</small></span><span class="c">4</span></div>
+<div class="mode"><span class="ic">★</span><span><b>북마크</b><small>표시해 둔 문제</small></span><span class="c">7</span></div>
+</div></div></div>
+<div><div class="cap">교재 문항 탭</div><div class="phone"><div class="scr"><div class="st"><span>9:41</span><span>●●●</span></div>
+<div class="hd"><span class="bk">‹</span><b>방카슈랑스 · 펀드</b></div>
+<div class="seg"><div>온라인 시험 기출</div><div class="on">교재 문항</div></div>
+<div class="sr" style="margin-bottom:12px"><div><b>19/105</b><span>푼 문제</span></div><div><b>74%</b><span>정답률</span></div><div><b>5</b><span>오답노트</span></div></div>
+<div class="mode b"><span class="ic">▶</span><span><b>문제 풀기</b><small>교재 확인문제 전체</small></span><span class="c">105</span></div>
+<div class="mode b"><span class="ic">✕</span><span><b>오답노트</b><small>교재에서 틀린 문제</small></span><span class="c">5</span></div>
+<div class="mode b"><span class="ic">↻</span><span><b>자주 틀린 문제</b><small>2번 이상 틀림</small></span><span class="c">1</span></div>
+<div class="mode b"><span class="ic">★</span><span><b>북마크</b><small>표시해 둔 문제</small></span><span class="c">3</span></div>
+<div class="note">마지막으로 본 탭을 기억해 다음에 그 탭으로 열림</div>
+</div></div></div>
+</div></section>
+
+<!-- C -->
+<section class="ver"><div class="vl"><span class="t">C안</span><h2>시험 대비 / 교재 단원 학습</h2><p>과목 화면에 큰 입구 2개. 기출은 지금처럼 무작위·오답 위주, 교재는 1·2권 단원 목록으로 단원별 진도를 채워 가는 방식.</p></div>
+<div class="screens">
+<div><div class="cap">과목 화면 — 입구 2개</div><div class="phone"><div class="scr"><div class="st"><span>9:41</span><span>●●●</span></div>
+<div class="hd"><span class="bk">‹</span><b>방카슈랑스 · 펀드</b></div>
+<div class="big"><h3>시험 대비</h3><p>온라인 시험 기출 159문항</p><div class="row"><span>98 풀이 · 정답률 81%</span><span>오답 12 ›</span></div></div>
+<div class="big b"><h3>교재 단원 학습</h3><p>1·2권 단원 확인문제 105문항</p><div class="pg b" style="margin:10px 0 0"><span style="width:18%"></span></div><div class="row"><span>단원 3/14 완료</span><span>이어서 2권 1장 ›</span></div></div>
+<div class="eb">공통</div>
+<div class="mode"><span class="ic">★</span><span><b>북마크</b><small>기출·교재 모아보기</small></span><span class="c">10</span></div>
+<div class="mode"><span class="ic">≡</span><span><b>해설 훑어보기</b><small>검색·정답 가리기</small></span></div>
+</div></div></div>
+<div><div class="cap">교재 단원 목록</div><div class="phone"><div class="scr"><div class="st"><span>9:41</span><span>●●●</span></div>
+<div class="hd"><span class="bk">‹</span><b>교재 단원 학습</b></div>
+<div class="chips"><span class="chip on">1권 펀드</span><span class="chip">2권 방카슈랑스</span></div>
+<div class="ch"><span class="ring f"></span><span class="no">1장</span><b>펀드 개요·자본시장법</b><span class="p ok">8/8</span></div>
+<div class="ch"><span class="ring f"></span><span class="no">2장</span><b>집합투자기구의 구조</b><span class="p ok">7/7</span></div>
+<div class="ch"><span class="ring h"></span><span class="no">3장</span><b>펀드 종류와 특징</b><span class="p">4/9</span></div>
+<div class="ch"><span class="ring"></span><span class="no">4장</span><b>펀드 판매·투자권유</b><span class="p">0/8</span></div>
+<div class="ch"><span class="ring"></span><span class="no">5장</span><b>펀드 세제</b><span class="p">0/7</span></div>
+<div class="ch"><span class="ring"></span><span class="no">6장</span><b>당행 펀드 업무</b><span class="p">0/6</span></div>
+<div class="note">단원을 누르면 그 단원 확인문제만 풀기. 틀린 문제는 단원 옆에 빨간 점</div>
+</div></div></div>
+</div></section>
+</body></html>
