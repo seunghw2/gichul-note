@@ -9,6 +9,10 @@ npm install
 npm run dev
 ```
 
+## 문제지 버전
+
+과목 JSON의 `version`이 현재 버전이다. 바꾸기 전 버전은 `src/data/archive/<id>.v<N>.json`에 보관한다(앱은 `banks/`만 읽는다). 앱에서 버전을 고르는 기능은 없다.
+
 ## 과목 추가
 
 `src/data/banks/`에 JSON 파일을 하나 넣으면 홈에 과목이 생긴다. 형식은 `src/types.ts`의 `Bank` 참고. 기존 과목에 문항을 더할 때는 `n`을 이어서 붙인다(풀이 기록이 `n` 기준이라 기존 번호는 바꾸지 않는다).
