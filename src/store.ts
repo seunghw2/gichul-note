@@ -16,6 +16,8 @@ export interface Prefs {
   source: string;
   shuffleQ: boolean;
   shuffleC: boolean;
+  /** 교재 연습문제(교재에만 있는 문항) 포함 여부. 기본 꺼짐 */
+  book: boolean;
 }
 
 const key = (id: string) => `gichul:${id}`;
@@ -48,7 +50,7 @@ export function loadSubject(id: string): SubjectState {
 export const saveSubject = (id: string, s: SubjectState) => write(key(id), s);
 
 export function loadPrefs(): Prefs {
-  return { type: "all", source: "all", shuffleQ: false, shuffleC: false, ...read<Partial<Prefs>>("gichul:prefs") };
+  return { type: "all", source: "all", shuffleQ: false, shuffleC: false, book: false, ...read<Partial<Prefs>>("gichul:prefs") };
 }
 
 export const savePrefs = (p: Prefs) => write("gichul:prefs", p);

@@ -66,17 +66,25 @@ let view: View = "home";
 let session: { kind: Kind; items: Item[]; i: number } | null = null;
 const reviewOpts: { q: string; hide: boolean; only: Only } = { q: "", hide: false, only: "all" };
 
+/** 교재 연습문제 출처 이름. 이 출처만 있는 문항은 '교재 연습문제 포함'을 켰을 때만 보인다 */
+const BOOK = "교재 연습문제";
+const isBookOnly = (q: Q) => q.sources.every((x) => x === BOOK);
+const visible = (b: LoadedBank) => (prefs.book ? b.questions : b.questions.filter((q) => !isBookOnly(q)));
+const sourcesOf = (b: LoadedBank) => (prefs.book ? b.sourceList : b.sourceList.filter((x) => x !== BOOK));
+
 function stats(b: LoadedBank, s: SubjectState) {
-  const total = b.questions.length;
-  const recs = Object.values(s.rec);
+  const vis = visible(b);
+  const total = vis.length;
+  const ns = new Set(vis.map((q) => q.n));
+  const recs = Object.entries(s.rec).filter(([n]) => ns.has(Number(n))).map(([, r]) => r);
   const done = recs.length;
   const ok = recs.filter((r) => r.last).length;
   return { total, done, rate: done ? Math.round((ok / done) * 100) : null, wrong: s.wrong.length, bm: s.bm.length };
 }
 
 const filtered = () => {
-  if (prefs.source !== "all" && !bank.sourceList.includes(prefs.source)) prefs.source = "all";
-  return bank.questions.filter(
+  if (prefs.source !== "all" && !sourcesOf(bank).includes(prefs.source)) prefs.source = "all";
+  return visible(bank).filter(
     (q) => (prefs.type === "all" || q.type === prefs.type) && (prefs.source === "all" || q.sources.includes(prefs.source)),
   );
 };
@@ -97,7 +105,7 @@ function renderHome() {
   const cards = BANKS.map((b) => {
     const s = stats(b, loadSubject(b.id));
     return `<button class="subject" data-open="${esc(b.id)}">
-      <div class="top"><div><h2>${esc(b.title)}</h2><div class="meta">${esc(b.org)} · ${s.total}문항</div><div class="meta">출처 ${esc(b.sourceList.join(", "))}</div></div><span class="badge">${esc(b.round)}</span></div>
+      <div class="top"><div><h2>${esc(b.title)}</h2><div class="meta">${esc(b.org)} · ${s.total}문항</div><div class="meta">출처 ${esc(sourcesOf(b).join(", "))}</div></div><span class="badge">${esc(b.round)}</span></div>
       <div class="progress" aria-label="진도"><span style="width:${pct(s.done, s.total)}%"></span></div>
       ${statRow(s, "오답노트")}
     </button>`;
@@ -116,7 +124,7 @@ function renderSubject() {
   const n = filtered().length;
   const chip = (k: "type" | "source", v: string, label: string) =>
     `<button class="chip" data-pref="${k}" data-val="${esc(v)}" aria-pressed="${prefs[k] === v}">${esc(label)}</button>`;
-  const tog = (k: "shuffleQ" | "shuffleC", label: string) =>
+  const tog = (k: "shuffleQ" | "shuffleC" | "book", label: string) =>
     `<button class="toggle" data-tog="${k}" aria-pressed="${prefs[k]}"><span>${label}</span><span class="sw"></span></button>`;
   const sub = (kind: Kind, base: string) => {
     const p = runProgress(kind);
@@ -140,7 +148,8 @@ function renderSubject() {
     <div class="eyebrow">출제 범위</div>
     <div class="filters">
       <div class="frow"><label>유형</label><div class="chips">${chip("type", "all", "전체")}${(["ox", "mc", "short", "essay"] as const).filter((t) => bank.questions.some((q) => q.type === t)).map((t) => chip("type", t, TYPE_LABEL[t])).join("")}</div></div>
-      <div class="frow"><label>출처</label><div class="chips">${chip("source", "all", "전체")}${bank.sourceList.map((x) => chip("source", x, x)).join("")}</div></div>
+      <div class="frow"><label>출처</label><div class="chips">${chip("source", "all", "전체")}${sourcesOf(bank).map((x) => chip("source", x, x)).join("")}</div></div>
+      ${tog("book", "교재 연습문제 포함")}
       ${tog("shuffleQ", "문제 순서 섞기")}
       ${tog("shuffleC", "보기 순서 섞기")}
       <div class="fcount">선택한 범위: <b class="num">${n}</b>문항</div>
@@ -503,7 +512,7 @@ $app.addEventListener("click", (e) => {
     savePrefs(prefs);
     return renderSubject();
   }
-  if (d.tog === "shuffleQ" || d.tog === "shuffleC") {
+  if (d.tog === "shuffleQ" || d.tog === "shuffleC" || d.tog === "book") {
     prefs[d.tog] = !prefs[d.tog];
     savePrefs(prefs);
     return renderSubject();
