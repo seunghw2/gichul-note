@@ -93,7 +93,7 @@ const pct = (a: number, b: number) => (b ? (a / b) * 100 : 0);
 
 function statRow(s: ReturnType<typeof stats>, wrongLabel: string) {
   return `<div class="statrow">
-    <div class="stat"><b>${s.done}<span class="num" style="font-size:13px;color:var(--ink-3)">/${s.total}</span></b><span>푼 문제</span></div>
+    <div class="stat"><b>${s.done}<span class="num" style="font-size:14.5px;color:var(--ink-3)">/${s.total}</span></b><span>푼 문제</span></div>
     <div class="stat"><b>${s.rate === null ? "–" : s.rate + "%"}</b><span>정답률</span></div>
     <div class="stat"><b>${s.wrong}</b><span>${wrongLabel}</span></div>
   </div>`;
@@ -349,7 +349,7 @@ function renderQuiz() {
   $app.innerHTML = `
     <div class="bar">
       <button class="icon-btn" data-act="subject" aria-label="그만 풀기">${I.close}</button>
-      <div class="qhead" style="flex:1"><div class="progress"><span style="width:${pct(session.i + (done ? 1 : 0), total)}%"></span></div><span class="num" style="font-size:13px;color:var(--ink-2)">${session.i + 1}/${total}</span></div>
+      <div class="qhead" style="flex:1"><div class="progress"><span style="width:${pct(session.i + (done ? 1 : 0), total)}%"></span></div><span class="num" style="font-size:14.5px;color:var(--ink-2)">${session.i + 1}/${total}</span></div>
     </div>
     <div class="qtags"><span class="tag type">${TYPE_LABEL[q.type]}</span>${session.kind !== "all" ? `<span class="tag">${LABEL[session.kind]}</span>` : ""}</div>
     <div class="qno">문제 ${q.n} <span class="qsrc">· ${esc(srcText(q))}</span></div>
@@ -417,7 +417,7 @@ function renderEnd() {
     <div class="score">
       <svg class="ring" viewBox="0 0 120 120"><circle cx="60" cy="60" r="${R}" fill="none" stroke="var(--surface-2)" stroke-width="10"/>
       <circle cx="60" cy="60" r="${R}" fill="none" stroke="var(--brand)" stroke-width="10" stroke-linecap="round" stroke-dasharray="${C * ratio} ${C}" transform="rotate(-90 60 60)"/>
-      <text x="60" y="68" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="24" font-weight="600" fill="var(--ink)">${Math.round(ratio * 100)}%</text></svg>
+      <text x="60" y="68" text-anchor="middle" font-family="Pretendard Variable, Pretendard, sans-serif" font-size="24" font-weight="600" fill="var(--ink)">${Math.round(ratio * 100)}%</text></svg>
       <div class="big num">${ok}<small>/${total}</small></div>
       <p>${wrongs.length ? `틀린 ${wrongs.length}문제는 오답노트에 담겼어요` : "모두 맞혔어요"}</p>
     </div>
@@ -466,7 +466,7 @@ function renderReview() {
     <div class="bar"><button class="icon-btn" data-act="subject" aria-label="과목으로">${I.back}</button><h1>해설 훑어보기</h1></div>
     <label class="search">${I.search}<input id="rsearch" type="search" placeholder="키워드 검색 (예: 보험가액, ELS)" value="${esc(reviewOpts.q)}"></label>
     <div class="chips" style="margin-bottom:8px">${only("all", "전체")}${only("wrong", "오답")}${only("bm", "북마크")}</div>
-    <button class="toggle" data-hide aria-pressed="${reviewOpts.hide}" style="margin:6px 0 14px"><span style="font-size:13.5px">정답·해설 가리기 <span style="color:var(--ink-3)">(카드를 눌러 확인)</span></span><span class="sw"></span></button>
+    <button class="toggle" data-hide aria-pressed="${reviewOpts.hide}" style="margin:6px 0 14px"><span style="font-size:15px">정답·해설 가리기 <span style="color:var(--ink-3)">(카드를 눌러 확인)</span></span><span class="sw"></span></button>
     <div class="rlist">${reviewCards()}</div>`;
 }
 
