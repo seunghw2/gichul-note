@@ -217,3 +217,21 @@ body::before{content:"";position:fixed;left:0;right:0;top:0;height:env(safe-area
 .ftoggles .sw{width:52px;height:30px}
 .ftoggles .sw::after{top:3px;left:3px;width:24px;height:24px}
 .ftoggles .toggle[aria-pressed="true"] .sw::after{transform:translateX(22px)}
+
+/* 풀이 화면 하단: 해설 끝이 버튼에 가리지 않게 */
+html{scroll-padding-bottom:110px}
+.result{scroll-margin-bottom:110px;margin-bottom:12px}
+.pill-btn.icon{width:50px;justify-content:center;padding:0}
+.pill-btn.prev{padding:0 16px}
+.pill-btn[disabled]{opacity:.4}
+.jump{font-size:15px;color:var(--ink-2);padding:6px 8px;border-radius:10px;background:var(--surface-2);white-space:nowrap}
+.tag.miss,.missmark{background:var(--bad-soft);color:var(--bad)}
+.missmark{font-size:12px;font-weight:600;padding:3px 7px;border-radius:6px}
+.jlegend{display:flex;gap:12px;font-size:13px;color:var(--ink-2)}
+.jlegend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;background:var(--surface-2);border:1px solid var(--line);vertical-align:-1px}
+.jlegend i.ok{background:var(--ok-soft);border-color:var(--ok)}.jlegend i.bad{background:var(--bad-soft);border-color:var(--bad)}
+.jgrid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;max-height:50vh;overflow:auto;padding:2px}
+.jgrid button{height:44px;border-radius:10px;background:var(--surface-2);border:1px solid var(--line);font-size:15px;font-variant-numeric:tabular-nums}
+.jgrid button.ok{background:var(--ok-soft);border-color:var(--ok)}
+.jgrid button.bad{background:var(--bad-soft);border-color:var(--bad)}
+.jgrid button.cur{outline:2px solid var(--brand);outline-offset:1px;font-weight:700}
