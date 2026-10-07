@@ -29,14 +29,25 @@ const tabMini = `
     .map(([i, t, n, c]) => `<div class="ob-row"><span style="color:${c}">${i}</span>${t}<span class="n">${n}</span></div>`)
     .join("")}`;
 
+/** 홈 화면 추가 방법은 기기마다 다르다: 아이폰=사파리 공유, 안드로이드=크롬 메뉴 */
+const ua = navigator.userAgent;
+const isIOS = /iP(hone|ad|od)/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+const isAndroid = /Android/.test(ua);
+const ADD_HINT = isIOS ? "공유 ⬆︎ → 홈 화면에 추가" : isAndroid ? "메뉴 ⋮ → 홈 화면에 추가" : "아이폰: 공유 ⬆︎ · 안드로이드: 메뉴 ⋮";
+const ADD_TEXT = isIOS
+  ? "사파리 아래 공유 버튼 → 홈 화면에 추가."
+  : isAndroid
+    ? "크롬 오른쪽 위 메뉴 ⋮ → 홈 화면에 추가(또는 앱 설치)."
+    : "아이폰은 사파리 공유 → 홈 화면에 추가, 안드로이드는 크롬 메뉴 ⋮ → 홈 화면에 추가.";
+
 const homeMini = `
   <div class="ob-icons">${'<i></i>'.repeat(4)}<b>기출</b></div>
-  <div class="ob-hint">공유 ⬆︎ → 홈 화면에 추가</div>`;
+  <div class="ob-hint">${ADD_HINT}</div>`;
 
 const SLIDES = [
   { n: "01 · 바로 채점", h: "풀자마자<br>정답과 해설", p: "해설마다 교재 원문과 쪽수가 함께 나와요.", pip: oxMini },
   { n: "02 · 나눠서 관리", h: "기출과 교재,<br>오답은 따로", p: "틀린 문제는 오답노트에 자동으로 담기고, 맞히면 빠져요.", pip: tabMini },
-  { n: "03 · 앱처럼", h: "홈 화면에<br>추가하세요", p: "사파리 공유 → 홈 화면에 추가. 왼쪽 끝에서 밀면 뒤로 가요.", pip: homeMini },
+  { n: "03 · 앱처럼", h: "홈 화면에<br>추가하세요", p: `${ADD_TEXT} 왼쪽 끝에서 밀면 뒤로 가요.`, pip: homeMini },
 ];
 
 export function showOnboarding() {
