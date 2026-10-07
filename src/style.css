@@ -209,3 +209,11 @@ html,body{overscroll-behavior-y:contain}
 /* 홈 화면 앱(전체화면)에서 상태바 아래로 내용이 들어가지 않게 */
 .app{padding-top:env(safe-area-inset-top,0px)}
 body::before{content:"";position:fixed;left:0;right:0;top:0;height:env(safe-area-inset-top,0px);background:var(--ground);z-index:6}
+/* 출제 범위: 유형 / 출처 / 토글 / 문항 수를 구분선으로 나눔, 토글 크게 */
+.filters{gap:14px;padding:16px}
+.filters>*+*{border-top:1px solid var(--line);padding-top:14px}
+.ftoggles{display:grid;gap:4px}
+.ftoggles .toggle{min-height:44px;font-size:15.5px;font-weight:500}
+.ftoggles .sw{width:52px;height:30px}
+.ftoggles .sw::after{top:3px;left:3px;width:24px;height:24px}
+.ftoggles .toggle[aria-pressed="true"] .sw::after{transform:translateX(22px)}

@@ -149,9 +149,11 @@ function renderSubject() {
     <div class="filters">
       <div class="frow"><label>유형</label><div class="chips">${chip("type", "all", "전체")}${(["ox", "mc", "short", "essay"] as const).filter((t) => bank.questions.some((q) => q.type === t)).map((t) => chip("type", t, TYPE_LABEL[t])).join("")}</div></div>
       <div class="frow"><label>출처</label><div class="chips">${chip("source", "all", "전체")}${sourcesOf(bank).map((x) => chip("source", x, x)).join("")}</div></div>
-      ${tog("book", "교재 연습문제 포함")}
-      ${tog("shuffleQ", "문제 순서 섞기")}
-      ${tog("shuffleC", "보기 순서 섞기")}
+      <div class="ftoggles">
+        ${tog("book", "교재 연습문제 포함")}
+        ${tog("shuffleQ", "문제 순서 섞기")}
+        ${tog("shuffleC", "보기 순서 섞기")}
+      </div>
       <div class="fcount">선택한 범위: <b class="num">${n}</b>문항</div>
     </div>`;
 }
