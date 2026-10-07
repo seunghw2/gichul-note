@@ -39,7 +39,7 @@ const storeMini = `
   ${[
     [`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d='M7 18h10a4 4 0 0 0 .5-8A6 6 0 0 0 6 9.5 4.3 4.3 0 0 0 7 18z'/><path d='M4 4l16 16'/></svg>`, "서버 없음", "문제와 앱이 모두 이 페이지 안에"],
     [`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx='12' cy='8' r='4'/><path d='M4 21a8 8 0 0 1 16 0'/></svg>`, "가입·로그인 없음", "열자마자 바로 풀기"],
-    [`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x='6' y='2.5' width='12' height='19' rx='2.5'/><path d='M11 18.5h2'/></svg>`, "이 기기에 저장", "브라우저 로컬 스토리지에 기록"],
+    [`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x='6' y='2.5' width='12' height='19' rx='2.5'/><path d='M11 18.5h2'/></svg>`, "이 기기에 저장", "사이트 데이터를 지우면 기록도 지워져요"],
   ]
     .map(([i, t, d]) => `<div class="ob-row ob-store"><span class="i">${i}</span><span><b>${t}</b><small>${d}</small></span></div>`)
     .join("")}
