@@ -130,6 +130,7 @@ function renderHome() {
   }).join("");
   $app.innerHTML = `
     <div class="bar"><div class="brandline" style="flex:1"><span class="logo">기출<b>노트</b></span></div>
+      <button class="icon-btn" data-act="onboarding" aria-label="사용법 보기">${I.help}</button>
       <button class="icon-btn" data-act="theme" aria-label="화면 테마: ${THEME_LABEL[loadTheme()]}">${I[loadTheme() === "system" ? "auto" : loadTheme() === "light" ? "sun" : "moon"]}</button></div>
     ${todayLine()}
     <div class="eyebrow">과목</div>
@@ -574,6 +575,7 @@ $app.addEventListener("click", (e) => {
     return renderEnd();
   }
   if (d.start) return view === "end" ? startSession(d.start as Kind) : chooseSession(d.start as Kind);
+  if (d.act === "onboarding") return showOnboarding();
   if (d.act === "theme") {
     const order: Theme[] = ["system", "light", "dark"];
     const next = order[(order.indexOf(loadTheme()) + 1) % 3];
