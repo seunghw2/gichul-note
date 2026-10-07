@@ -235,3 +235,6 @@ html{scroll-padding-bottom:110px}
 .jgrid button.ok{background:var(--ok-soft);border-color:var(--ok)}
 .jgrid button.bad{background:var(--bad-soft);border-color:var(--bad)}
 .jgrid button.cur{outline:2px solid var(--brand);outline-offset:1px;font-weight:700}
+/* 해설 가독성: 인용은 본문색, 라벨·출처는 한 단계 진하게 */
+.quote{color:var(--ink)}
+.lbl,.result .src,.rcard .src{color:var(--ink-2)}
