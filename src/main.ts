@@ -134,7 +134,7 @@ function renderHome() {
     ${todayLine()}
     <div class="eyebrow">과목</div>
     <div style="display:grid;gap:12px">${cards}</div>
-    <p class="note">풀이 기록과 북마크는 이 기기의 브라우저에 저장됩니다. · <button class="linkbtn" data-act="onboarding">사용법 다시 보기</button></p>`;
+    <p class="note">풀이 기록과 북마크는 이 기기의 브라우저에 저장됩니다.</p>`;
 }
 
 /* ---------- 과목 ---------- */
@@ -574,7 +574,6 @@ $app.addEventListener("click", (e) => {
     return renderEnd();
   }
   if (d.start) return view === "end" ? startSession(d.start as Kind) : chooseSession(d.start as Kind);
-  if (d.act === "onboarding") return showOnboarding();
   if (d.act === "theme") {
     const order: Theme[] = ["system", "light", "dark"];
     const next = order[(order.indexOf(loadTheme()) + 1) % 3];

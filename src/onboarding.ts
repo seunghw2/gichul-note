@@ -1,4 +1,4 @@
-/* 첫 접속 온보딩: 브랜드 컬러 바탕의 넘겨보기 카드 3장. 처음 한 번만, 홈의 '사용법 다시 보기'로 다시 볼 수 있다 */
+/* 첫 접속 온보딩: 브랜드 컬러 바탕의 넘겨보기 카드 3장. 기기에서 처음 한 번만 */
 const KEY = "gichul:onboarded";
 
 export function seenOnboarding() {
@@ -13,7 +13,10 @@ const oxMini = `
   <span class="ob-chip">OX 진위형</span>
   <div class="ob-q">자본시장법상 증권은 최대손실이 원금으로 한정된다.</div>
   <div class="ob-ox"><div class="o on">O</div><div class="x">X</div></div>
-  <div class="ob-res"><div class="h">✓ 정답</div><div class="b">해설 · 출제원 교재 1권 p.9</div></div>`;
+  <div class="ob-res"><div class="h">✓ 정답<span>정답 O</span></div><div class="b">
+    <div class="l">해설</div>증권에 대한 맞는 설명이다.
+    <div class="qt"><div class="l">원문 인용</div>증권이란 최대손실이 투자원금으로 한정되는 금융투자상품…</div>
+    <div class="src">출제원 교재 1권 p.9</div></div></div>`;
 
 const tabMini = `
   <div class="ob-seg"><div class="on">온라인 기출</div><div>교재 문항</div></div>
@@ -50,11 +53,15 @@ export function showOnboarding() {
     ).join("")}</div>
     <div class="onb-foot"><div class="onb-dots">${SLIDES.map(() => "<i></i>").join("")}</div><button class="onb-cta" data-onb="next"></button></div>`;
   document.body.appendChild(el);
+  document.documentElement.classList.add("onb-open");
   const track = el.querySelector<HTMLElement>(".onb-track")!;
-  let i = 0;
-  const go = (n: number) => {
-    i = Math.max(0, Math.min(SLIDES.length - 1, n));
-    track.style.transform = `translateX(${-i * 100}%)`;
+  let i = -1;
+  // 손가락을 따라 움직이는 브라우저 기본 가로 스크롤(스냅)로 넘기고, 버튼은 같은 스크롤을 부드럽게 움직인다
+  const go = (n: number) => track.scrollTo({ left: Math.max(0, Math.min(SLIDES.length - 1, n)) * track.clientWidth, behavior: "smooth" });
+  const sync = () => {
+    const n = Math.round(track.scrollLeft / track.clientWidth);
+    if (n === i) return;
+    i = n;
     el.querySelectorAll(".onb-dots i").forEach((d, k) => d.classList.toggle("on", k === i));
     el.querySelector(".onb-cta")!.textContent = i === SLIDES.length - 1 ? "시작하기" : "다음";
     el.querySelector<HTMLElement>(".onb-skip")!.hidden = i === SLIDES.length - 1;
@@ -66,6 +73,7 @@ export function showOnboarding() {
       /* 무시 */
     }
     el.classList.add("out");
+    document.documentElement.classList.remove("onb-open");
     setTimeout(() => el.remove(), 200);
   };
   el.addEventListener("click", (e) => {
@@ -73,13 +81,6 @@ export function showOnboarding() {
     if (a === "skip") close();
     if (a === "next") (i === SLIDES.length - 1 ? close() : go(i + 1));
   });
-  // 옆으로 밀어서 넘기기
-  let sx = 0;
-  let sy = 0;
-  el.addEventListener("touchstart", (e) => ((sx = e.touches[0].clientX), (sy = e.touches[0].clientY)), { passive: true });
-  el.addEventListener("touchend", (e) => {
-    const dx = e.changedTouches[0].clientX - sx;
-    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(e.changedTouches[0].clientY - sy)) go(i + (dx < 0 ? 1 : -1));
-  });
-  go(0);
+  track.addEventListener("scroll", sync, { passive: true });
+  sync();
 }
