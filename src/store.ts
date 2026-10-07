@@ -75,3 +75,24 @@ export function clearRun(id: string, kind: string) {
     /* 무시 */
   }
 }
+
+/** 화면 테마: 시스템(폰 설정 따름) / 라이트 / 다크 */
+export type Theme = "system" | "light" | "dark";
+export const loadTheme = (): Theme => read<Theme>("gichul:theme") ?? "system";
+export const saveTheme = (t: Theme) => write("gichul:theme", t);
+
+/** 오늘 푼 문제 수(모든 과목 합산). 날짜가 바뀌면 0부터 */
+export interface Today {
+  d: string;
+  n: number;
+  ok: number;
+}
+const todayStr = () => new Date().toLocaleDateString("sv-SE");
+export function loadToday(): Today {
+  const v = read<Today>("gichul:today");
+  return v && v.d === todayStr() ? v : { d: todayStr(), n: 0, ok: 0 };
+}
+export function addToday(ok: boolean) {
+  const v = loadToday();
+  write("gichul:today", { d: v.d, n: v.n + 1, ok: v.ok + (ok ? 1 : 0) });
+}

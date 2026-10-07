@@ -1,7 +1,7 @@
 import "./style.css";
 import { BANKS } from "./data";
 import { I } from "./icons";
-import { clearRun, loadPrefs, loadRun, loadSubject, savePrefs, saveRun, saveSubject, type SavedRun, type SubjectState } from "./store";
+import { addToday, clearRun, loadPrefs, loadTheme, loadToday, saveTheme, type Theme, loadRun, loadSubject, savePrefs, saveRun, saveSubject, type SavedRun, type SubjectState } from "./store";
 import type { LoadedBank, Q } from "./types";
 
 type View = "home" | "subject" | "quiz" | "end" | "review";
@@ -30,9 +30,6 @@ const OFTEN = 2;
 const TYPE_LABEL: Record<Q["type"], string> = { ox: "OX 진위형", mc: "4지선다", short: "단답형", essay: "약술형" };
 const TYPE_SHORT: Record<Q["type"], string> = { ox: "OX", mc: "4지", short: "단답", essay: "약술" };
 
-/** 단답형 비교용: 띄어쓰기·기호를 지우고 비교 */
-const norm = (s: string) => s.replace(/[\s.,·()\[\]'"]/g, "").toLowerCase();
-const isAccepted = (q: Q, text: string) => !!norm(text) && (q.accept ?? []).some((a) => norm(a) === norm(text));
 const srcText = (q: Q) => q.sources.join(", ");
 const shortAnswer = (q: Q) => q.answerText ?? (q.accept ?? []).join(" / ");
 const quoteHtml = (q: Q) => (q.quote ? `<blockquote class="quote"><div class="lbl">원문 인용</div>${esc(q.quote)}</blockquote>` : "");
@@ -105,7 +102,20 @@ function statRow(s: ReturnType<typeof stats>, wrongLabel: string) {
   </div>`;
 }
 
+/* ---------- 테마 ---------- */
+const THEME_LABEL: Record<Theme, string> = { system: "폰 설정 따름", light: "라이트 모드", dark: "다크 모드" };
+function applyTheme(t: Theme) {
+  if (t === "system") delete document.documentElement.dataset.theme;
+  else document.documentElement.dataset.theme = t;
+}
+applyTheme(loadTheme());
+
 /* ---------- 홈 ---------- */
+function todayLine() {
+  const t = loadToday();
+  return `<p class="today">${t.n ? `오늘 <b class="num">${t.n}</b>문제 풀었어요 · 정답 <b class="num">${t.ok}</b>` : "오늘은 아직 푼 문제가 없어요"}</p>`;
+}
+
 function renderHome() {
   view = "home";
   const cards = BANKS.map((b) => {
@@ -118,7 +128,9 @@ function renderHome() {
     </button>`;
   }).join("");
   $app.innerHTML = `
-    <div class="bar"><div class="brandline" style="flex:1"><span class="logo">기출<b>노트</b></span></div></div>
+    <div class="bar"><div class="brandline" style="flex:1"><span class="logo">기출<b>노트</b></span></div>
+      <button class="icon-btn" data-act="theme" aria-label="화면 테마: ${THEME_LABEL[loadTheme()]}">${I[loadTheme() === "system" ? "auto" : loadTheme() === "light" ? "sun" : "moon"]}</button></div>
+    ${todayLine()}
     <div class="eyebrow">과목</div>
     <div style="display:grid;gap:12px">${cards}</div>
     <p class="note">풀이 기록과 북마크는 이 기기의 브라우저에 저장됩니다.</p>`;
@@ -334,12 +346,15 @@ function renderQuiz() {
         <button class="ox-btn x ${cls(2)}" data-pick="2" ${done ? "disabled" : ""} aria-label="X 틀림">X</button>
       </div>`;
   } else if (q.type === "short") {
+    // 입력·자동채점 없이 머릿속으로 떠올린 뒤 정답을 보고 스스로 채점
     body = done
-      ? `<div class="myans ${correct ? "ok" : "bad"}"><span class="lbl">내 답</span>${esc(it.text || "(빈칸)")}</div>`
-      : `<form class="short" id="shortForm" autocomplete="off">
-          <input id="shortInput" type="text" placeholder="정답을 입력하세요" enterkeyhint="done" aria-label="정답 입력">
-          <button class="next" type="submit">채점</button>
-        </form>`;
+      ? ""
+      : it.shown
+        ? `<div class="model"><div class="lbl">정답</div><b class="shortans">${esc(shortAnswer(q))}</b></div>
+           <p class="selfq">떠올린 답이 맞았나요?</p>
+           <div class="ox-btns self"><button class="ox-btn o" data-self="1">맞았어요</button><button class="ox-btn x" data-self="0">틀렸어요</button></div>`
+        : `<p class="selfq">답을 머릿속으로 떠올려 본 뒤 정답을 확인하세요.</p>
+           <button class="next wide" data-show>정답 보기</button>`;
   } else if (q.type === "essay") {
     body = done
       ? myEssay(it)
@@ -380,7 +395,6 @@ function renderQuiz() {
       <button class="next" data-act="next" ${done ? "" : "disabled"}>${session.i === total - 1 ? "결과 보기" : "다음 문제"}</button>
     </div>`;
   window.scrollTo(0, 0);
-  if (q.type === "short" && !done) document.getElementById("shortInput")?.focus();
 }
 
 /** 약술형에 적어 둔 내 답안 */
@@ -400,6 +414,7 @@ function grade(ok: boolean) {
   const it = session.items[session.i];
   if (it.ok !== null) return;
   it.ok = ok;
+  addToday(ok);
   const q = it.q;
   const r = st.rec[q.n] ?? { tries: 0, miss: 0, last: false };
   r.tries++;
@@ -558,6 +573,14 @@ $app.addEventListener("click", (e) => {
     return renderEnd();
   }
   if (d.start) return view === "end" ? startSession(d.start as Kind) : chooseSession(d.start as Kind);
+  if (d.act === "theme") {
+    const order: Theme[] = ["system", "light", "dark"];
+    const next = order[(order.indexOf(loadTheme()) + 1) % 3];
+    saveTheme(next);
+    applyTheme(next);
+    toast(THEME_LABEL[next]);
+    return renderHome();
+  }
   if (d.pref === "type") {
     prefs.type = d.val as typeof prefs.type;
     savePrefs(prefs);
@@ -599,16 +622,6 @@ $app.addEventListener("click", (e) => {
     return renderReview();
   }
   if ("reveal" in d) t.classList.toggle("revealed");
-});
-
-$app.addEventListener("submit", (e) => {
-  if ((e.target as HTMLElement).id !== "shortForm" || !session) return;
-  e.preventDefault();
-  const it = session.items[session.i];
-  const text = (document.getElementById("shortInput") as HTMLInputElement).value.trim();
-  if (!text) return toast("답을 입력하세요");
-  it.text = text;
-  grade(isAccepted(it.q, text));
 });
 
 $app.addEventListener("input", (e) => {

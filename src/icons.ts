@@ -4,6 +4,9 @@ const s = (body: string, size = 20, extra = 'fill="none" stroke="currentColor" s
 const bmPath = '<path d="M6 3h12v18l-6-4.5L6 21z"/>';
 
 export const I = {
+  sun: s('<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>', 21),
+  moon: s('<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>', 21),
+  auto: s('<circle cx="12" cy="12" r="8.5"/><path d="M12 3.5v17a8.5 8.5 0 0 0 0-17z" fill="currentColor"/>', 21),
   back: s('<path d="M15 18l-6-6 6-6"/>', 22),
   close: s('<path d="M6 6l12 12M18 6L6 18"/>', 22),
   play: s('<path d="M8 5.5v13l10.5-6.5z"/>', 20, 'fill="currentColor"'),
