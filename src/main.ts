@@ -1,5 +1,6 @@
 import "./style.css";
 import { BANKS } from "./data";
+import { seenOnboarding, showOnboarding } from "./onboarding";
 import { I } from "./icons";
 import { addToday, clearRun, loadPrefs, loadTheme, loadToday, saveTheme, type Theme, loadRun, loadSubject, savePrefs, saveRun, saveSubject, type SavedRun, type SubjectState } from "./store";
 import type { LoadedBank, Q } from "./types";
@@ -133,7 +134,7 @@ function renderHome() {
     ${todayLine()}
     <div class="eyebrow">과목</div>
     <div style="display:grid;gap:12px">${cards}</div>
-    <p class="note">풀이 기록과 북마크는 이 기기의 브라우저에 저장됩니다.</p>`;
+    <p class="note">풀이 기록과 북마크는 이 기기의 브라우저에 저장됩니다. · <button class="linkbtn" data-act="onboarding">사용법 다시 보기</button></p>`;
 }
 
 /* ---------- 과목 ---------- */
@@ -573,6 +574,7 @@ $app.addEventListener("click", (e) => {
     return renderEnd();
   }
   if (d.start) return view === "end" ? startSession(d.start as Kind) : chooseSession(d.start as Kind);
+  if (d.act === "onboarding") return showOnboarding();
   if (d.act === "theme") {
     const order: Theme[] = ["system", "light", "dark"];
     const next = order[(order.indexOf(loadTheme()) + 1) % 3];
@@ -670,7 +672,7 @@ let g: { x: number; y: number; mode: "back" | "pull" | null; d: number } | null 
 document.addEventListener(
   "touchstart",
   (e) => {
-    if (e.touches.length !== 1 || document.querySelector(".sheet-wrap")) return (g = null);
+    if (e.touches.length !== 1 || document.querySelector(".sheet-wrap, .onb")) return (g = null);
     const t = e.touches[0];
     const inField = !!(e.target as HTMLElement).closest?.("input, textarea");
     const mode = customBack && t.clientX <= EDGE && view !== "home" ? "back" : window.scrollY <= 0 && !inField ? "pull" : null;
@@ -727,3 +729,4 @@ document.addEventListener("touchend", () => {
 document.addEventListener("touchcancel", resetGesture);
 
 showRoute(history.state as Route | null);
+if (!seenOnboarding()) showOnboarding();
