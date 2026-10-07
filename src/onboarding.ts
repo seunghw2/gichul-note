@@ -34,20 +34,21 @@ const ua = navigator.userAgent;
 const isIOS = /iP(hone|ad|od)/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 const isAndroid = /Android/.test(ua);
 const ADD_HINT = isIOS ? "공유 ⬆︎ → 홈 화면에 추가" : isAndroid ? "메뉴 ⋮ → 홈 화면에 추가" : "아이폰: 공유 ⬆︎ · 안드로이드: 메뉴 ⋮";
-const ADD_TEXT = isIOS
-  ? "사파리 아래 공유 버튼 → 홈 화면에 추가."
-  : isAndroid
-    ? "크롬 오른쪽 위 메뉴 ⋮ → 홈 화면에 추가(또는 앱 설치)."
-    : "아이폰은 사파리 공유 → 홈 화면에 추가, 안드로이드는 크롬 메뉴 ⋮ → 홈 화면에 추가.";
 
-const homeMini = `
-  <div class="ob-icons">${'<i></i>'.repeat(4)}<b>기출</b></div>
-  <div class="ob-hint">${ADD_HINT}</div>`;
+const storeMini = `
+  ${[
+    [`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d='M7 18h10a4 4 0 0 0 .5-8A6 6 0 0 0 6 9.5 4.3 4.3 0 0 0 7 18z'/><path d='M4 4l16 16'/></svg>`, "서버 없음", "문제와 앱이 모두 이 페이지 안에"],
+    [`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx='12' cy='8' r='4'/><path d='M4 21a8 8 0 0 1 16 0'/></svg>`, "가입·로그인 없음", "열자마자 바로 풀기"],
+    [`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x='6' y='2.5' width='12' height='19' rx='2.5'/><path d='M11 18.5h2'/></svg>`, "이 기기에 저장", "브라우저 로컬 스토리지에 기록"],
+  ]
+    .map(([i, t, d]) => `<div class="ob-row ob-store"><span class="i">${i}</span><span><b>${t}</b><small>${d}</small></span></div>`)
+    .join("")}
+  <div class="ob-add"><b>기출</b><span>홈 화면에 추가하면 앱처럼<br><em>${ADD_HINT}</em></span></div>`;
 
 const SLIDES = [
   { n: "01 · 바로 채점", h: "풀자마자<br>정답과 해설", p: "해설마다 교재 원문과 쪽수가 함께 나와요.", pip: oxMini },
   { n: "02 · 나눠서 관리", h: "기출과 교재,<br>오답은 따로", p: "틀린 문제는 오답노트에 자동으로 담기고, 맞히면 빠져요.", pip: tabMini },
-  { n: "03 · 앱처럼", h: "홈 화면에<br>추가하세요", p: `${ADD_TEXT} 왼쪽 끝에서 밀면 뒤로 가요.`, pip: homeMini },
+  { n: "03 · 가입 없이", h: "로그인 없이,<br>이 기기에 저장", p: "서버 없이 동작해요. 풀이 기록은 이 기기 브라우저에만 저장돼요.", pip: storeMini },
 ];
 
 export function showOnboarding() {
