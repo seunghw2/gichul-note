@@ -2,6 +2,7 @@ import "./style.css";
 import { BANKS } from "./data";
 import { seenOnboarding, showOnboarding } from "./onboarding";
 import { markActive, pageview, track, trackOnce } from "./stats";
+import { applyImport, localSummary, makeLink, readIncoming, summarize } from "./transfer";
 import { I } from "./icons";
 import { addToday, clearRun, loadPrefs, loadTheme, loadToday, saveTheme, type Theme, loadRun, loadSubject, savePrefs, saveRun, saveSubject, type SavedRun, type SubjectState } from "./store";
 import type { LoadedBank, Q } from "./types";
@@ -101,6 +102,7 @@ function statRow(s: ReturnType<typeof stats>, wrongLabel: string) {
     <div class="stat"><b>${s.done}<span class="num" style="font-size:14.5px;color:var(--ink-3)">/${s.total}</span></b><span>푼 문제</span></div>
     <div class="stat"><b>${s.rate === null ? "–" : s.rate + "%"}</b><span>정답률</span></div>
     <div class="stat"><b>${s.wrong}</b><span>${wrongLabel}</span></div>
+    <div class="stat"><b>${loadToday().n}</b><span>오늘 푼 문제</span></div>
   </div>`;
 }
 
@@ -113,11 +115,6 @@ function applyTheme(t: Theme) {
 applyTheme(loadTheme());
 
 /* ---------- 홈 ---------- */
-function todayLine() {
-  const t = loadToday();
-  return `<p class="today">${t.n ? `오늘 <b class="num">${t.n}</b>문제 풀었어요 · 정답 <b class="num">${t.ok}</b>` : "오늘은 아직 푼 문제가 없어요"}</p>`;
-}
-
 /* ---------- 숨은 통계 화면: 홈 로고를 2초 안에 5번 누르면 열림 (GitHub Actions가 1시간마다 만드는 stats.json) ---------- */
 type QStat = { n: number; ok: number; wrong: number };
 type StatRange = {
@@ -347,6 +344,97 @@ function openStatQuestion(n: number) {
 const noticeBanner = () =>
   `<button class="notice" data-act="notice"><span class="ic">📣</span><b>온라인 시험 1,2차 문항 공유 부탁드립니다</b><span class="go">›</span></button>`;
 
+/* ---------- 기록 옮기기: 링크 보내기 시트 / 받는 기기 확인 화면 ---------- */
+const sumTiles = (x: { solved: number; wrong: number; bm: number }) =>
+  `<div class="tr-sum"><div><b class="num">${x.solved}</b><span>푼 문제</span></div><div><b class="num">${x.wrong}</b><span>오답노트</span></div><div><b class="num">${x.bm}</b><span>북마크</span></div></div>`;
+
+function openTransfer() {
+  const sheet = document.createElement("div");
+  sheet.className = "sheet-wrap";
+  sheet.innerHTML = `
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="tr-title">
+      <div class="grab"></div>
+      <h3 id="tr-title">기록 옮기기</h3>
+      <p>이 기기의 풀이 기록·오답노트·북마크를 링크 하나로 다른 기기에 옮겨요. 링크를 새 기기에서 열면 가져올 수 있어요.</p>
+      ${sumTiles(localSummary())}
+      ${typeof navigator.share === "function" ? '<button class="next" data-tr="share">링크 보내기 (카톡 나와의 채팅)</button>' : ""}
+      <button class="btn" data-tr="copy">링크 복사</button>
+      <p class="tr-warn">⚠︎ 링크를 받은 사람은 이 기록을 가져갈 수 있어요. 나에게만 보내세요.</p>
+    </div>`;
+  document.body.appendChild(sheet);
+  sheet.addEventListener("click", async (e) => {
+    const b = (e.target as HTMLElement).closest<HTMLElement>("[data-tr]");
+    if (!b && e.target === sheet) return sheet.remove();
+    if (!b) return;
+    const url = await makeLink();
+    trackOnce("transfer/send", "day");
+    if (b.dataset.tr === "share") {
+      try {
+        await navigator.share({ title: "기출노트 기록 옮기기", text: "기출노트 기록 옮기기 — 새 기기에서 이 링크를 여세요", url });
+        sheet.remove();
+      } catch {
+        /* 공유창을 닫은 경우 */
+      }
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      toast("링크를 복사했어요. 새 기기에서 열어 주세요");
+      sheet.remove();
+    } catch {
+      prompt("아래 링크를 복사하세요", url);
+    }
+  });
+}
+
+/** 받는 기기: #import= 링크로 열렸으면 확인 화면 */
+async function checkIncoming(): Promise<boolean> {
+  const p = await readIncoming();
+  if (!p) return false;
+  if (p === "error") {
+    toast("링크가 잘려서 가져올 수 없어요. 링크 전체를 다시 열어 주세요");
+    return true;
+  }
+  const inc = summarize(p.d);
+  const cur = localSummary();
+  const hasLocal = cur.solved + cur.wrong + cur.bm > 0;
+  const el = document.createElement("div");
+  el.className = "tr-full";
+  el.setAttribute("role", "dialog");
+  el.setAttribute("aria-modal", "true");
+  el.innerHTML = `
+    <div class="tr-in">
+      <span class="pin">기록 가져오기</span>
+      <h2>다른 기기의 기록이 도착했어요</h2>
+      <p>${new Date(p.t).toLocaleString("ko-KR", { month: "numeric", day: "numeric", hour: "numeric", minute: "2-digit" })}에 보낸 기록이에요.</p>
+      ${sumTiles(inc)}
+      ${
+        hasLocal
+          ? `<p class="tr-sub">이 기기에도 기록이 있어요 (푼 문제 ${cur.solved})</p>
+             <label class="tr-opt"><input type="radio" name="trm" value="merge" checked><span><b>합치기</b><small>오답노트·북마크는 모두 모으고 푼 횟수는 더해요</small></span></label>
+             <label class="tr-opt"><input type="radio" name="trm" value="overwrite"><span><b>덮어쓰기</b><small>이 기기 기록을 지우고 받은 기록으로 바꿔요</small></span></label>`
+          : ""
+      }
+      <div class="tr-foot"><button class="next" data-tri="ok">가져오기</button><button class="btn" data-tri="cancel">취소</button></div>
+    </div>`;
+  document.body.appendChild(el);
+  el.addEventListener("click", (e) => {
+    const b = (e.target as HTMLElement).closest<HTMLElement>("[data-tri]");
+    if (!b) return;
+    if (b.dataset.tri === "ok") {
+      const mode = (el.querySelector<HTMLInputElement>('input[name="trm"]:checked')?.value ?? "merge") as "merge" | "overwrite";
+      applyImport(p, mode);
+      try {
+        sessionStorage.setItem("gichul:imported", "1");
+      } catch {
+        /* 무시 */
+      }
+      location.reload();
+    } else el.remove();
+  });
+  return true;
+}
+
 function openNotice() {
   trackOnce("notice/open", "day");
   const sheet = document.createElement("div");
@@ -389,12 +477,11 @@ function renderHome() {
     <div class="bar"><div class="brandline" style="flex:1"><span class="logo" data-act="logo">기출<b>노트</b></span></div>
       <button class="icon-btn" data-act="onboarding" aria-label="사용법 보기">${I.help}</button>
       <button class="icon-btn" data-act="theme" aria-label="화면 테마: ${THEME_LABEL[loadTheme()]}">${I[loadTheme() === "system" ? "auto" : loadTheme() === "light" ? "sun" : "moon"]}</button></div>
-    ${todayLine()}
     ${noticeBanner()}
     <div class="eyebrow">과목</div>
     <div style="display:grid;gap:12px">${cards}</div>
     ${liveCard()}
-    <p class="note">풀이 기록과 북마크는 이 기기의 브라우저에 저장됩니다.</p>`;
+    <p class="note">풀이 기록과 북마크는 이 기기의 브라우저에 저장됩니다. · <button class="linkbtn" data-act="transfer">기록 옮기기</button></p>`;
 }
 
 /* ---------- 과목 ---------- */
@@ -848,6 +935,7 @@ $app.addEventListener("click", (e) => {
   if (d.start) return view === "end" ? startSession(d.start as Kind) : chooseSession(d.start as Kind);
   if (d.act === "onboarding") return showOnboarding();
   if (d.act === "notice") return openNotice();
+  if (d.act === "transfer") return openTransfer();
   if (d.act === "logo") return tapLogo();
   if (d.lvbar) return pickLiveBar(Number(d.lvbar));
   if (d.shour) {
@@ -1019,4 +1107,15 @@ document.addEventListener("touchend", () => {
 document.addEventListener("touchcancel", resetGesture);
 
 showRoute(history.state as Route | null);
-if (!seenOnboarding()) showOnboarding();
+// 기록 옮기기 링크로 열렸으면 온보딩 대신 가져오기 확인
+checkIncoming().then((incoming) => {
+  if (!incoming && !seenOnboarding()) showOnboarding();
+});
+try {
+  if (sessionStorage.getItem("gichul:imported")) {
+    sessionStorage.removeItem("gichul:imported");
+    setTimeout(() => toast("기록을 가져왔어요"), 300);
+  }
+} catch {
+  /* 무시 */
+}
