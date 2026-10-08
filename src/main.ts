@@ -127,7 +127,12 @@ type StatRange = {
   hours: number[]; questions: QStat[]; prev: { visitors: number; solved: number; ok: number };
   systems: { name: string; count: number }[];
 };
-type StatsData = { updated: string; ranges: Record<"today" | "week" | "month", StatRange>; daily: { day: string; visitors: number; solved: number }[] };
+type StatsData = {
+  updated: string;
+  ranges: Record<"today" | "week" | "month", StatRange>;
+  daily: { day: string; visitors: number; solved: number }[];
+  last24?: { hour: number; solved: number }[];
+};
 const RANGE_LABEL = { today: "오늘", week: "7일", month: "30일" } as const;
 const statsUi = { range: "today" as keyof typeof RANGE_LABEL, series: "solved" as "solved" | "visitors", data: undefined as StatsData | null | undefined };
 let logoTaps: number[] = [];
@@ -150,6 +155,36 @@ async function loadStats() {
     statsUi.data = null;
   }
   if (view === "stats") renderStats();
+  if (view === "home") renderHome();
+}
+
+/** 홈: 모두에게 보이는 '함께 공부하는 사람들' 카드 (오늘 방문자·푼 문제 + 지난 24시간 시간별 푼 문제) */
+function liveCard() {
+  if (statsUi.data === undefined) {
+    statsUi.data = null; // 중복 요청 방지
+    loadStats();
+    return "";
+  }
+  const d = statsUi.data;
+  const t = d?.ranges?.today;
+  if (!d || !t) return "";
+  const h = d.last24 ?? [];
+  const m = Math.max(1, ...h.map((x) => x.solved));
+  const last = h[h.length - 1];
+  const bars = h.length
+    ? `<div class="lv-bars" aria-label="지난 24시간 시간별 푼 문제 수">${h.map((x, i) => `<i class="${i === h.length - 1 ? "now" : ""}" style="height:${Math.max(4, (x.solved / m) * 100)}%"></i>`).join("")}</div>
+       <div class="lv-axis">${[0, 6, 12, 18, h.length - 1].map((i) => `<span>${h[i]?.hour ?? ""}시</span>`).join("")}</div>`
+    : "";
+  return `<div class="eyebrow">함께 공부하는 사람들</div>
+    <section class="lv">
+      <div class="lv-nums">
+        <div><b class="num">${t.visitors}</b><span>오늘 방문자</span></div>
+        <div><b class="num">${t.solved}</b><span>오늘 푼 문제</span></div>
+        ${last ? `<div class="lv-last"><b class="num">+${last.solved}문제</b><span>지난 1시간</span></div>` : ""}
+      </div>
+      ${bars}
+      <p class="lv-note">지난 24시간 시간별 푼 문제 · 1시간마다 갱신</p>
+    </section>`;
 }
 
 function renderStats() {
@@ -297,6 +332,7 @@ function renderHome() {
     ${noticeBanner()}
     <div class="eyebrow">과목</div>
     <div style="display:grid;gap:12px">${cards}</div>
+    ${liveCard()}
     <p class="note">풀이 기록과 북마크는 이 기기의 브라우저에 저장됩니다.</p>`;
 }
 

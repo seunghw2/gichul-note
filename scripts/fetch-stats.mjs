@@ -133,9 +133,25 @@ for (const [key, n] of Object.entries(ranges)) {
   };
   if (key === "month") month = cur;
 }
+// 홈 화면용: 지난 24시간(마지막 '다 지난' 시각까지) 시간별 푼 문제 수. GoatCounter 계정 시간대가 한국(KR.Asia/Seoul)이라 day·hourly가 한국 시간
+const lastFull = new Date(Math.floor(now.getTime() / 3600e3) * 3600e3 - 3600e3); // 다 지난 마지막 시각의 시작
+const h48 = await allHits(iso(new Date(lastFull.getTime() - 47 * 3600e3)), iso(endHour));
+const byHour = new Map();
+for (const h of h48) {
+  if (!isAnswer(h.path)) continue;
+  for (const st of h.stats ?? []) (st.hourly ?? []).forEach((v, i) => byHour.set(`${st.day} ${i}`, (byHour.get(`${st.day} ${i}`) ?? 0) + v));
+}
+out.last24 = Array.from({ length: 24 }, (_, k) => {
+  const t = new Date(lastFull.getTime() - (23 - k) * 3600e3 + 9 * 3600e3); // 한국 시각
+  const day = t.toISOString().slice(0, 10);
+  const hour = t.getUTCHours();
+  return { hour, solved: byHour.get(`${day} ${hour}`) ?? 0 };
+});
+
 const days = Array.from({ length: 30 }, (_, i) => kstDay(new Date(todayStart.getTime() - (29 - i) * DAY)));
 out.daily = daily(month ?? [], days);
-writeFileSync("public/stats.json", JSON.stringify(out));
 const t = out.ranges.today;
 console.log(`통계 저장: 오늘 방문 ${t.visitors} · 푼 문제 ${t.solved} · 문항 ${t.questions.length}개 / 30일 방문 ${out.ranges.month.visitors}`);
 console.log("일별 샘플:", JSON.stringify(out.daily.slice(-3)));
+writeFileSync("public/stats.json", JSON.stringify(out));
+console.log("24시간:", out.last24.map((x) => `${x.hour}시 ${x.solved}`).join(", "));

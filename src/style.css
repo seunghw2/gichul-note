@@ -348,3 +348,13 @@ html.onb-open,html.onb-open body{background:#0E3B36}
 .st-qsheet h3{font-size:17px;line-height:1.45}
 .st-choices{margin:0;padding:0;list-style:none;display:grid;gap:6px;font-size:14.5px}.st-choices li.ok{color:var(--ok);font-weight:700}
 .st-exp{font-size:14.5px;line-height:1.6;color:var(--ink);background:var(--surface-2);border-radius:12px;padding:12px}
+
+/* 홈: 함께 공부하는 사람들 */
+.lv{background:var(--surface);border-radius:20px;padding:16px;box-shadow:var(--shadow)}
+.lv-nums{display:flex;gap:22px;align-items:flex-end}
+.lv-nums b{display:block;font-size:24px}.lv-nums span{font-size:12.5px;color:var(--ink-3)}
+.lv-last{margin-left:auto;text-align:right}.lv-last b{font-size:16px;color:var(--brand)}
+.lv-bars{display:flex;align-items:flex-end;gap:2px;height:64px;margin-top:14px}
+.lv-bars i{flex:1;background:var(--brand);opacity:.75;border-radius:2px 2px 0 0}.lv-bars i.now{background:var(--mark);opacity:1}
+.lv-axis{display:flex;justify-content:space-between;font-size:11px;color:var(--ink-3);margin-top:5px}
+.lv-note{font-size:12px;color:var(--ink-3);margin:8px 0 0}
