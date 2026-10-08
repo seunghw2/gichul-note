@@ -210,7 +210,11 @@ if (process.env.STATS_KEY) {
   const { webcrypto } = await import("node:crypto");
   const salt = webcrypto.getRandomValues(new Uint8Array(16));
   const iv = webcrypto.getRandomValues(new Uint8Array(12));
-  const base = await webcrypto.subtle.importKey("raw", new TextEncoder().encode(process.env.STATS_KEY), "PBKDF2", false, ["deriveKey"]);
+  // 앞뒤 공백·줄바꿈을 지우고 한글 자모 조합 방식(NFC)을 맞춘다 — 폰에서 입력한 값과 같게
+  const raw = process.env.STATS_KEY;
+  const pass = raw.trim().normalize("NFC");
+  console.log(`STATS_KEY 길이 ${raw.length} → 정리 후 ${pass.length} (값은 출력 안 함)`);
+  const base = await webcrypto.subtle.importKey("raw", new TextEncoder().encode(pass), "PBKDF2", false, ["deriveKey"]);
   const key = await webcrypto.subtle.deriveKey({ name: "PBKDF2", salt, iterations: 100000, hash: "SHA-256" }, base, { name: "AES-GCM", length: 256 }, false, ["encrypt"]);
   const data = new Uint8Array(await webcrypto.subtle.encrypt({ name: "AES-GCM", iv }, key, new TextEncoder().encode(JSON.stringify(rows))));
   const b64 = (x) => Buffer.from(x).toString("base64");

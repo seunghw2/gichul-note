@@ -285,7 +285,7 @@ type UserRow = { id: string; distinct: number; today: number; week: number; last
 const KEY_STORE = "gichul:stats-pass";
 const b64 = (s: string) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
 async function decryptUsers(enc: { salt: string; iv: string; data: string }, pass: string): Promise<UserRow[]> {
-  const base = await crypto.subtle.importKey("raw", new TextEncoder().encode(pass), "PBKDF2", false, ["deriveKey"]);
+  const base = await crypto.subtle.importKey("raw", new TextEncoder().encode(pass.trim().normalize("NFC")), "PBKDF2", false, ["deriveKey"]);
   const key = await crypto.subtle.deriveKey({ name: "PBKDF2", salt: b64(enc.salt), iterations: 100000, hash: "SHA-256" }, base, { name: "AES-GCM", length: 256 }, false, ["decrypt"]);
   const plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv: b64(enc.iv) }, key, b64(enc.data));
   return JSON.parse(new TextDecoder().decode(plain));
@@ -305,7 +305,7 @@ async function drawUsers() {
     /* 무시 */
   }
   const askPass = (msg = "") => {
-    box.innerHTML = `<form class="st-pass"><input type="password" placeholder="통계 비밀번호" autocomplete="current-password"><button class="btn" type="submit">열기</button></form>${msg ? `<p class="st-note" style="color:var(--bad)">${msg}</p>` : ""}`;
+    box.innerHTML = `<form class="st-pass"><input type="password" placeholder="통계 비밀번호" autocomplete="current-password" autocapitalize="off" autocorrect="off" spellcheck="false"><button class="btn" type="submit">열기</button></form>${msg ? `<p class="st-note" style="color:var(--bad)">${msg}</p>` : ""}`;
     box.querySelector("form")!.addEventListener("submit", (e) => {
       e.preventDefault();
       const v = box.querySelector("input")!.value;
