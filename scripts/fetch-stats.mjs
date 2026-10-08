@@ -97,6 +97,16 @@ function summarize(hits) {
     noticeKbi: c("notice/kbi"),
     hours,
     visitHours,
+    newVisitors: c("visit/new"),
+    returning: c("visit/return"),
+    streak3: c("streak/3plus"),
+    bookmarks: hits
+      .map((h) => ({ m: /^bm\/q(\d+)$/.exec(h.path), count: h.count }))
+      .filter((x) => x.m)
+      .map((x) => ({ n: Number(x.m[1]), count: x.count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10),
+    modes: Object.fromEntries(["all", "wrong", "bm", "often"].map((k) => [k, { start: sum(new RegExp(`^start/[a-z]+/${k}$`)), finish: sum(new RegExp(`^finish/[a-z]+/${k}$`)) }])),
     questions: qs,
   };
 }
@@ -114,6 +124,11 @@ function daily(hits, days) {
   }
   // 새 신호가 없던 날은 예전 앱 실행 신호로 대신
   return [...map.values()].map(({ launches, ...v }) => ({ ...v, visitors: v.visitors || launches }));
+}
+
+async function toprefs(start, end) {
+  const r = await api("/stats/toprefs", new URLSearchParams({ start, end, limit: "6" }));
+  return (r?.stats ?? []).map((s) => ({ name: s.name, count: s.count }));
 }
 
 async function systems(start, end) {
@@ -140,6 +155,7 @@ for (const [key, n] of Object.entries(ranges)) {
     ...s,
     prev: { visitors: p.visitors, solved: p.solved, ok: p.ok },
     systems: await systems(iso(start), iso(endHour)),
+    refs: await toprefs(iso(start), iso(endHour)),
   };
   if (key === "month") month = cur;
 }

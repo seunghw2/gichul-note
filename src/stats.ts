@@ -31,10 +31,13 @@ export function pageview(view: string) {
 export const track = (name: string) => send({ path: name, title: name, event: true });
 
 /** 이 기기에서 하루(day) 또는 한 시간(hour)에 한 번만 보내는 신호 → GoatCounter에서 '사람 수'로 읽힘 */
-export function trackOnce(name: string, per: "day" | "hour") {
+const p2 = (n: number) => String(n).padStart(2, "0");
+const dayStr = (d: Date) => `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`;
+
+/** ever = 이 기기에서 딱 한 번 */
+export function trackOnce(name: string, per: "day" | "hour" | "ever") {
   const d = new Date();
-  const p2 = (n: number) => String(n).padStart(2, "0");
-  const bucket = `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}${per === "hour" ? ` ${p2(d.getHours())}` : ""}`;
+  const bucket = per === "ever" ? "1" : `${dayStr(d)}${per === "hour" ? ` ${p2(d.getHours())}` : ""}`;
   const key = `gichul:gc-once:${name}`;
   try {
     if (localStorage.getItem(key) === bucket) return;
@@ -45,8 +48,32 @@ export function trackOnce(name: string, per: "day" | "hour") {
   track(name);
 }
 
-/** 방문자 신호: 오늘 방문자(하루 1번) + 이 시간 활동한 사람(한 시간 1번) */
+/** 방문자 신호: 오늘 방문자(하루 1번) + 이 시간 활동한 사람(한 시간 1번)
+    하루 첫 방문 때 처음 온 사람인지(visit/new) 다시 온 사람인지(visit/return), 3일 이상 연속인지(streak/3plus)도 함께 */
 export function markActive() {
+  const today = dayStr(new Date());
+  let prev: string | null = null;
+  let hasRecords = false;
+  try {
+    prev = localStorage.getItem("gichul:gc-once:visit/day");
+    hasRecords = Object.keys(localStorage).some((k) => /^gichul:[^:]+$/.test(k) && !/^gichul:(prefs|theme|onboarded|today)$/.test(k));
+  } catch {
+    /* 무시 */
+  }
+  if (prev !== today) {
+    track(prev || hasRecords ? "visit/return" : "visit/new");
+    const y = new Date();
+    y.setDate(y.getDate() - 1);
+    let streak = 1;
+    try {
+      const last = JSON.parse(localStorage.getItem("gichul:gc-streak") ?? "null") as { d: string; n: number } | null;
+      streak = last && last.d === dayStr(y) ? last.n + 1 : 1;
+      localStorage.setItem("gichul:gc-streak", JSON.stringify({ d: today, n: streak }));
+    } catch {
+      /* 무시 */
+    }
+    if (streak >= 3) track("streak/3plus");
+  }
   trackOnce("visit/day", "day");
   trackOnce("visit/hour", "hour");
 }

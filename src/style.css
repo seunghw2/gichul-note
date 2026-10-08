@@ -362,3 +362,11 @@ html.onb-open,html.onb-open body{background:#0E3B36}
 .lv-bars:has(.sel) button:not(.sel) i{opacity:.35}.lv-bars .sel i{background:var(--mark);opacity:1}
 .lv-axis{display:flex;justify-content:space-between;font-size:11px;color:var(--ink-3);margin-top:5px}
 .lv-note{font-size:12px;color:var(--ink-3);margin:8px 0 0}
+.st-split{display:flex;height:16px;border-radius:6px;overflow:hidden;background:var(--surface-2)}.st-split i{display:block}
+.st-leg{display:flex;flex-wrap:wrap;gap:12px;font-size:12.5px;color:var(--ink-2);margin-top:8px}.st-leg i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.st-mini3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.st-mini3 div{background:var(--surface-2);border-radius:12px;padding:10px;text-align:center;display:grid}.st-mini3 b{font-size:18px}.st-mini3 span{font-size:12px;color:var(--ink-3)}
+.st-q>b.num{flex:none;font-size:13.5px}
+/* 태블릿·PC: 온보딩 내용을 앱과 같은 폭(480px) 가운데 칸에 */
+.onb-slide{padding-inline:max(26px,calc((100vw - 480px) / 2 + 26px))}
+.onb-foot{padding-inline:max(22px,calc((100vw - 480px) / 2 + 22px))}
+.onb-skip{right:max(16px,calc((100vw - 480px) / 2 + 16px))}

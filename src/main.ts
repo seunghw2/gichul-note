@@ -124,7 +124,10 @@ type StatRange = {
   visitors: number; homescreen: number; browser: number; solved: number; ok: number; wrong: number;
   starts: number; startsByTab: { exam: number; book: number }; progress10: number; finishes: number;
   onboardingDone: number; onboardingSkip: number[]; noticeOpen: number; noticeKbi: number;
-  hours: number[]; visitHours?: number[]; questions: QStat[]; prev: { visitors: number; solved: number; ok: number };
+  hours: number[]; visitHours?: number[]; questions: QStat[];
+  newVisitors?: number; returning?: number; streak3?: number;
+  bookmarks?: { n: number; count: number }[]; modes?: Record<string, { start: number; finish: number }>;
+  refs?: { name: string; count: number }[]; prev: { visitors: number; solved: number; ok: number };
   systems: { name: string; count: number }[];
 };
 type StatsData = {
@@ -239,8 +242,8 @@ function renderStats() {
   const funnel = `<div class="st-fun">${steps.map(([l, v, u]) => `<div><span>${l}</span><i style="width:calc((100% - 140px) * ${Math.max(0.02, v / fmax).toFixed(3)})"></i><b class="num">${v}${u}</b></div>`).join("")}</div>
     <p class="st-note">풀이 시작: 기출 ${s.startsByTab.exam} · 교재 ${s.startsByTab.book}</p>`;
   // 오답률 높은 문항: 3명 이상 푼 문항만
-  const qs = s.questions.filter((q) => q.ok + q.wrong >= 3 && q.wrong).sort((a, b) => b.wrong / (b.ok + b.wrong) - a.wrong / (a.ok + a.wrong) || b.wrong - a.wrong).slice(0, 10);
   const qText = new Map(BANKS.flatMap((b) => b.questions).map((q) => [q.n, q.q]));
+  const qs = s.questions.filter((q) => qText.has(q.n) && q.ok + q.wrong >= 3 && q.wrong).sort((a, b) => b.wrong / (b.ok + b.wrong) - a.wrong / (a.ok + a.wrong) || b.wrong - a.wrong).slice(0, 10);
   const qList = qs.length
     ? qs.map((q) => {
         const r = Math.round((q.wrong / (q.ok + q.wrong)) * 100);
@@ -274,7 +277,50 @@ function renderStats() {
     ${card("기기 · 실행 방식", "", devices)}
     ${card("온보딩", "", kv("끝까지 봄", String(s.onboardingDone)) + skips)}
     ${card("공지", "", kv("배너 열람", String(s.noticeOpen)) + kv("kbi 링크 클릭", `${s.noticeKbi} (${pct(s.noticeKbi, s.noticeOpen)})`))}
+    ${extraCards(s, kv, pct, card)}
     <p class="st-note">방문자·공지·온보딩은 기기마다 하루 1번(시간대는 한 시간에 1번), 푼 문제·풀이는 전부 셉니다. 7일·30일 방문자는 하루 방문자의 합이에요. 광고 차단기 사용자는 빠져요.</p>`;
+}
+
+/** 통계 화면 추가 카드: 새/재방문, 1인당, 유형·기출/교재 정답률, 커버리지, 모드별, 북마크, 유입 */
+function extraCards(s: StatRange, kv: (l: string, v: string) => string, pct: (a: number, b: number) => string, card: (t: string, sub: string, body: string) => string) {
+  const allQ = BANKS.flatMap((b) => b.questions);
+  const byN = new Map(allQ.map((q) => [q.n, q]));
+  const nv = s.newVisitors ?? 0, rv = s.returning ?? 0, tv = nv + rv;
+  const split = tv
+    ? `<div class="st-split"><i style="width:${(nv / tv) * 100}%;background:var(--mark)"></i><i style="width:${(rv / tv) * 100}%;background:var(--brand)"></i></div>
+       <div class="st-leg"><span><i style="background:var(--mark)"></i>처음 온 사람 ${nv}</span><span><i style="background:var(--brand)"></i>다시 온 사람 ${rv}</span></div>
+       <p class="st-note">3일 이상 연속으로 온 사람 ${s.streak3 ?? 0}명</p>`
+    : '<p class="st-note">아직 데이터가 없어요 (오늘부터 집계)</p>';
+  const per = (a: number, b: number) => (b ? (a / b).toFixed(1) : "–");
+  const perCap = `<div class="st-mini3"><div><b class="num">${per(s.solved, s.visitors)}</b><span>푼 문제</span></div><div><b class="num">${per(s.starts, s.visitors)}</b><span>풀이 시작</span></div><div><b class="num">${pct(s.finishes, s.starts)}</b><span>끝까지 비율</span></div></div>`;
+  // 문항별 숫자를 문제은행과 맞춰 유형별·기출/교재별 정답률 계산
+  const agg = (pick: (q: Q) => boolean) => {
+    let ok = 0, all = 0;
+    for (const x of s.questions) {
+      const q = byN.get(x.n);
+      if (q && pick(q)) (ok += x.ok), (all += x.ok + x.wrong);
+    }
+    return all ? `${Math.round((ok / all) * 100)}% (${all})` : "–";
+  };
+  const types = (["ox", "mc", "short"] as const).map((t) => kv(TYPE_LABEL[t], agg((q) => q.type === t))).join("");
+  const tabs = kv("온라인 시험 기출", agg((q) => inTab(q, "exam"))) + kv("교재 문항", agg((q) => inTab(q, "book")));
+  const touched = s.questions.filter((x) => byN.has(x.n) && x.ok + x.wrong > 0).length;
+  const cover = `<div class="st-split"><i style="width:${(touched / allQ.length) * 100}%;background:var(--brand)"></i></div>
+    <div class="st-leg"><span><i style="background:var(--brand)"></i>누군가 푼 문항 ${touched}</span><span><i style="background:var(--surface-2)"></i>아직 아무도 안 푼 ${allQ.length - touched}</span></div>`;
+  const MODE: Record<string, string> = { all: "문제 풀기", wrong: "오답노트", bm: "북마크", often: "자주 틀린 문제" };
+  const modes = Object.keys(MODE).map((k) => kv(MODE[k], `${s.modes?.[k]?.start ?? 0}회 → ${s.modes?.[k]?.finish ?? 0}회`)).join("");
+  const bms = s.bookmarks?.length
+    ? s.bookmarks.map((b) => `<button class="st-q" data-sq="${b.n}"><span class="n num">${b.n}</span><span class="t">${esc(byN.get(b.n)?.q ?? "")}</span><b class="num">${b.count}명</b></button>`).join("")
+    : '<p class="st-note">아직 없어요</p>';
+  const refs = s.refs?.length ? s.refs.map((r) => kv(esc(r.name || "직접 접속(홈 화면 앱·주소 입력)"), String(r.count))).join("") : '<p class="st-note">아직 없어요</p>';
+  return `${card("새 방문 vs 다시 온 사람", "", split)}
+    ${card("1인당", "", perCap)}
+    ${card("유형별 정답률", "", types)}
+    ${card("기출 vs 교재 정답률", "", tabs)}
+    ${card("문항 커버리지", `전체 ${allQ.length}문항`, cover)}
+    ${card("모드별 사용", "시작 → 끝까지", modes)}
+    ${card("북마크 많은 문항", "탭하면 해설", `<div class="st-qs">${bms}</div>`)}
+    ${card("유입 경로", "", refs)}`;
 }
 
 /** 통계 화면에서 문항을 누르면 문제·정답·해설 시트 */
@@ -760,6 +806,7 @@ function toggleBookmark(n: number) {
   const on = !st.bm.includes(n);
   st.bm = on ? [...st.bm, n] : st.bm.filter((x) => x !== n);
   saveSubject(bank.id, st);
+  if (on) trackOnce(`bm/q${n}`, "ever"); // 문항마다 이 기기에서 한 번만 → '북마크한 사람 수'
 }
 
 function go(fn: () => void) {
