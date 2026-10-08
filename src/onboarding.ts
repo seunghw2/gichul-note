@@ -47,7 +47,7 @@ const stepsMini = ADD_STEPS.map(
 ).join("");
 
 const SLIDES = [
-  { n: "01 · 바로 채점", h: "풀자마자<br>정답과 해설", p: "NotebookLM과 Claude Code로<br>교재를 대조해 쓴 해설이에요.<br>원문과 쪽수도 함께 나와요.", pip: oxMini + answerCard },
+  { n: "01 · 바로 채점", h: "교재로 검증한<br>해설 한 장", p: "NotebookLM과 Claude Code로<br>교재를 대조해 쓴 해설이에요.<br>원문과 쪽수도 함께 나와요.", pip: oxMini + answerCard },
   { n: "02 · 나눠서 관리", h: "기출과 교재,<br>오답은 따로", p: "틀린 문제는 오답노트에 자동으로,<br>맞히면 바로 빠져요.", pip: tabMini },
   { n: "03 · 앱처럼", h: "홈 화면에<br>추가하세요", p: `세 번만 누르면 앱처럼 써요.<br>${ADD_OTHER}`, pip: stepsMini },
   {
