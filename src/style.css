@@ -407,3 +407,8 @@ body.has-tabs .app{padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
 .more-row .ic{width:34px;height:34px;flex:none;border-radius:10px;background:var(--brand-soft);color:var(--brand);display:grid;place-items:center}
 .more-row b{flex:1;font-weight:600}.more-row .r{color:var(--ink-3);font-size:14px}
 .tabbar[hidden]{display:none}
+/* 탭바 위치 고정: 아이폰 홈 화면 앱에서 bottom:0 기준이 화면마다 달라져 위아래로 움직이던 문제 →
+   화면 전체 높이(100lvh) 기준 위에서부터 위치를 잡고, 탭바 높이를 고정 */
+html{background:var(--ground)}
+.tabbar{--tbh:calc(64px + env(safe-area-inset-bottom,0px));bottom:auto;top:calc(100vh - var(--tbh));top:calc(100lvh - var(--tbh));height:var(--tbh);align-items:flex-start}
+body.has-tabs .app{padding-bottom:calc(88px + env(safe-area-inset-bottom,0px))}
