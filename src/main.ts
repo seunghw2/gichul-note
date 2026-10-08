@@ -200,14 +200,30 @@ function openAdminSheet() {
   setTimeout(() => input.focus(), 50);
 }
 
+/** 통계 파일 받기: 받는 중엔 이미 있는 데이터로 그대로 보여주고, 새 파일이 실제로 바뀌었을 때만 다시 그린다(깜빡임 방지) */
+let statsLoading = false;
 async function loadStats() {
+  if (statsLoading) return;
+  statsLoading = true;
+  let next: StatsData | null = null;
   try {
     const r = await fetch(`./stats.json?t=${Date.now()}`, { cache: "no-store" });
-    statsUi.data = r.ok ? await r.json() : null;
+    next = r.ok ? await r.json() : null;
   } catch {
-    statsUi.data = null;
+    /* 네트워크 오류: 있던 데이터 유지 */
   }
-  if (view === "stats") renderStats();
+  statsLoading = false;
+  const prev = statsUi.data;
+  // 새 파일이 있고 기준 시각이 바뀌었거나, 처음 받는 경우에만 다시 그림
+  const changed = next ? !prev || next.updated !== prev.updated : prev === undefined;
+  if (next) statsUi.data = next;
+  else if (prev === undefined) statsUi.data = null;
+  if (!changed) return;
+  if (view === "stats") {
+    const y = window.scrollY;
+    renderStats();
+    window.scrollTo(0, y);
+  }
   if (view === "home") renderHome();
 }
 
@@ -227,7 +243,6 @@ function pickLiveBar(i: number) {
 /** 홈: 모두에게 보이는 '함께 공부하는 사람들' 카드 (오늘 방문자·푼 문제 + 지난 24시간 시간별 푼 문제) */
 function liveCard() {
   if (statsUi.data === undefined) {
-    statsUi.data = null; // 중복 요청 방지
     loadStats();
     return "";
   }
@@ -257,7 +272,7 @@ function renderStats() {
   view = "stats";
   syncTabbar();
   const head = (sub: string) => `<div class="bar tabhead"><h1>통계</h1><span class="st-upd">${sub}</span></div>`;
-  if (statsUi.data === undefined) {
+  if (statsUi.data === undefined || (statsUi.data === null && statsLoading)) {
     $app.innerHTML = head("") + '<p class="st-note">불러오는 중…</p>';
     loadStats();
     return;
@@ -336,6 +351,7 @@ function renderStats() {
 /* 사용자별 표: stats.json의 users는 STATS_KEY(비밀번호)로 암호화(PBKDF2 + AES-GCM) — 이 폰에서 한 번 입력하면 기억 */
 type UserRow = { id: string; distinct: number; today: number; week: number; last: string };
 const KEY_STORE = "gichul:stats-pass";
+let usersCache: { data: string; pass: string; rows: UserRow[] } | null = null;
 const b64 = (s: string) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
 async function decryptUsers(enc: { salt: string; iv: string; data: string }, pass: string): Promise<UserRow[]> {
   const base = await crypto.subtle.importKey("raw", new TextEncoder().encode(pass.trim().normalize("NFC")), "PBKDF2", false, ["deriveKey"]);
@@ -376,7 +392,8 @@ async function drawUsers() {
   if (!pass) return askPass();
   let rows: UserRow[];
   try {
-    rows = await decryptUsers(enc, pass);
+    rows = usersCache?.data === enc.data && usersCache.pass === pass ? usersCache.rows : await decryptUsers(enc, pass);
+    usersCache = { data: enc.data, pass, rows };
   } catch {
     try {
       localStorage.removeItem(KEY_STORE);
@@ -485,7 +502,7 @@ function goTab(k: TabKey) {
   const route = { ...(k === "more" || k === "stats" ? { view: k as View } : { view: k as View, bank: bank.id }), fromHome };
   if (view === "home") history.pushState(route, "");
   else history.replaceState(route, "");
-  if (k === "stats") statsUi.data = undefined; // 들어올 때마다 최신 통계
+  if (k === "stats") loadStats(); // 있던 데이터로 바로 보여주고, 뒤에서 최신 파일 확인
   go(k === "subject" ? renderSubject : k === "review" ? renderReview : k === "stats" ? renderStats : renderMore);
 }
 $tabbar.addEventListener("click", (e) => {
@@ -829,7 +846,7 @@ function showRoute(r: Route | null, fromPop = false) {
       history.replaceState({ view: "home" } satisfies Route, "");
       return go(renderHome);
     }
-    statsUi.data = undefined;
+    loadStats();
     return go(renderStats);
   }
   if (r?.view === "more") return go(renderMore);
