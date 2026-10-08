@@ -1,4 +1,5 @@
 /* 첫 접속 온보딩: 브랜드 컬러 바탕의 넘겨보기 카드 4장. 기기에서 처음 한 번만, 홈의 ? 버튼으로 다시 보기 */
+import { track as trackEvent } from "./stats";
 const KEY = "gichul:onboarded";
 
 export function seenOnboarding() {
@@ -53,7 +54,7 @@ const SLIDES = [
   {
     n: "04 · 서버리스",
     h: "계정 없이,<br>이 기기에만",
-    p: '백엔드 없는 정적 웹앱(GitHub Pages)이라<br>가입·로그인 없이 바로 써요.<br>풀이 기록은 이 브라우저의<br>localStorage에만 저장돼요.<span class="ob-warn">⚠︎ 사이트 데이터를 지우면<br>기록도 함께 지워져요.</span>',
+    p: '백엔드 없는 정적 웹앱(GitHub Pages)이라<br>가입·로그인 없이 바로 써요.<br>풀이 기록은 이 브라우저의<br>localStorage에만 저장돼요.<br>익명 방문 통계만 GoatCounter로 수집해요.<span class="ob-warn">⚠︎ 사이트 데이터를 지우면<br>기록도 함께 지워져요.</span>',
   },
 ];
 
@@ -98,8 +99,15 @@ export function showOnboarding() {
   };
   el.addEventListener("click", (e) => {
     const a = (e.target as HTMLElement).closest<HTMLElement>("[data-onb]")?.dataset.onb;
-    if (a === "skip") close();
-    if (a === "next") (i === SLIDES.length - 1 ? close() : go(i + 1));
+    if (a === "skip") {
+      trackEvent(`onboarding/skip-${i + 1}`);
+      close();
+    }
+    if (a === "next") {
+      if (i < SLIDES.length - 1) return go(i + 1);
+      trackEvent("onboarding/done");
+      close();
+    }
   });
   // 장이 화면에 어느 정도 보이면 그 장의 등장 애니메이션을 한 번만 재생(다시 돌아와도 반복하지 않음)
   const io = new IntersectionObserver(

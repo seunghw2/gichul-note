@@ -1,6 +1,7 @@
 import "./style.css";
 import { BANKS } from "./data";
 import { seenOnboarding, showOnboarding } from "./onboarding";
+import { pageview, track } from "./stats";
 import { I } from "./icons";
 import { addToday, clearRun, loadPrefs, loadTheme, loadToday, saveTheme, type Theme, loadRun, loadSubject, savePrefs, saveRun, saveSubject, type SavedRun, type SubjectState } from "./store";
 import type { LoadedBank, Q } from "./types";
@@ -122,6 +123,7 @@ const noticeBanner = () =>
   `<button class="notice" data-act="notice"><span class="ic">📣</span><b>온라인 시험 1,2차 문항 공유 부탁드립니다</b><span class="go">›</span></button>`;
 
 function openNotice() {
+  track("notice/open");
   const sheet = document.createElement("div");
   sheet.className = "sheet-wrap";
   sheet.innerHTML = `
@@ -139,6 +141,7 @@ function openNotice() {
     </div>`;
   document.body.appendChild(sheet);
   sheet.addEventListener("click", (e) => {
+    if ((e.target as HTMLElement).closest("a")) return track("notice/kbi");
     const b = (e.target as HTMLElement).closest<HTMLElement>("[data-notice]");
     if (!b && e.target !== sheet) return;
     sheet.remove();
@@ -147,6 +150,7 @@ function openNotice() {
 
 function renderHome() {
   view = "home";
+  pageview("home");
   const cards = BANKS.map((b) => {
     const s = stats(b, loadSubject(b.id), null);
     const tabsMeta = (Object.keys(TABS) as Tab[]).filter((t) => visible(b, t).length).map((t) => `${TABS[t]} ${visible(b, t).length}`).join(" · ");
@@ -170,6 +174,7 @@ function renderHome() {
 /* ---------- 과목 ---------- */
 function renderSubject() {
   view = "subject";
+  pageview(`subject/${tab()}`);
   const s = stats(bank, st);
   const n = filtered().length;
   const chip = (k: "type", v: string, label: string) =>
@@ -320,6 +325,7 @@ const pushRoute = (v: View) => history.pushState(route(v), "");
 const replaceRoute = (v: View) => history.replaceState(route(v), "");
 
 function enterQuiz() {
+  if (session) track(`start/${tab()}/${session.kind}`);
   // 과목 화면에서 시작하면 한 단계 깊어지고, 결과 화면에서 다시 풀면 같은 깊이를 유지
   if (view === "subject") pushRoute("quiz");
   else replaceRoute("quiz");
@@ -362,6 +368,7 @@ function goBack() {
 function renderQuiz() {
   if (!session) return;
   view = "quiz";
+  pageview("quiz");
   const it = session.items[session.i];
   const q = it.q;
   const done = it.ok !== null;
@@ -445,6 +452,8 @@ function grade(ok: boolean) {
   const it = session.items[session.i];
   if (it.ok !== null) return;
   it.ok = ok;
+  track(ok ? "answer/ok" : "answer/wrong");
+  if (!ok) track(`wrong/q${it.q.n}`);
   addToday(ok);
   const q = it.q;
   const r = st.rec[q.n] ?? { tries: 0, miss: 0, last: false };
@@ -467,6 +476,7 @@ function renderEnd() {
   if (!session) return;
   clearRun(bank.id, runKind(session.kind));
   view = "end";
+  pageview("end");
   const items = session.items;
   const total = items.length;
   const ok = items.filter((it) => it.ok === true).length;
@@ -524,6 +534,7 @@ function reviewCards() {
 
 function renderReview() {
   view = "review";
+  pageview("review");
   const only = (v: Only, l: string) => `<button class="chip" data-only="${v}" aria-pressed="${reviewOpts.only === v}">${l}</button>`;
   $app.innerHTML = `
     <div class="bar"><button class="icon-btn" data-act="subject" aria-label="과목으로">${I.back}</button><h1>해설 훑어보기</h1></div>
@@ -601,6 +612,7 @@ $app.addEventListener("click", (e) => {
       return renderQuiz();
     }
     replaceRoute("end");
+    track(`finish/${tab()}/${session.kind}`);
     return renderEnd();
   }
   if (d.start) return view === "end" ? startSession(d.start as Kind) : chooseSession(d.start as Kind);
@@ -697,6 +709,7 @@ const $ptr = document.getElementById("ptr")!;
 const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 const standalone = (navigator as Navigator & { standalone?: boolean }).standalone === true || matchMedia("(display-mode: standalone)").matches;
 const customBack = !(isIOS && !standalone);
+track(standalone ? "launch/homescreen" : "launch/browser");
 let popAt = 0;
 let g: { x: number; y: number; mode: "back" | "pull" | null; d: number } | null = null;
 
