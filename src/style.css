@@ -169,7 +169,7 @@ svg{display:block}
 .rcard .src{font-size:14px;color:var(--ink-3);display:flex;gap:6px;align-items:center}
 .mode small .resume{font-style:normal;font-weight:600;color:var(--brand)}
 .mode.primary small .resume{color:var(--brand-ink);opacity:1}
-.sheet-wrap{position:fixed;inset:0;z-index:30;background:rgba(10,20,18,.45);display:flex;align-items:flex-end;justify-content:center;animation:fade .18s ease-out}
+.sheet-wrap{position:fixed;top:0;left:0;right:0;height:100vh;height:100lvh;z-index:30;background:rgba(10,20,18,.45);display:flex;align-items:flex-end;justify-content:center;animation:fade .18s ease-out}
 .sheet{width:100%;max-width:480px;background:var(--surface);border-radius:22px 22px 0 0;padding:10px 20px calc(20px + env(safe-area-inset-bottom,0px));display:grid;gap:12px;animation:up .22s ease-out}
 .sheet .grab{width:40px;height:4px;border-radius:4px;background:var(--line);margin:0 auto 4px}
 .sheet h3{margin:0;font-size:20px}
@@ -319,4 +319,3 @@ html.onb-open,html.onb-open body{background:#0E3B36}
 .nsteps li{display:flex;gap:10px;align-items:center;font-size:15.5px}
 .nsteps span{width:24px;height:24px;flex:none;border-radius:50%;background:var(--brand-soft);color:var(--brand);font-size:12.5px;font-weight:800;display:grid;place-items:center}
 .nsteps a{color:var(--brand);font-weight:700;text-decoration:underline;text-underline-offset:3px}
-.linkish{font-size:14px;color:var(--ink-3);padding:4px;justify-self:center}

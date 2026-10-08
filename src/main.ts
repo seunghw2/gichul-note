@@ -118,16 +118,8 @@ function todayLine() {
 }
 
 /* ---------- 공지: 온라인 시험 기출 캡처 공유 요청 ---------- */
-const NOTICE_KEY = "gichul:notice-hidden:share-v1";
-const noticeHidden = () => {
-  try {
-    return localStorage.getItem(NOTICE_KEY) === "1";
-  } catch {
-    return false;
-  }
-};
 const noticeBanner = () =>
-  noticeHidden() ? "" : `<button class="notice" data-act="notice"><span class="ic">📣</span><b>온라인 시험 1차, 2차 내용 공유 부탁드립니다</b><span class="go">›</span></button>`;
+  `<button class="notice" data-act="notice"><span class="ic">📣</span><b>온라인 시험 1차, 2차 내용 공유 부탁드립니다</b><span class="go">›</span></button>`;
 
 function openNotice() {
   const sheet = document.createElement("div");
@@ -144,21 +136,12 @@ function openNotice() {
         <li><span>3</span>카카오톡 단톡방이나 개인톡으로 보내기</li>
       </ol>
       <button class="btn" data-notice="ok">확인</button>
-      <button class="linkish" data-notice="hide">다시 보지 않기</button>
     </div>`;
   document.body.appendChild(sheet);
   sheet.addEventListener("click", (e) => {
     const b = (e.target as HTMLElement).closest<HTMLElement>("[data-notice]");
     if (!b && e.target !== sheet) return;
     sheet.remove();
-    if (b?.dataset.notice === "hide") {
-      try {
-        localStorage.setItem(NOTICE_KEY, "1");
-      } catch {
-        /* 무시 */
-      }
-      if (view === "home") renderHome();
-    }
   });
 }
 
