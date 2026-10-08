@@ -18,6 +18,8 @@ async function api(path, params) {
       await sleep(1000);
       continue;
     }
+    // 아직 기간 안에 데이터가 하나도 없으면 404 not found 가 온다 → 빈 결과로 처리
+    if (res.status === 404) return null;
     if (!res.ok) throw new Error(`${res.status} ${path}: ${await res.text()}`);
     await sleep(300); // 초당 4회 제한
     return res.json();
@@ -31,6 +33,7 @@ async function allHits(start, end) {
     const p = new URLSearchParams({ start, end, limit: "100" });
     if (out.size) p.set("exclude_paths", [...out.values()].map((h) => h.path_id).join(","));
     const r = await api("/stats/hits", p);
+    if (!r) break;
     const fresh = (r.hits ?? []).filter((h) => !out.has(h.path));
     fresh.forEach((h) => out.set(h.path, h));
     if (!r.more || !fresh.length) break;
