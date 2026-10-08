@@ -260,7 +260,8 @@ function renderStats() {
     ${s.systems.map((x) => kv(esc(x.name || "기타"), `${x.count} (${pct(x.count, sysTotal)})`)).join("")}`;
   const skips = s.onboardingSkip.map((v, i) => kv(`${i + 1}장에서 건너뜀`, String(v))).join("");
   $app.innerHTML = `${head(`${new Date(data.updated).toLocaleString("ko-KR", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })} 기준`)}
-    <div class="chips st-range">${(Object.keys(RANGE_LABEL) as (keyof typeof RANGE_LABEL)[]).map((k) => `<button class="chip" data-srange="${k}" aria-pressed="${k === statsUi.range}">${RANGE_LABEL[k]}</button>`).join("")}</div>
+    ${card("사용자별", "익명 번호 · 암호화 · 누적", '<div id="st-users"><p class="st-note">불러오는 중…</p></div>')}
+    <div class="chips st-range" style="margin-top:16px">${(Object.keys(RANGE_LABEL) as (keyof typeof RANGE_LABEL)[]).map((k) => `<button class="chip" data-srange="${k}" aria-pressed="${k === statsUi.range}">${RANGE_LABEL[k]}</button>`).join("")}</div>
     <div class="st-tiles">
       ${tile(s.visitors, "방문자", delta(s.visitors, s.prev.visitors))}
       ${tile(s.solved, "푼 문제", delta(s.solved, s.prev.solved))}
@@ -275,7 +276,6 @@ function renderStats() {
     ${card("온보딩", "", kv("끝까지 봄", String(s.onboardingDone)) + skips)}
     ${card("공지", "", kv("배너 열람", String(s.noticeOpen)) + kv("kbi 링크 클릭", `${s.noticeKbi} (${pct(s.noticeKbi, s.noticeOpen)})`))}
     ${extraCards(s, kv, pct, card)}
-    ${card("사용자별", "익명 번호 · 암호화", '<div id="st-users"><p class="st-note">불러오는 중…</p></div>')}
     <p class="st-note">방문자·공지·온보딩은 기기마다 하루 1번(시간대는 한 시간에 1번), 푼 문제·풀이는 전부 셉니다. 7일·30일 방문자는 하루 방문자의 합이에요. 광고 차단기 사용자는 빠져요.</p>`;
   drawUsers();
 }
