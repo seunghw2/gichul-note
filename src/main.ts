@@ -131,7 +131,7 @@ function openNotice() {
       <h3 id="notice-title">1차·2차, 한 장씩 모아요</h3>
       <p>1차와 2차 결과를 모두 캡처해 보내주시면 바로 정리해 올릴게요.</p>
       <ol class="nsteps">
-        <li><span>1</span><div><a href="https://www.kbi.or.kr" target="_blank" rel="noopener">www.kbi.or.kr</a> 접속</div></li>
+        <li><span>1</span><div><a href="https://www.kbi.or.kr/platformWeb/Appraisal.do?cmd=appraisalMentGo&pageName=appraisalMentList" target="_blank" rel="noopener">www.kbi.or.kr</a> 평가 결과 페이지 접속</div></li>
         <li><span>2</span>1차, 2차 결과 모두 캡처 (여러 장 OK)</li>
         <li><span>3</span>카카오톡 단톡방이나 개인톡으로 보내기</li>
       </ol>
