@@ -481,7 +481,12 @@ function renderHome() {
     <div class="eyebrow">과목</div>
     <div style="display:grid;gap:12px">${cards}</div>
     ${liveCard()}
-    <p class="note">풀이 기록과 북마크는 이 기기의 브라우저에 저장됩니다. · <button class="linkbtn" data-act="transfer">기록 옮기기</button></p>`;
+    <section class="keep" aria-label="기록 보관 안내">
+      <p><span class="ic" aria-hidden="true">📱</span>기록은 이 기기의 브라우저에만 저장돼요</p>
+      <p><span class="ic" aria-hidden="true">🗑</span>캐시·사이트 데이터를 지우면 사라져요</p>
+      <p><span class="ic" aria-hidden="true">🔁</span>기기를 바꿀 땐 먼저 기록을 옮기세요</p>
+      <button class="btn" data-act="transfer">기록 옮기기</button>
+    </section>`;
 }
 
 /* ---------- 과목 ---------- */

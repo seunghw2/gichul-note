@@ -389,3 +389,9 @@ html.onb-open,html.onb-open body{background:#0E3B36}
 .tr-opt input{accent-color:var(--brand);width:18px;height:18px;margin-top:2px}
 .tr-opt b{display:block;font-size:15.5px}.tr-opt small{display:block;font-size:13px;color:var(--ink-3);margin-top:2px}
 .tr-foot{margin-top:auto;display:grid;gap:8px}.tr-foot button{height:52px;width:100%}
+
+/* 홈 하단: 기록 보관 안내 */
+.keep{margin-top:20px;padding-top:14px;border-top:1px solid var(--line);display:grid;gap:4px}
+.keep p{display:flex;align-items:center;gap:10px;margin:0;font-size:14px;color:var(--ink-2);padding:3px 0}
+.keep .ic{width:26px;height:26px;flex:none;border-radius:8px;background:var(--surface-2);display:grid;place-items:center;font-size:13px}
+.keep .btn{margin-top:8px;height:46px;width:100%}
