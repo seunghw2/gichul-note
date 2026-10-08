@@ -106,6 +106,7 @@ function summarize(hits) {
       .map((x) => ({ n: Number(x.m[1]), count: x.count }))
       .sort((a, b) => b.count - a.count)
       .slice(0, 10),
+    devices: Object.fromEntries(hits.filter((h) => /^device\//.test(h.path)).map((h) => [h.path.slice(7), h.count])),
     modes: Object.fromEntries(["all", "wrong", "bm", "often"].map((k) => [k, { start: sum(new RegExp(`^start/[a-z]+/${k}$`)), finish: sum(new RegExp(`^finish/[a-z]+/${k}$`)) }])),
     questions: qs,
   };
@@ -154,8 +155,7 @@ for (const [key, n] of Object.entries(ranges)) {
   out.ranges[key] = {
     ...s,
     prev: { visitors: p.visitors, solved: p.solved, ok: p.ok },
-    systems: await systems(iso(start), iso(endHour)),
-    refs: await toprefs(iso(start), iso(endHour)),
+    systems: [],
   };
   if (key === "month") month = cur;
 }
