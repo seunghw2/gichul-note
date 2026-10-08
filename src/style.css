@@ -421,3 +421,12 @@ body.has-tabs .app{padding-bottom:calc(88px + env(safe-area-inset-bottom,0px))}
 .bar.tabhead{min-height:64px;padding-block:14px 10px}
 .bar.tabhead h1,.bar.tabhead .logo{font-size:24px;font-weight:700;letter-spacing:-.02em;line-height:1.3}
 .bar.tabhead+*{margin-top:4px}
+
+/* 숨은 통계: 사용자별 표 */
+.st-pass{display:flex;gap:8px}.st-pass input{flex:1;min-width:0;height:46px;border-radius:12px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);padding:0 12px;font-size:15px}.st-pass .btn{height:46px;padding:0 16px}
+.st-users{display:grid;font-size:13.5px}
+.st-users>div{display:grid;grid-template-columns:28px 1fr 56px 44px 44px 46px;gap:6px;align-items:center;padding:8px 2px;border-top:1px solid var(--line)}
+.st-users>div:first-child{border-top:0}
+.st-users .hd{font-size:11.5px;color:var(--ink-3);font-weight:600}
+.st-users>div>:nth-child(n+3){text-align:right}
+.st-users .me{background:var(--brand-soft);border-radius:10px;font-weight:700}

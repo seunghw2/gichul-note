@@ -5,7 +5,7 @@ import { trackOnce } from "./stats";
 
 const PREFIX = "gichul:";
 // 통계용 '오늘 보냄' 표시와 연속 방문 기록은 기기마다 따로 있어야 하므로 옮기지 않는다
-const SKIP = /^gichul:(gc-once:|gc-streak$)/;
+const SKIP = /^gichul:(gc-once:|gc-streak$|stats-pass$)/;
 
 type Payload = { v: 1; t: number; d: Record<string, string> };
 type SubjectLike = { rec?: Record<string, { tries: number; miss: number; last: boolean }>; bm?: number[]; wrong?: number[] };

@@ -1,7 +1,7 @@
 import "./style.css";
 import { BANKS } from "./data";
 import { seenOnboarding, showOnboarding } from "./onboarding";
-import { markActive, pageview, track, trackOnce } from "./stats";
+import { anonId, backfillSolved, markActive, pageview, track, trackOnce, trackSolve } from "./stats";
 import { applyImport, localSummary, makeLink, readIncoming, summarize } from "./transfer";
 import { I } from "./icons";
 import { addToday, clearRun, loadPrefs, loadTheme, loadToday, saveTheme, type Theme, loadRun, loadSubject, savePrefs, saveRun, saveSubject, type SavedRun, type SubjectState } from "./store";
@@ -275,7 +275,66 @@ function renderStats() {
     ${card("온보딩", "", kv("끝까지 봄", String(s.onboardingDone)) + skips)}
     ${card("공지", "", kv("배너 열람", String(s.noticeOpen)) + kv("kbi 링크 클릭", `${s.noticeKbi} (${pct(s.noticeKbi, s.noticeOpen)})`))}
     ${extraCards(s, kv, pct, card)}
+    ${card("사용자별", "익명 번호 · 암호화", '<div id="st-users"><p class="st-note">불러오는 중…</p></div>')}
     <p class="st-note">방문자·공지·온보딩은 기기마다 하루 1번(시간대는 한 시간에 1번), 푼 문제·풀이는 전부 셉니다. 7일·30일 방문자는 하루 방문자의 합이에요. 광고 차단기 사용자는 빠져요.</p>`;
+  drawUsers();
+}
+
+/* 사용자별 표: stats.json의 users는 STATS_KEY(비밀번호)로 암호화(PBKDF2 + AES-GCM) — 이 폰에서 한 번 입력하면 기억 */
+type UserRow = { id: string; distinct: number; today: number; week: number; last: string };
+const KEY_STORE = "gichul:stats-pass";
+const b64 = (s: string) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
+async function decryptUsers(enc: { salt: string; iv: string; data: string }, pass: string): Promise<UserRow[]> {
+  const base = await crypto.subtle.importKey("raw", new TextEncoder().encode(pass), "PBKDF2", false, ["deriveKey"]);
+  const key = await crypto.subtle.deriveKey({ name: "PBKDF2", salt: b64(enc.salt), iterations: 100000, hash: "SHA-256" }, base, { name: "AES-GCM", length: 256 }, false, ["decrypt"]);
+  const plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv: b64(enc.iv) }, key, b64(enc.data));
+  return JSON.parse(new TextDecoder().decode(plain));
+}
+async function drawUsers() {
+  const box = document.getElementById("st-users");
+  const enc = (statsUi.data as unknown as { users?: { salt: string; iv: string; data: string } })?.users;
+  if (!box) return;
+  if (!enc) {
+    box.innerHTML = '<p class="st-note">아직 데이터가 없어요 (비밀값 STATS_KEY 설정 후 다음 갱신부터)</p>';
+    return;
+  }
+  let pass = "";
+  try {
+    pass = localStorage.getItem(KEY_STORE) ?? "";
+  } catch {
+    /* 무시 */
+  }
+  const askPass = (msg = "") => {
+    box.innerHTML = `<form class="st-pass"><input type="password" placeholder="통계 비밀번호" autocomplete="current-password"><button class="btn" type="submit">열기</button></form>${msg ? `<p class="st-note" style="color:var(--bad)">${msg}</p>` : ""}`;
+    box.querySelector("form")!.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const v = box.querySelector("input")!.value;
+      try {
+        localStorage.setItem(KEY_STORE, v);
+      } catch {
+        /* 무시 */
+      }
+      drawUsers();
+    });
+  };
+  if (!pass) return askPass();
+  let rows: UserRow[];
+  try {
+    rows = await decryptUsers(enc, pass);
+  } catch {
+    try {
+      localStorage.removeItem(KEY_STORE);
+    } catch {
+      /* 무시 */
+    }
+    return askPass("비밀번호가 맞지 않아요");
+  }
+  const me = anonId();
+  box.innerHTML = rows.length
+    ? `<div class="st-users"><div class="hd"><span>#</span><span>번호</span><span>푼 문제</span><span>오늘</span><span>7일</span><span>최근</span></div>
+       ${rows.map((r, i) => `<div class="${r.id === me ? "me" : ""}"><span class="num">${i + 1}</span><span>${r.id === me ? "나" : esc(r.id)}</span><b class="num">${r.distinct}</b><span class="num">${r.today}</span><span class="num">${r.week}</span><span>${esc(r.last.slice(5).replace("-", "/"))}</span></div>`).join("")}</div>
+       <p class="st-note">푼 문제 = 서로 다른 문항(누적) · 오늘·7일 = 푼 횟수(다시 푼 것 포함) · 기기 기준</p>`
+    : '<p class="st-note">아직 없어요</p>';
 }
 
 /** 통계 화면 추가 카드: 새/재방문, 1인당, 유형·기출/교재 정답률, 커버리지, 모드별, 북마크, 유입 */
@@ -398,7 +457,7 @@ function renderMore() {
       <p><span class="ic" aria-hidden="true">🗑</span>캐시·사이트 데이터를 지우면 사라져요</p>
       <p><span class="ic" aria-hidden="true">🔁</span>기기를 바꿀 땐 먼저 기록을 옮기세요</p>
     </section>
-    <p class="note">문제은행 ${BANKS.reduce((a, b) => a + b.questions.length, 0)}문항 · 익명 방문 통계만 수집해요</p>`;
+    <p class="note">문제은행 ${BANKS.reduce((a, b) => a + b.questions.length, 0)}문항 · 익명 방문·학습 통계(푼 문제 수 등)를 수집해요</p>`;
 }
 
 /* ---------- 공지: 온라인 시험 기출 캡처 공유 요청 ---------- */
@@ -830,6 +889,7 @@ function grade(ok: boolean) {
   it.ok = ok;
   // GoatCounter는 같은 사람·같은 이름 신호를 몇 시간 안엔 1번으로 세므로 문항 번호를 넣어 문항별로 센다(합계 = 푼 문제 수)
   track(`${ok ? "ok" : "wrong"}/q${it.q.n}`);
+  trackSolve(it.q.n);
   markActive();
   if (session.items.filter((x) => x.ok !== null).length === 10) track("progress/10");
   addToday(ok);
@@ -1126,6 +1186,7 @@ addEventListener("orientationchange", () => setTimeout(syncFullHeight, 300));
 const customBack = !(isIOS && !standalone);
 trackOnce(standalone ? "launch/homescreen" : "launch/browser", "day");
 markActive();
+backfillSolved(BANKS.flatMap((b) => Object.keys(loadSubject(b.id).rec).map(Number)));
 let popAt = 0;
 let g: { x: number; y: number; mode: "back" | "pull" | null; d: number } | null = null;
 

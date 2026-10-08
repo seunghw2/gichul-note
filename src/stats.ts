@@ -77,3 +77,43 @@ export function markActive() {
   trackOnce("visit/day", "day");
   trackOnce("visit/hour", "hour");
 }
+
+/* ---------- 사용자별 학습량(숨은 통계 전용): 기기마다 무작위 익명 번호 ---------- */
+const ID_KEY = "gichul:gc-id";
+export function anonId(): string {
+  try {
+    let id = localStorage.getItem(ID_KEY);
+    if (!id) {
+      id = "u" + Math.random().toString(36).slice(2, 8);
+      localStorage.setItem(ID_KEY, id);
+    }
+    return id;
+  } catch {
+    return "u-nostore";
+  }
+}
+const udKey = (n: number) => `gichul:gc-ud:${n}`;
+/** 문항을 채점할 때: ua(매번, 푼 횟수) + ud(이 기기에서 그 문항을 처음 풀 때만, 푼 문제 수) */
+export function trackSolve(n: number) {
+  const id = anonId();
+  track(`ua/${id}`);
+  try {
+    if (localStorage.getItem(udKey(n))) return;
+    localStorage.setItem(udKey(n), "1");
+  } catch {
+    return;
+  }
+  track(`ud/${id}`);
+}
+/** 이 기능 전에 이미 푼 문항을 한 번에 맞춰 보냄(문항마다 한 번) */
+export function backfillSolved(solved: number[]) {
+  const id = anonId();
+  const todo: number[] = [];
+  try {
+    for (const n of solved) if (!localStorage.getItem(udKey(n))) todo.push(n);
+    todo.forEach((n) => localStorage.setItem(udKey(n), "1"));
+  } catch {
+    return;
+  }
+  todo.forEach((_, i) => setTimeout(() => track(`ud/${id}`), 200 + i * 60));
+}

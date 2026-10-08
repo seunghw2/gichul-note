@@ -54,7 +54,7 @@ const SLIDES = [
   {
     n: "04 · 서버리스",
     h: "계정 없이,<br>이 기기에만",
-    p: '백엔드 없는 정적 웹앱(GitHub Pages)이라<br>가입·로그인 없이 바로 써요.<br>풀이 기록은 이 브라우저의<br>localStorage에만 저장돼요.<br>익명 방문 통계만 GoatCounter로 수집해요.<span class="ob-warn">⚠︎ 사이트 데이터를 지우면<br>기록도 함께 지워져요.</span>',
+    p: '백엔드 없는 정적 웹앱(GitHub Pages)이라<br>가입·로그인 없이 바로 써요.<br>풀이 기록은 이 브라우저의<br>localStorage에만 저장돼요.<br>익명 방문·학습 통계만 GoatCounter로 수집해요.<span class="ob-warn">⚠︎ 사이트 데이터를 지우면<br>기록도 함께 지워져요.</span>',
   },
 ];
 

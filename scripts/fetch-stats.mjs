@@ -184,6 +184,40 @@ out.last24 = Array.from({ length: 24 }, (_, k) => {
 
 const days = Array.from({ length: 30 }, (_, i) => kstDay(new Date(todayStart.getTime() - (29 - i) * DAY)));
 out.daily = daily(month ?? [], days);
+// ---- 사용자별(숨은 통계 전용): ud/<익명번호>=처음 푼 문항(누적 푼 문제 수), ua/<익명번호>=푼 횟수
+// 표는 STATS_KEY(비밀번호)로 암호화(PBKDF2-SHA256 10만 회 + AES-GCM)해서 넣는다. 키가 없으면 넣지 않음
+if (process.env.STATS_KEY) {
+  const allStart = iso(new Date("2026-10-01T00:00:00Z"));
+  const all = await allHits(allStart, iso(endHour));
+  const today = await allHits(iso(todayStart), iso(endHour));
+  const week = await allHits(iso(new Date(todayStart.getTime() - 6 * DAY)), iso(endHour));
+  const users = new Map();
+  const u = (id) => users.get(id) ?? users.set(id, { id, distinct: 0, today: 0, week: 0, last: "" }).get(id);
+  for (const h of all) {
+    const m = /^(ud|ua)\/(u[\w-]+)$/.exec(h.path);
+    if (!m) continue;
+    const r = u(m[2]);
+    if (m[1] === "ud") r.distinct += h.count;
+    for (const st of h.stats ?? []) if ((st.daily ?? 0) > 0 && st.day > r.last) r.last = st.day;
+  }
+  for (const [list, key] of [[today, "today"], [week, "week"]]) {
+    for (const h of list) {
+      const m = /^ua\/(u[\w-]+)$/.exec(h.path);
+      if (m) u(m[1])[key] += h.count;
+    }
+  }
+  const rows = [...users.values()].sort((a, b) => b.distinct - a.distinct || b.week - a.week);
+  const { webcrypto } = await import("node:crypto");
+  const salt = webcrypto.getRandomValues(new Uint8Array(16));
+  const iv = webcrypto.getRandomValues(new Uint8Array(12));
+  const base = await webcrypto.subtle.importKey("raw", new TextEncoder().encode(process.env.STATS_KEY), "PBKDF2", false, ["deriveKey"]);
+  const key = await webcrypto.subtle.deriveKey({ name: "PBKDF2", salt, iterations: 100000, hash: "SHA-256" }, base, { name: "AES-GCM", length: 256 }, false, ["encrypt"]);
+  const data = new Uint8Array(await webcrypto.subtle.encrypt({ name: "AES-GCM", iv }, key, new TextEncoder().encode(JSON.stringify(rows))));
+  const b64 = (x) => Buffer.from(x).toString("base64");
+  out.users = { salt: b64(salt), iv: b64(iv), data: b64(data) };
+  console.log(`사용자별: ${rows.length}명 (암호화)`);
+} else console.log("STATS_KEY 없음 — 사용자별 표 건너뜀");
+
 const t = out.ranges.today;
 console.log(`통계 저장: 오늘 방문 ${t.visitors} · 푼 문제 ${t.solved} · 문항 ${t.questions.length}개 / 30일 방문 ${out.ranges.month.visitors}`);
 console.log("일별 샘플:", JSON.stringify(out.daily.slice(-3)));
