@@ -310,3 +310,13 @@ html.onb-open,html.onb-open body{background:#0E3B36}
 @media (prefers-reduced-motion:reduce){
   .onb-slide *,.onb-slide>*{animation-duration:.01s!important;animation-delay:0s!important}
 }
+
+/* 홈 공지 배너 + 공지 시트 */
+.notice{display:flex;align-items:center;gap:8px;width:100%;margin-top:10px;padding:12px 14px;border-radius:14px;background:var(--brand-soft);color:var(--ink);text-align:left;font-size:15px}
+.notice b{flex:1;font-weight:600}.notice .go{color:var(--brand);font-size:19px;line-height:1}
+.sheet .pin{justify-self:start;font-size:12px;font-weight:700;color:var(--mark);background:var(--mark-soft);padding:3px 9px;border-radius:7px}
+.nsteps{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.nsteps li{display:flex;gap:10px;align-items:center;font-size:15.5px}
+.nsteps span{width:24px;height:24px;flex:none;border-radius:50%;background:var(--brand-soft);color:var(--brand);font-size:12.5px;font-weight:800;display:grid;place-items:center}
+.nsteps a{color:var(--brand);font-weight:700;text-decoration:underline;text-underline-offset:3px}
+.linkish{font-size:14px;color:var(--ink-3);padding:4px;justify-self:center}

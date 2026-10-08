@@ -117,6 +117,51 @@ function todayLine() {
   return `<p class="today">${t.n ? `오늘 <b class="num">${t.n}</b>문제 풀었어요 · 정답 <b class="num">${t.ok}</b>` : "오늘은 아직 푼 문제가 없어요"}</p>`;
 }
 
+/* ---------- 공지: 온라인 시험 기출 캡처 공유 요청 ---------- */
+const NOTICE_KEY = "gichul:notice-hidden:share-v1";
+const noticeHidden = () => {
+  try {
+    return localStorage.getItem(NOTICE_KEY) === "1";
+  } catch {
+    return false;
+  }
+};
+const noticeBanner = () =>
+  noticeHidden() ? "" : `<button class="notice" data-act="notice"><span class="ic">📣</span><b>온라인 시험 1차, 2차 내용 공유 부탁드립니다</b><span class="go">›</span></button>`;
+
+function openNotice() {
+  const sheet = document.createElement("div");
+  sheet.className = "sheet-wrap";
+  sheet.innerHTML = `
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="notice-title">
+      <div class="grab"></div>
+      <span class="pin">공지</span>
+      <h3 id="notice-title">1차·2차, 한 장씩 모아요</h3>
+      <p>시험 본 회차의 문제지나 정답지 캡처를 보내주시면 바로 정리해 올릴게요.</p>
+      <ol class="nsteps">
+        <li><span>1</span><div><a href="https://www.kbi.or.kr" target="_blank" rel="noopener">www.kbi.or.kr</a> 접속</div></li>
+        <li><span>2</span>1차·2차 중 본 회차 캡처 (여러 장 OK)</li>
+        <li><span>3</span>카카오톡 단톡방이나 개인톡으로 보내기</li>
+      </ol>
+      <button class="btn" data-notice="ok">확인</button>
+      <button class="linkish" data-notice="hide">다시 보지 않기</button>
+    </div>`;
+  document.body.appendChild(sheet);
+  sheet.addEventListener("click", (e) => {
+    const b = (e.target as HTMLElement).closest<HTMLElement>("[data-notice]");
+    if (!b && e.target !== sheet) return;
+    sheet.remove();
+    if (b?.dataset.notice === "hide") {
+      try {
+        localStorage.setItem(NOTICE_KEY, "1");
+      } catch {
+        /* 무시 */
+      }
+      if (view === "home") renderHome();
+    }
+  });
+}
+
 function renderHome() {
   view = "home";
   const cards = BANKS.map((b) => {
@@ -133,6 +178,7 @@ function renderHome() {
       <button class="icon-btn" data-act="onboarding" aria-label="사용법 보기">${I.help}</button>
       <button class="icon-btn" data-act="theme" aria-label="화면 테마: ${THEME_LABEL[loadTheme()]}">${I[loadTheme() === "system" ? "auto" : loadTheme() === "light" ? "sun" : "moon"]}</button></div>
     ${todayLine()}
+    ${noticeBanner()}
     <div class="eyebrow">과목</div>
     <div style="display:grid;gap:12px">${cards}</div>
     <p class="note">풀이 기록과 북마크는 이 기기의 브라우저에 저장됩니다.</p>`;
@@ -576,6 +622,7 @@ $app.addEventListener("click", (e) => {
   }
   if (d.start) return view === "end" ? startSession(d.start as Kind) : chooseSession(d.start as Kind);
   if (d.act === "onboarding") return showOnboarding();
+  if (d.act === "notice") return openNotice();
   if (d.act === "theme") {
     const order: Theme[] = ["system", "light", "dark"];
     const next = order[(order.indexOf(loadTheme()) + 1) % 3];
