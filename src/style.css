@@ -410,5 +410,9 @@ body.has-tabs .app{padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
 /* 탭바 위치 고정: 아이폰 홈 화면 앱에서 bottom:0 기준이 화면마다 달라져 위아래로 움직이던 문제 →
    화면 전체 높이(100lvh) 기준 위에서부터 위치를 잡고, 탭바 높이를 고정 */
 html{background:var(--ground)}
-.tabbar{--tbh:calc(64px + env(safe-area-inset-bottom,0px));bottom:auto;top:calc(100vh - var(--tbh));top:calc(100lvh - var(--tbh));height:var(--tbh);align-items:flex-start}
+.tabbar{--tbh:calc(60px + env(safe-area-inset-bottom,0px));height:var(--tbh);align-items:flex-start}
+/* 홈 화면 앱: 실제 화면 높이 기준으로 위치 고정 + 문서가 화면 끝까지 덮도록 */
+html.standalone{min-height:calc(100% + env(safe-area-inset-top,0px))}
+html.standalone .tabbar{bottom:auto;top:calc(var(--full-h) - var(--tbh))}
+html.standalone .sheet-wrap,html.standalone .onb,html.standalone .tr-full{height:var(--full-h)}
 body.has-tabs .app{padding-bottom:calc(88px + env(safe-area-inset-bottom,0px))}

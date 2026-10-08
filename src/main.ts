@@ -1112,6 +1112,17 @@ const $edge = document.getElementById("edge")!;
 const $ptr = document.getElementById("ptr")!;
 const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 const standalone = (navigator as Navigator & { standalone?: boolean }).standalone === true || matchMedia("(display-mode: standalone)").matches;
+// 아이폰 홈 화면 앱(상태바 투명)에서는 100%·100vh·100lvh가 실제 화면보다 상태바만큼 짧게 잡혀
+// 아래 고정 요소(탭바·시트)가 화면마다 위로 떠 보인다 → 실제 화면 높이(screen)로 맞춘다
+function syncFullHeight() {
+  if (!standalone) return;
+  const full = innerWidth < innerHeight ? Math.max(screen.height, screen.width) : Math.min(screen.height, screen.width);
+  document.documentElement.classList.add("standalone");
+  document.documentElement.style.setProperty("--full-h", `${full}px`);
+}
+syncFullHeight();
+addEventListener("resize", syncFullHeight);
+addEventListener("orientationchange", () => setTimeout(syncFullHeight, 300));
 const customBack = !(isIOS && !standalone);
 trackOnce(standalone ? "launch/homescreen" : "launch/browser", "day");
 markActive();
