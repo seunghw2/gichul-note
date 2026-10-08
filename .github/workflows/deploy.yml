@@ -4,6 +4,9 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  # 1시간마다 GoatCounter 통계를 받아 stats.json으로 함께 배포 (숨은 통계 화면용)
+  schedule:
+    - cron: "7 * * * *"
 
 permissions:
   contents: read
@@ -27,6 +30,11 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
+      - name: Fetch stats
+        run: node scripts/fetch-stats.mjs
+        continue-on-error: true
+        env:
+          GOATCOUNTER_TOKEN: ${{ secrets.GOATCOUNTER_TOKEN }}
       - run: npm run build
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3

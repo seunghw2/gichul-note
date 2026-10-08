@@ -118,6 +118,69 @@ function todayLine() {
   return `<p class="today">${t.n ? `오늘 <b class="num">${t.n}</b>문제 풀었어요 · 정답 <b class="num">${t.ok}</b>` : "오늘은 아직 푼 문제가 없어요"}</p>`;
 }
 
+/* ---------- 숨은 통계 화면: 홈 로고를 연속 5번 누르면 열림 (GitHub Actions가 1시간마다 만드는 stats.json) ---------- */
+type StatSum = {
+  visitors: number; homescreen: number; solved: number; ok: number; wrong: number; starts: number; finishes: number;
+  startsByTab: { exam: number; book: number }; onboardingDone: number; onboardingSkip: number; noticeOpen: number; noticeKbi: number;
+  topWrong: { n: number; ok: number; wrong: number }[];
+};
+let logoTaps: number[] = [];
+function tapLogo() {
+  const now = Date.now();
+  logoTaps = [...logoTaps.filter((t) => now - t < 2000), now];
+  if (logoTaps.length >= 5) {
+    logoTaps = [];
+    openStats();
+  }
+}
+
+async function openStats() {
+  const sheet = document.createElement("div");
+  sheet.className = "sheet-wrap";
+  sheet.innerHTML = `<div class="sheet stats" role="dialog" aria-modal="true" aria-label="사용 통계"><div class="grab"></div><h3>사용 통계</h3><p class="st-note">불러오는 중…</p></div>`;
+  document.body.appendChild(sheet);
+  sheet.addEventListener("click", (e) => {
+    const t = (e.target as HTMLElement).closest<HTMLElement>("[data-range]");
+    if (t) return draw(t.dataset.range as "today" | "week");
+    if (e.target === sheet || (e.target as HTMLElement).closest("[data-close]")) sheet.remove();
+  });
+  const box = sheet.querySelector<HTMLElement>(".sheet")!;
+  let data: { updated: string; today: StatSum; week: StatSum } | null = null;
+  try {
+    const r = await fetch(`./stats.json?t=${Date.now()}`, { cache: "no-store" });
+    if (r.ok) data = await r.json();
+  } catch {
+    /* 네트워크 오류면 아래 안내 */
+  }
+  const qText = new Map(BANKS.flatMap((b) => b.questions).map((q) => [q.n, q.q]));
+  function draw(range: "today" | "week") {
+    if (!data) {
+      box.innerHTML = `<div class="grab"></div><h3>사용 통계</h3><p class="st-note">아직 통계가 없어요. GitHub Actions가 1시간마다 만들어요.</p><button class="btn" data-close>닫기</button>`;
+      return;
+    }
+    const s = data[range];
+    const rate = s.solved ? Math.round((s.ok / s.solved) * 100) + "%" : "–";
+    const tile = (v: string | number, l: string) => `<div class="st-tile"><b class="num">${v}</b><span>${l}</span></div>`;
+    const row = (l: string, v: string | number) => `<div class="st-row"><span>${l}</span><b class="num">${v}</b></div>`;
+    box.innerHTML = `<div class="grab"></div>
+      <h3>사용 통계</h3>
+      <div class="seg" role="tablist">${(["today", "week"] as const).map((k) => `<button role="tab" data-range="${k}" aria-selected="${k === range}">${k === "today" ? "오늘" : "최근 7일"}</button>`).join("")}</div>
+      <div class="st-tiles">${tile(s.visitors, "방문자")}${tile(s.solved, "푼 문제")}${tile(rate, "정답률")}</div>
+      <div class="st-list">
+        ${row("풀이 시작 (기출 / 교재)", `${s.starts} (${s.startsByTab.exam} / ${s.startsByTab.book})`)}
+        ${row("풀이 끝까지", s.finishes)}
+        ${row("홈 화면 앱으로 실행", s.homescreen)}
+        ${row("온보딩 완료 / 건너뜀", `${s.onboardingDone} / ${s.onboardingSkip}`)}
+        ${row("공지 열람 / kbi 클릭", `${s.noticeOpen} / ${s.noticeKbi}`)}
+      </div>
+      <div class="eyebrow" style="margin:4px 0 0">많이 틀린 문항</div>
+      ${s.topWrong.length ? `<ol class="st-wrong">${s.topWrong.map((w) => `<li><span class="num">${w.n}</span><span class="t">${esc(qText.get(w.n) ?? "")}</span><b class="num">${w.wrong}회</b></li>`).join("")}</ol>` : '<p class="st-note">아직 없어요</p>'}
+      <p class="st-note">기준 ${new Date(data.updated).toLocaleString("ko-KR", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })} · 1시간마다 갱신 · 같은 사람의 같은 동작은 몇 시간 안엔 1번으로 셈</p>
+      <button class="btn" data-close>닫기</button>`;
+  }
+  draw("today");
+}
+
 /* ---------- 공지: 온라인 시험 기출 캡처 공유 요청 ---------- */
 const noticeBanner = () =>
   `<button class="notice" data-act="notice"><span class="ic">📣</span><b>온라인 시험 1,2차 문항 공유 부탁드립니다</b><span class="go">›</span></button>`;
@@ -161,7 +224,7 @@ function renderHome() {
     </button>`;
   }).join("");
   $app.innerHTML = `
-    <div class="bar"><div class="brandline" style="flex:1"><span class="logo">기출<b>노트</b></span></div>
+    <div class="bar"><div class="brandline" style="flex:1"><span class="logo" data-act="logo">기출<b>노트</b></span></div>
       <button class="icon-btn" data-act="onboarding" aria-label="사용법 보기">${I.help}</button>
       <button class="icon-btn" data-act="theme" aria-label="화면 테마: ${THEME_LABEL[loadTheme()]}">${I[loadTheme() === "system" ? "auto" : loadTheme() === "light" ? "sun" : "moon"]}</button></div>
     ${todayLine()}
@@ -585,7 +648,7 @@ function go(fn: () => void) {
 }
 
 $app.addEventListener("click", (e) => {
-  const t = (e.target as HTMLElement).closest<HTMLElement>("button, [data-reveal]");
+  const t = (e.target as HTMLElement).closest<HTMLElement>("button, [data-reveal], [data-act=\"logo\"]");
   if (!t) return;
   const d = t.dataset;
   if (d.open) {
@@ -618,6 +681,7 @@ $app.addEventListener("click", (e) => {
   if (d.start) return view === "end" ? startSession(d.start as Kind) : chooseSession(d.start as Kind);
   if (d.act === "onboarding") return showOnboarding();
   if (d.act === "notice") return openNotice();
+  if (d.act === "logo") return tapLogo();
   if (d.act === "theme") {
     const order: Theme[] = ["system", "light", "dark"];
     const next = order[(order.indexOf(loadTheme()) + 1) % 3];
