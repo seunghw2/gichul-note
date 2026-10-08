@@ -128,8 +128,8 @@ function openNotice() {
     <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="notice-title">
       <div class="grab"></div>
       <span class="pin">공지</span>
-      <h3 id="notice-title">1차·2차, 한 장씩 모아요</h3>
-      <p>1차와 2차 결과를 모두 캡처해 보내주시면 바로 정리해 올릴게요.</p>
+      <h3 id="notice-title">1·2차 결과, 캡처해 주세요</h3>
+      <p>아래 순서대로 보내주시면 정리해서 추가할게요.</p>
       <ol class="nsteps">
         <li><span>1</span><div><a href="https://www.kbi.or.kr/platformWeb/Appraisal.do?cmd=appraisalMentGo&pageName=appraisalMentList" target="_blank" rel="noopener">www.kbi.or.kr</a> 평가 결과 페이지 접속</div></li>
         <li><span>2</span>1차, 2차 결과 모두 캡처 (여러 장 OK)</li>
