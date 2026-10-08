@@ -372,7 +372,7 @@ html.onb-open,html.onb-open body{background:#0E3B36}
 .onb-skip{right:max(16px,calc((100vw - 480px) / 2 + 16px))}
 
 /* 홈 통계 4칸 */
-.statrow{grid-template-columns:repeat(4,1fr)}
+.statrow{grid-template-columns:repeat(3,1fr)}
 /* 기록 옮기기 */
 .linkbtn{color:var(--brand);font-weight:600;text-decoration:underline;text-underline-offset:3px;font-size:inherit}
 .tr-sum{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}

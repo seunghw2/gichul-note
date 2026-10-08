@@ -100,7 +100,6 @@ const pct = (a: number, b: number) => (b ? (a / b) * 100 : 0);
 function statRow(s: ReturnType<typeof stats>, wrongLabel: string) {
   return `<div class="statrow">
     <div class="stat"><b>${s.done}<span class="num" style="font-size:14.5px;color:var(--ink-3)">/${s.total}</span></b><span>푼 문제</span></div>
-    <div class="stat"><b>${s.rate === null ? "–" : s.rate + "%"}</b><span>정답률</span></div>
     <div class="stat"><b>${s.wrong}</b><span>${wrongLabel}</span></div>
     <div class="stat"><b>${loadToday().n}</b><span>오늘 푼 문제</span></div>
   </div>`;
