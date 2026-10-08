@@ -4,6 +4,8 @@ const s = (body: string, size = 20, extra = 'fill="none" stroke="currentColor" s
 const bmPath = '<path d="M6 3h12v18l-6-4.5L6 21z"/>';
 
 export const I = {
+  chart: s('<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>', 22),
+  lock: s('<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>', 20),
   home: s('<path d="M3.5 10.5 12 3.5l8.5 7"/><path d="M5.5 9v11h13V9"/><path d="M10 20v-6h4v6"/>', 22),
   more: s('<circle cx="5" cy="12" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="19" cy="12" r="1.6" fill="currentColor"/>', 22),
   swap: s('<path d="M7 7h12l-3-3M17 17H5l3 3"/>', 20),

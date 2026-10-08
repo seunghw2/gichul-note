@@ -140,10 +140,64 @@ function tapLogo() {
   logoTaps = [...logoTaps.filter((t) => now - t < 2000), now];
   if (logoTaps.length >= 5) {
     logoTaps = [];
-    history.pushState({ view: "stats" } satisfies Route, "");
-    statsUi.data = undefined;
-    renderStats();
+    if (isAdmin()) goTab("stats");
+    else openAdminSheet();
   }
+}
+
+/* ---------- 관리자 모드: 통계 비밀번호를 한 번 맞히면 이 기기에 5번째 '통계' 탭(순위 + 사용 통계)이 생기고 계속 유지 ---------- */
+function isAdmin() {
+  try {
+    return !!localStorage.getItem(KEY_STORE);
+  } catch {
+    return false;
+  }
+}
+function openAdminSheet() {
+  const sheet = document.createElement("div");
+  sheet.className = "sheet-wrap";
+  sheet.innerHTML = `
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="adm-title">
+      <div class="grab"></div>
+      <h3 id="adm-title">관리자 확인</h3>
+      <p>통계 비밀번호를 입력하면 이 기기 하단에 <b>통계</b> 탭이 생겨요. 한 번 입력하면 계속 유지돼요.</p>
+      <form class="st-pass"><input type="password" placeholder="통계 비밀번호" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"><button class="next" type="submit">확인</button></form>
+      <label class="st-show"><input type="checkbox"> 입력한 글자 보기</label>
+      <p class="adm-msg" role="alert"></p>
+    </div>`;
+  document.body.appendChild(sheet);
+  const input = sheet.querySelector<HTMLInputElement>(".st-pass input")!;
+  const msg = sheet.querySelector<HTMLElement>(".adm-msg")!;
+  sheet.querySelector<HTMLInputElement>(".st-show input")!.addEventListener("change", (e) => (input.type = (e.target as HTMLInputElement).checked ? "text" : "password"));
+  sheet.addEventListener("click", (e) => {
+    if (e.target === sheet) sheet.remove();
+  });
+  sheet.querySelector("form")!.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    msg.textContent = "확인 중…";
+    let enc: { salt: string; iv: string; data: string } | undefined;
+    try {
+      const r = await fetch(`./stats.json?t=${Date.now()}`, { cache: "no-store" });
+      enc = r.ok ? (await r.json()).users : undefined;
+    } catch {
+      /* 아래 안내 */
+    }
+    if (!enc) return void (msg.textContent = "통계 데이터를 불러올 수 없어요. 잠시 뒤 다시 해 주세요");
+    try {
+      await decryptUsers(enc, input.value);
+    } catch {
+      return void (msg.textContent = "비밀번호가 맞지 않아요");
+    }
+    try {
+      localStorage.setItem(KEY_STORE, input.value);
+    } catch {
+      /* 무시 */
+    }
+    sheet.remove();
+    toast("관리자 모드를 켰어요");
+    goTab("stats");
+  });
+  setTimeout(() => input.focus(), 50);
 }
 
 async function loadStats() {
@@ -202,8 +256,7 @@ function liveCard() {
 function renderStats() {
   view = "stats";
   syncTabbar();
-  const head = (sub: string) =>
-    `<div class="bar"><button class="icon-btn" data-act="home" aria-label="홈으로">${I.back}</button><h1>사용 통계</h1><span class="st-upd">${sub}</span></div>`;
+  const head = (sub: string) => `<div class="bar tabhead"><h1>통계</h1><span class="st-upd">${sub}</span></div>`;
   if (statsUi.data === undefined) {
     $app.innerHTML = head("") + '<p class="st-note">불러오는 중…</p>';
     loadStats();
@@ -260,7 +313,7 @@ function renderStats() {
     ${s.systems.map((x) => kv(esc(x.name || "기타"), `${x.count} (${pct(x.count, sysTotal)})`)).join("")}`;
   const skips = s.onboardingSkip.map((v, i) => kv(`${i + 1}장에서 건너뜀`, String(v))).join("");
   $app.innerHTML = `${head(`${new Date(data.updated).toLocaleString("ko-KR", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })} 기준`)}
-    ${card("사용자별", "익명 번호 · 암호화 · 누적", '<div id="st-users"><p class="st-note">불러오는 중…</p></div>')}
+    ${card("사용자 순위", "푼 문제(누적) 순 · 익명 번호", '<div id="st-users"><p class="st-note">불러오는 중…</p></div>')}
     <div class="chips st-range" style="margin-top:16px">${(Object.keys(RANGE_LABEL) as (keyof typeof RANGE_LABEL)[]).map((k) => `<button class="chip" data-srange="${k}" aria-pressed="${k === statsUi.range}">${RANGE_LABEL[k]}</button>`).join("")}</div>
     <div class="st-tiles">
       ${tile(s.visitors, "방문자", delta(s.visitors, s.prev.visitors))}
@@ -403,20 +456,19 @@ function openStatQuestion(n: number) {
 }
 
 /* ---------- 하단 탭바: 홈 · 문제 풀기 · 해설 훑어보기 · 더보기 (풀이·결과·통계 화면에서는 숨김) ---------- */
-type TabKey = "home" | "subject" | "review" | "more";
-const TABBAR: [TabKey, string, string][] = [
-  ["home", "홈", I.home],
-  ["subject", "문제 풀기", I.play],
-  ["review", "해설 훑어보기", I.book],
-  ["more", "더보기", I.more],
-];
+type TabKey = "home" | "subject" | "review" | "stats" | "more";
+/** 관리자 기기는 5칸(통계 추가, '해설 훑어보기'는 '해설'로 줄임) */
+const tabList = (): [TabKey, string, string][] =>
+  isAdmin()
+    ? [["home", "홈", I.home], ["subject", "문제 풀기", I.play], ["review", "해설", I.book], ["stats", "통계", I.chart], ["more", "더보기", I.more]]
+    : [["home", "홈", I.home], ["subject", "문제 풀기", I.play], ["review", "해설 훑어보기", I.book], ["more", "더보기", I.more]];
 const $tabbar = document.getElementById("tabbar")!;
 function syncTabbar() {
-  const show = view === "home" || view === "subject" || view === "review" || view === "more";
+  const show = view === "home" || view === "subject" || view === "review" || view === "more" || view === "stats";
   $tabbar.hidden = !show;
   document.body.classList.toggle("has-tabs", show);
   if (!show) return;
-  $tabbar.innerHTML = TABBAR.map(
+  $tabbar.innerHTML = tabList().map(
     ([k, l, ic]) => `<button data-tab-go="${k}" aria-current="${view === k ? "page" : "false"}">${ic}<span>${l}</span></button>`,
   ).join("");
 }
@@ -430,10 +482,11 @@ function goTab(k: TabKey) {
     return go(renderHome);
   }
   const fromHome = view === "home" || !!history.state?.fromHome;
-  const route = { ...(k === "more" ? { view: "more" as View } : { view: k as View, bank: bank.id }), fromHome };
+  const route = { ...(k === "more" || k === "stats" ? { view: k as View } : { view: k as View, bank: bank.id }), fromHome };
   if (view === "home") history.pushState(route, "");
   else history.replaceState(route, "");
-  go(k === "subject" ? renderSubject : k === "review" ? renderReview : renderMore);
+  if (k === "stats") statsUi.data = undefined; // 들어올 때마다 최신 통계
+  go(k === "subject" ? renderSubject : k === "review" ? renderReview : k === "stats" ? renderStats : renderMore);
 }
 $tabbar.addEventListener("click", (e) => {
   const b = (e.target as HTMLElement).closest<HTMLElement>("[data-tab-go]");
@@ -454,6 +507,7 @@ function renderMore() {
       ${row("theme-more", I[t === "system" ? "auto" : t === "light" ? "sun" : "moon"], "화면 테마", THEME_LABEL[t])}
       ${row("onboarding", I.help, "사용법 보기")}
       ${row("notice", I.bell, "공지")}
+      ${isAdmin() ? row("admin-off", I.lock, "관리자 모드 끄기", "이 기기에서 통계 탭 숨김") : ""}
     </div>
     <section class="keep" aria-label="기록 보관 안내">
       <p><span class="ic" aria-hidden="true">📱</span>기록은 이 기기의 브라우저에만 저장돼요</p>
@@ -770,7 +824,14 @@ function enterQuiz() {
 /** 기록에 남은 화면을 그린다. 풀이·결과는 다시 그릴 수 없어서 과목 화면으로 보낸다 */
 function showRoute(r: Route | null, fromPop = false) {
   document.querySelector(".sheet-wrap")?.remove();
-  if (r?.view === "stats") return go(renderStats);
+  if (r?.view === "stats") {
+    if (!isAdmin()) {
+      history.replaceState({ view: "home" } satisfies Route, "");
+      return go(renderHome);
+    }
+    statsUi.data = undefined;
+    return go(renderStats);
+  }
   if (r?.view === "more") return go(renderMore);
   const b = r?.bank ? BANKS.find((x) => x.id === r.bank) : undefined;
   if (!r || r.view === "home" || !b) {
@@ -1078,6 +1139,15 @@ $app.addEventListener("click", (e) => {
     return renderStats();
   }
   if (d.sq) return openStatQuestion(Number(d.sq));
+  if (d.act === "admin-off") {
+    try {
+      localStorage.removeItem(KEY_STORE);
+    } catch {
+      /* 무시 */
+    }
+    toast("관리자 모드를 껐어요");
+    return renderMore();
+  }
   if (d.act === "theme-more") {
     const order: Theme[] = ["system", "light", "dark"];
     const next = order[(order.indexOf(loadTheme()) + 1) % 3];
