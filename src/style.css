@@ -353,12 +353,12 @@ html.onb-open,html.onb-open body{background:#0E3B36}
 .lv{background:var(--surface);border-radius:20px;padding:16px;box-shadow:var(--shadow)}
 .lv-nums{display:flex;gap:22px;align-items:flex-end}
 .lv-nums b{display:block;font-size:24px}.lv-nums span{font-size:12.5px;color:var(--ink-3)}
-.lv-last{margin-left:auto;text-align:right}.lv-last b{font-size:16px;color:var(--brand)}
+.lv-last{margin-left:auto;text-align:right}.lv-pair{display:flex;gap:10px;justify-content:flex-end}.lv-pair b{font-size:18px;color:var(--mark)}
 .lv-bars{display:flex;align-items:flex-end;gap:2px;height:64px;margin-top:14px}
 .lv-bars button{flex:1;height:100%;display:flex;align-items:flex-end;padding:0;min-width:0}
 .lv-bars i{display:block;width:100%;background:var(--brand);opacity:.75;border-radius:2px 2px 0 0;transition:opacity .2s,background .2s}
 .lv-bars .now i{background:var(--mark);opacity:1}
-.lv-bars .sel i{background:var(--ink);opacity:1}.lv-bars .dim i{opacity:.3}
-.lv-last.sel b{color:var(--mark)}
+
+.lv-bars:has(.sel) button:not(.sel) i{opacity:.35}.lv-bars .sel i{background:var(--mark);opacity:1}
 .lv-axis{display:flex;justify-content:space-between;font-size:11px;color:var(--ink-3);margin-top:5px}
 .lv-note{font-size:12px;color:var(--ink-3);margin:8px 0 0}

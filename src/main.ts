@@ -1,7 +1,7 @@
 import "./style.css";
 import { BANKS } from "./data";
 import { seenOnboarding, showOnboarding } from "./onboarding";
-import { pageview, track } from "./stats";
+import { markActive, pageview, track, trackOnce } from "./stats";
 import { I } from "./icons";
 import { addToday, clearRun, loadPrefs, loadTheme, loadToday, saveTheme, type Theme, loadRun, loadSubject, savePrefs, saveRun, saveSubject, type SavedRun, type SubjectState } from "./store";
 import type { LoadedBank, Q } from "./types";
@@ -124,17 +124,17 @@ type StatRange = {
   visitors: number; homescreen: number; browser: number; solved: number; ok: number; wrong: number;
   starts: number; startsByTab: { exam: number; book: number }; progress10: number; finishes: number;
   onboardingDone: number; onboardingSkip: number[]; noticeOpen: number; noticeKbi: number;
-  hours: number[]; questions: QStat[]; prev: { visitors: number; solved: number; ok: number };
+  hours: number[]; visitHours?: number[]; questions: QStat[]; prev: { visitors: number; solved: number; ok: number };
   systems: { name: string; count: number }[];
 };
 type StatsData = {
   updated: string;
   ranges: Record<"today" | "week" | "month", StatRange>;
   daily: { day: string; visitors: number; solved: number }[];
-  last24?: { hour: number; solved: number }[];
+  last24?: { hour: number; solved: number; visitors?: number }[];
 };
 const RANGE_LABEL = { today: "오늘", week: "7일", month: "30일" } as const;
-const statsUi = { range: "today" as keyof typeof RANGE_LABEL, series: "solved" as "solved" | "visitors", data: undefined as StatsData | null | undefined };
+const statsUi = { range: "today" as keyof typeof RANGE_LABEL, series: "solved" as "solved" | "visitors", hourSeries: "solved" as "solved" | "visitors", data: undefined as StatsData | null | undefined };
 let logoTaps: number[] = [];
 function tapLogo() {
   const now = Date.now();
@@ -158,31 +158,17 @@ async function loadStats() {
   if (view === "home") renderHome();
 }
 
-/** 홈 막대를 누르면 오른쪽 위 숫자가 그 시간 값으로 바뀜. 같은 막대를 다시 누르거나 4초 지나면 원래대로 */
+/** 홈 막대를 누르면 오른쪽 위에 그 시간의 방문자·푼 문제. 처음엔 가장 최근 한 시간이 선택돼 있음 */
 let lvSel = -1;
-let lvTimer = 0;
+const hourLabel = (x: { hour: number }) => `${x.hour}–${(x.hour + 1) % 24}시`;
 function pickLiveBar(i: number) {
   const h = statsUi.data?.last24;
   const box = document.querySelector<HTMLElement>(".lv-last");
-  if (!h || !box) return;
-  clearTimeout(lvTimer);
-  const reset = () => {
-    lvSel = -1;
-    const last = h[h.length - 1];
-    box.classList.remove("sel");
-    box.innerHTML = `<b class="num">+${last.solved}문제</b><span>최근 1시간 · ${last.hour}–${(last.hour + 1) % 24}시</span>`;
-    document.querySelectorAll(".lv-bars button").forEach((b) => b.classList.remove("sel", "dim"));
-  };
-  if (i === lvSel) return reset();
+  if (!h?.[i] || !box) return;
   lvSel = i;
   const x = h[i];
-  box.classList.add("sel");
-  box.innerHTML = `<b class="num">${x.solved}문제</b><span>${x.hour}–${(x.hour + 1) % 24}시</span>`;
-  document.querySelectorAll(".lv-bars button").forEach((b, k) => {
-    b.classList.toggle("sel", k === i);
-    b.classList.toggle("dim", k !== i);
-  });
-  lvTimer = window.setTimeout(reset, 4000);
+  box.innerHTML = `<div class="lv-pair"><b class="num">${x.visitors ?? 0}명</b><b class="num">${x.solved}문제</b></div><span>${hourLabel(x)} 방문자 · 푼 문제</span>`;
+  document.querySelectorAll(".lv-bars button").forEach((b, k) => b.classList.toggle("sel", k === i));
 }
 
 /** 홈: 모두에게 보이는 '함께 공부하는 사람들' 카드 (오늘 방문자·푼 문제 + 지난 24시간 시간별 푼 문제) */
@@ -199,7 +185,7 @@ function liveCard() {
   const m = Math.max(1, ...h.map((x) => x.solved));
   const last = h[h.length - 1];
   const bars = h.length
-    ? `<div class="lv-bars" aria-label="지난 24시간 시간별 푼 문제 수">${h.map((x, i) => `<button class="${i === h.length - 1 ? "now" : ""}" data-lvbar="${i}" aria-label="${x.hour}시 ${x.solved}문제"><i style="height:${Math.max(4, (x.solved / m) * 100)}%"></i></button>`).join("")}</div>
+    ? `<div class="lv-bars" aria-label="지난 24시간 시간별 푼 문제 수">${h.map((x, i) => `<button class="${i === h.length - 1 ? "sel" : ""}" data-lvbar="${i}" aria-label="${x.hour}시 방문자 ${x.visitors ?? 0}명 ${x.solved}문제"><i style="height:${Math.max(4, (x.solved / m) * 100)}%"></i></button>`).join("")}</div>
        <div class="lv-axis">${[0, 6, 12, 18, h.length - 1].map((i) => `<span>${h[i]?.hour ?? ""}시</span>`).join("")}</div>`
     : "";
   return `<div class="eyebrow">함께 공부하는 사람들</div>
@@ -207,10 +193,10 @@ function liveCard() {
       <div class="lv-nums">
         <div><b class="num">${t.visitors}</b><span>오늘 방문자</span></div>
         <div><b class="num">${t.solved}</b><span>오늘 푼 문제</span></div>
-        ${last ? `<div class="lv-last"><b class="num">+${last.solved}문제</b><span>최근 1시간 · ${last.hour}–${(last.hour + 1) % 24}시</span></div>` : ""}
+        ${last ? `<div class="lv-last"><div class="lv-pair"><b class="num">${last.visitors ?? 0}명</b><b class="num">${last.solved}문제</b></div><span>${hourLabel(last)} 방문자 · 푼 문제</span></div>` : ""}
       </div>
       ${bars}
-      <p class="lv-note">시간별 푼 문제 · 막대를 누르면 그 시간 숫자 · 1시간마다 갱신</p>
+      <p class="lv-note">막대는 시간별 푼 문제 · 누르면 그 시간 숫자 · 1시간마다 갱신</p>
     </section>`;
 }
 
@@ -248,9 +234,9 @@ function renderStats() {
   const dayLabel = (d: string) => `${Number(d.slice(5, 7))}/${Number(d.slice(8, 10))}`;
   const trend = barChart(days.map((d) => d[statsUi.series]), days.map((d) => dayLabel(d.day)), days.length - 1);
   // 사용 흐름
-  const steps: [string, number][] = [["방문", s.visitors], ["풀이 시작", s.starts], ["10문제 이상", s.progress10], ["끝까지", s.finishes]];
+  const steps: [string, number, string][] = [["방문자", s.visitors, "명"], ["풀이 시작", s.starts, "회"], ["10문제 이상", s.progress10, "회"], ["끝까지", s.finishes, "회"]];
   const fmax = Math.max(1, ...steps.map(([, v]) => v));
-  const funnel = `<div class="st-fun">${steps.map(([l, v]) => `<div><span>${l}</span><i style="width:calc((100% - 140px) * ${Math.max(0.02, v / fmax).toFixed(3)})"></i><b class="num">${v}</b></div>`).join("")}</div>
+  const funnel = `<div class="st-fun">${steps.map(([l, v, u]) => `<div><span>${l}</span><i style="width:calc((100% - 140px) * ${Math.max(0.02, v / fmax).toFixed(3)})"></i><b class="num">${v}${u}</b></div>`).join("")}</div>
     <p class="st-note">풀이 시작: 기출 ${s.startsByTab.exam} · 교재 ${s.startsByTab.book}</p>`;
   // 오답률 높은 문항: 3명 이상 푼 문항만
   const qs = s.questions.filter((q) => q.ok + q.wrong >= 3 && q.wrong).sort((a, b) => b.wrong / (b.ok + b.wrong) - a.wrong / (a.ok + a.wrong) || b.wrong - a.wrong).slice(0, 10);
@@ -262,7 +248,9 @@ function renderStats() {
       }).join("")
     : '<p class="st-note">3명 이상 푼 문항이 아직 없어요</p>';
   // 시간대
-  const hours = barChart(s.hours, s.hours.map((_, i) => `${i}시`));
+  const hv = statsUi.hourSeries === "visitors" ? (s.visitHours ?? Array(24).fill(0)) : s.hours;
+  const hours = barChart(hv, hv.map((_, i) => `${i}시`));
+  const hourToggle = `<span class="st-series">${(["solved", "visitors"] as const).map((k) => `<button data-shour="${k}" aria-pressed="${k === statsUi.hourSeries}">${k === "solved" ? "푼 문제" : "방문자"}</button>`).join("")}</span>`;
   // 기기·실행
   const sysTotal = s.systems.reduce((a, x) => a + x.count, 0);
   const launchTotal = s.homescreen + s.browser;
@@ -280,13 +268,13 @@ function renderStats() {
     </div>
     <p class="st-note">▲▼는 ${prevName} 같은 시각까지와 비교</p>
     ${card("일별 추이", `<span class="st-series">${(["solved", "visitors"] as const).map((k) => `<button data-sseries="${k}" aria-pressed="${k === statsUi.series}">${k === "solved" ? "푼 문제" : "방문자"}</button>`).join("")}</span>`, trend)}
-    ${card("사용 흐름", "방문 → 끝까지", funnel)}
+    ${card("사용 흐름", "방문자 → 끝까지", funnel)}
     ${card("오답률 높은 문항", "3명 이상 푼 문항 · 탭하면 해설", `<div class="st-qs">${qList}</div>`)}
-    ${card("공부하는 시간대", "푼 문제 기준", hours)}
+    ${card("공부하는 시간대", hourToggle, hours)}
     ${card("기기 · 실행 방식", "", devices)}
     ${card("온보딩", "", kv("끝까지 봄", String(s.onboardingDone)) + skips)}
     ${card("공지", "", kv("배너 열람", String(s.noticeOpen)) + kv("kbi 링크 클릭", `${s.noticeKbi} (${pct(s.noticeKbi, s.noticeOpen)})`))}
-    <p class="st-note">같은 사람의 같은 동작은 몇 시간 안엔 1번으로 세요. 광고 차단기를 쓰는 사람은 빠져요.</p>`;
+    <p class="st-note">방문자·공지·온보딩은 기기마다 하루 1번(시간대는 한 시간에 1번), 푼 문제·풀이는 전부 셉니다. 7일·30일 방문자는 하루 방문자의 합이에요. 광고 차단기 사용자는 빠져요.</p>`;
 }
 
 /** 통계 화면에서 문항을 누르면 문제·정답·해설 시트 */
@@ -314,7 +302,7 @@ const noticeBanner = () =>
   `<button class="notice" data-act="notice"><span class="ic">📣</span><b>온라인 시험 1,2차 문항 공유 부탁드립니다</b><span class="go">›</span></button>`;
 
 function openNotice() {
-  track("notice/open");
+  trackOnce("notice/open", "day");
   const sheet = document.createElement("div");
   sheet.className = "sheet-wrap";
   sheet.innerHTML = `
@@ -332,7 +320,7 @@ function openNotice() {
     </div>`;
   document.body.appendChild(sheet);
   sheet.addEventListener("click", (e) => {
-    if ((e.target as HTMLElement).closest("a")) return track("notice/kbi");
+    if ((e.target as HTMLElement).closest("a")) return trackOnce("notice/kbi", "day");
     const b = (e.target as HTMLElement).closest<HTMLElement>("[data-notice]");
     if (!b && e.target !== sheet) return;
     sheet.remove();
@@ -647,6 +635,7 @@ function grade(ok: boolean) {
   it.ok = ok;
   // GoatCounter는 같은 사람·같은 이름 신호를 몇 시간 안엔 1번으로 세므로 문항 번호를 넣어 문항별로 센다(합계 = 푼 문제 수)
   track(`${ok ? "ok" : "wrong"}/q${it.q.n}`);
+  markActive();
   if (session.items.filter((x) => x.ok !== null).length === 10) track("progress/10");
   addToday(ok);
   const q = it.q;
@@ -814,6 +803,10 @@ $app.addEventListener("click", (e) => {
   if (d.act === "notice") return openNotice();
   if (d.act === "logo") return tapLogo();
   if (d.lvbar) return pickLiveBar(Number(d.lvbar));
+  if (d.shour) {
+    statsUi.hourSeries = d.shour as typeof statsUi.hourSeries;
+    return renderStats();
+  }
   if (d.srange) {
     statsUi.range = d.srange as typeof statsUi.range;
     return renderStats();
@@ -914,7 +907,8 @@ const $ptr = document.getElementById("ptr")!;
 const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 const standalone = (navigator as Navigator & { standalone?: boolean }).standalone === true || matchMedia("(display-mode: standalone)").matches;
 const customBack = !(isIOS && !standalone);
-track(standalone ? "launch/homescreen" : "launch/browser");
+trackOnce(standalone ? "launch/homescreen" : "launch/browser", "day");
+markActive();
 let popAt = 0;
 let g: { x: number; y: number; mode: "back" | "pull" | null; d: number } | null = null;
 

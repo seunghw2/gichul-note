@@ -1,5 +1,5 @@
 /* 첫 접속 온보딩: 브랜드 컬러 바탕의 넘겨보기 카드 4장. 기기에서 처음 한 번만, 홈의 ? 버튼으로 다시 보기 */
-import { track as trackEvent } from "./stats";
+import { trackOnce } from "./stats";
 const KEY = "gichul:onboarded";
 
 export function seenOnboarding() {
@@ -100,12 +100,12 @@ export function showOnboarding() {
   el.addEventListener("click", (e) => {
     const a = (e.target as HTMLElement).closest<HTMLElement>("[data-onb]")?.dataset.onb;
     if (a === "skip") {
-      trackEvent(`onboarding/skip-${i + 1}`);
+      trackOnce(`onboarding/skip-${i + 1}`, "day");
       close();
     }
     if (a === "next") {
       if (i < SLIDES.length - 1) return go(i + 1);
-      trackEvent("onboarding/done");
+      trackOnce("onboarding/done", "day");
       close();
     }
   });
