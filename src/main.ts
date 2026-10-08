@@ -452,8 +452,8 @@ function grade(ok: boolean) {
   const it = session.items[session.i];
   if (it.ok !== null) return;
   it.ok = ok;
-  track(ok ? "answer/ok" : "answer/wrong");
-  if (!ok) track(`wrong/q${it.q.n}`);
+  // GoatCounter는 같은 사람·같은 이름 신호를 몇 시간 안엔 1번으로 세므로 문항 번호를 넣어 문항별로 센다(합계 = 푼 문제 수)
+  track(`${ok ? "ok" : "wrong"}/q${it.q.n}`);
   addToday(ok);
   const q = it.q;
   const r = st.rec[q.n] ?? { tries: 0, miss: 0, last: false };
