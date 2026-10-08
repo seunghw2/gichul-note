@@ -386,7 +386,7 @@ function renderMore() {
   const row = (act: string, ic: string, label: string, right = "") =>
     `<button class="more-row" data-act="${act}"><span class="ic">${ic}</span><b>${label}</b><span class="r">${right} ›</span></button>`;
   $app.innerHTML = `
-    <div class="bar"><h1 style="font-size:24px">더보기</h1></div>
+    <div class="bar tabhead"><h1>더보기</h1></div>
     <div class="more-list">
       ${row("transfer", I.swap, "기록 옮기기")}
       ${row("theme-more", I[t === "system" ? "auto" : t === "light" ? "sun" : "moon"], "화면 테마", THEME_LABEL[t])}
@@ -536,7 +536,7 @@ function renderHome() {
     </button>`;
   }).join("");
   $app.innerHTML = `
-    <div class="bar"><div class="brandline" style="flex:1"><span class="logo" data-act="logo">기출<b>노트</b></span></div></div>
+    <div class="bar tabhead"><div class="brandline" style="flex:1"><span class="logo" data-act="logo">기출<b>노트</b></span></div></div>
     ${noticeBanner()}
     <div class="eyebrow">과목</div>
     <div style="display:grid;gap:12px">${cards}</div>
@@ -560,7 +560,7 @@ function renderSubject() {
     return p ? `<em class="resume">${p.done}/${p.total} 진행 중 · 이어서 풀 수 있어요</em>` : base;
   };
   $app.innerHTML = `
-    <div class="bar"><h1>${esc(bank.title)}</h1></div>
+    <div class="bar tabhead"><h1>${esc(bank.title)}</h1></div>
     ${bank.questions.some((q) => inTab(q, "book")) ? `<div class="seg" role="tablist">${(Object.keys(TABS) as Tab[]).map((t) => `<button role="tab" data-tab="${t}" aria-selected="${tab() === t}">${TABS[t]}</button>`).join("")}</div>` : ""}
     <div class="subject" style="cursor:default">
       <div class="progress"><span style="width:${pct(s.done, s.total)}%"></span></div>
@@ -917,7 +917,7 @@ function renderReview() {
   pageview("review");
   const only = (v: Only, l: string) => `<button class="chip" data-only="${v}" aria-pressed="${reviewOpts.only === v}">${l}</button>`;
   $app.innerHTML = `
-    <div class="bar"><h1>해설 훑어보기</h1></div>
+    <div class="bar tabhead"><h1>해설 훑어보기</h1></div>
     <label class="search">${I.search}<input id="rsearch" type="search" placeholder="키워드 검색 (예: 보험가액, ELS)" value="${esc(reviewOpts.q)}"></label>
     <div class="chips" style="margin-bottom:8px">${only("all", "전체")}${only("wrong", "오답")}${only("bm", "북마크")}</div>
     <button class="toggle" data-hide aria-pressed="${reviewOpts.hide}" style="margin:6px 0 14px"><span style="font-size:15px">정답·해설 가리기 <span style="color:var(--ink-3)">(카드를 눌러 확인)</span></span><span class="sw"></span></button>

@@ -416,3 +416,8 @@ html.standalone{min-height:calc(100% + env(safe-area-inset-top,0px))}
 html.standalone .tabbar{bottom:auto;top:calc(var(--full-h) - var(--tbh))}
 html.standalone .sheet-wrap,html.standalone .onb,html.standalone .tr-full{height:var(--full-h)}
 body.has-tabs .app{padding-bottom:calc(88px + env(safe-area-inset-bottom,0px))}
+
+/* 탭 화면 제목: 네 탭 모두 같은 크기·높이 (홈 로고와 같은 24px) */
+.bar.tabhead{min-height:64px;padding-block:14px 10px}
+.bar.tabhead h1,.bar.tabhead .logo{font-size:24px;font-weight:700;letter-spacing:-.02em;line-height:1.3}
+.bar.tabhead+*{margin-top:4px}
