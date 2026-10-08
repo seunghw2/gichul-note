@@ -119,7 +119,7 @@ function todayLine() {
 
 /* ---------- 공지: 온라인 시험 기출 캡처 공유 요청 ---------- */
 const noticeBanner = () =>
-  `<button class="notice" data-act="notice"><span class="ic">📣</span><b>온라인 시험 1차, 2차 내용 공유 부탁드립니다</b><span class="go">›</span></button>`;
+  `<button class="notice" data-act="notice"><span class="ic">📣</span><b>온라인 시험 1,2차 문항 공유 부탁드립니다</b><span class="go">›</span></button>`;
 
 function openNotice() {
   const sheet = document.createElement("div");
