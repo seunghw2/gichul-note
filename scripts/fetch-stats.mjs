@@ -80,8 +80,8 @@ function summarize(hits) {
     if (arr) for (const s of h.stats ?? []) (s.hourly ?? []).forEach((v, i) => (arr[i] += v));
   }
   return {
-    // 새 신호(visit/day)가 생기기 전 기록은 예전 앱 실행 신호(launch/*)로 대신
-    visitors: c("visit/day") || c("launch/homescreen") + c("launch/browser"),
+    // 새 신호(visit/day)가 생기기 전 기록은 예전 앱 실행 신호(launch/*)로 대신 (지금은 둘 다 기기마다 하루 1번이라 같은 값)
+    visitors: Math.max(c("visit/day"), c("launch/homescreen") + c("launch/browser")),
     homescreen: c("launch/homescreen"),
     browser: c("launch/browser"),
     solved: ok + wrong,
@@ -123,7 +123,7 @@ function daily(hits, days) {
     }
   }
   // 새 신호가 없던 날은 예전 앱 실행 신호로 대신
-  return [...map.values()].map(({ launches, ...v }) => ({ ...v, visitors: v.visitors || launches }));
+  return [...map.values()].map(({ launches, ...v }) => ({ ...v, visitors: Math.max(v.visitors, launches) }));
 }
 
 async function toprefs(start, end) {
