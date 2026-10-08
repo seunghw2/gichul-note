@@ -54,6 +54,7 @@ const todayStart = new Date(Date.UTC(kstNow.getUTCFullYear(), kstNow.getUTCMonth
 const kstDay = (d) => new Date(d.getTime() + 9 * 3600e3).toISOString().slice(0, 10);
 
 const isVisit = (p) => p === "visit/day";
+const isLaunch = (p) => p === "launch/homescreen" || p === "launch/browser";
 const isAnswer = (p) => /^(ok|wrong)\/q\d+$/.test(p);
 
 function summarize(hits) {
@@ -79,7 +80,8 @@ function summarize(hits) {
     if (arr) for (const s of h.stats ?? []) (s.hourly ?? []).forEach((v, i) => (arr[i] += v));
   }
   return {
-    visitors: c("visit/day"),
+    // 새 신호(visit/day)가 생기기 전 기록은 예전 앱 실행 신호(launch/*)로 대신
+    visitors: c("visit/day") || c("launch/homescreen") + c("launch/browser"),
     homescreen: c("launch/homescreen"),
     browser: c("launch/browser"),
     solved: ok + wrong,
@@ -101,16 +103,17 @@ function summarize(hits) {
 
 /** 일별 추이: 문항·실행 경로의 daily 값을 날짜별로 합산 */
 function daily(hits, days) {
-  const map = new Map(days.map((d) => [d, { day: d, visitors: 0, solved: 0 }]));
+  const map = new Map(days.map((d) => [d, { day: d, visitors: 0, solved: 0, launches: 0 }]));
   for (const h of hits) {
-    const key = isVisit(h.path) ? "visitors" : isAnswer(h.path) ? "solved" : null;
+    const key = isVisit(h.path) ? "visitors" : isAnswer(h.path) ? "solved" : isLaunch(h.path) ? "launches" : null;
     if (!key) continue;
     for (const s of h.stats ?? []) {
       const v = map.get(s.day);
       if (v) v[key] += s.daily ?? 0;
     }
   }
-  return [...map.values()];
+  // 새 신호가 없던 날은 예전 앱 실행 신호로 대신
+  return [...map.values()].map(({ launches, ...v }) => ({ ...v, visitors: v.visitors || launches }));
 }
 
 async function systems(start, end) {
