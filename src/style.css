@@ -279,7 +279,7 @@ html.onb-open,html.onb-open body{background:#0E3B36}
 
 /* 온보딩 01: 떠오르는 정답 카드 */
 .onb-slide:first-child .ob-pip{overflow:visible;min-height:0;padding-bottom:0;margin-bottom:20px}
-.ob-fc{position:relative;z-index:2;left:50%;width:calc(100vw - 40px);max-width:420px;margin:14px 0 -12px;translate:-50% 0;background:#fff;border-radius:16px;box-shadow:0 18px 40px rgba(0,0,0,.35);overflow:hidden;color:#16211F;word-break:keep-all;opacity:0;transform:translateY(24px) scale(.92)}
+.ob-fc{position:relative;z-index:2;left:50%;width:calc(100vw - 40px);max-width:420px;margin:-6px 0 -12px;translate:-50% 0;background:#fff;border-radius:16px;box-shadow:0 18px 40px rgba(0,0,0,.35);overflow:hidden;color:#16211F;word-break:keep-all;opacity:0;transform:translateY(24px) scale(.92)}
 .ob-fc .h{background:#DAF1E6;color:#1C8A5E;font-weight:700;padding:9px 14px;font-size:14px}.ob-fc .h span{float:right;color:#4A5753;font-size:12.5px}
 .ob-fc .b{padding:11px 14px 13px;font-size:13px;line-height:1.5;display:grid;gap:8px}
 .ob-fc .l{font-size:11px;font-weight:600;color:#4A5753}
