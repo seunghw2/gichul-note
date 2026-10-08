@@ -6,7 +6,7 @@ import { I } from "./icons";
 import { addToday, clearRun, loadPrefs, loadTheme, loadToday, saveTheme, type Theme, loadRun, loadSubject, savePrefs, saveRun, saveSubject, type SavedRun, type SubjectState } from "./store";
 import type { LoadedBank, Q } from "./types";
 
-type View = "home" | "subject" | "quiz" | "end" | "review";
+type View = "home" | "subject" | "quiz" | "end" | "review" | "stats";
 type Kind = "all" | "wrong" | "bm" | "often";
 type Only = "all" | "wrong" | "bm";
 
@@ -118,67 +118,133 @@ function todayLine() {
   return `<p class="today">${t.n ? `오늘 <b class="num">${t.n}</b>문제 풀었어요 · 정답 <b class="num">${t.ok}</b>` : "오늘은 아직 푼 문제가 없어요"}</p>`;
 }
 
-/* ---------- 숨은 통계 화면: 홈 로고를 연속 5번 누르면 열림 (GitHub Actions가 1시간마다 만드는 stats.json) ---------- */
-type StatSum = {
-  visitors: number; homescreen: number; solved: number; ok: number; wrong: number; starts: number; finishes: number;
-  startsByTab: { exam: number; book: number }; onboardingDone: number; onboardingSkip: number; noticeOpen: number; noticeKbi: number;
-  topWrong: { n: number; ok: number; wrong: number }[];
+/* ---------- 숨은 통계 화면: 홈 로고를 2초 안에 5번 누르면 열림 (GitHub Actions가 1시간마다 만드는 stats.json) ---------- */
+type QStat = { n: number; ok: number; wrong: number };
+type StatRange = {
+  visitors: number; homescreen: number; browser: number; solved: number; ok: number; wrong: number;
+  starts: number; startsByTab: { exam: number; book: number }; progress10: number; finishes: number;
+  onboardingDone: number; onboardingSkip: number[]; noticeOpen: number; noticeKbi: number;
+  hours: number[]; questions: QStat[]; prev: { visitors: number; solved: number; ok: number };
+  systems: { name: string; count: number }[];
 };
+type StatsData = { updated: string; ranges: Record<"today" | "week" | "month", StatRange>; daily: { day: string; visitors: number; solved: number }[] };
+const RANGE_LABEL = { today: "오늘", week: "7일", month: "30일" } as const;
+const statsUi = { range: "today" as keyof typeof RANGE_LABEL, series: "solved" as "solved" | "visitors", data: undefined as StatsData | null | undefined };
 let logoTaps: number[] = [];
 function tapLogo() {
   const now = Date.now();
   logoTaps = [...logoTaps.filter((t) => now - t < 2000), now];
   if (logoTaps.length >= 5) {
     logoTaps = [];
-    openStats();
+    history.pushState({ view: "stats" } satisfies Route, "");
+    statsUi.data = undefined;
+    renderStats();
   }
 }
 
-async function openStats() {
-  const sheet = document.createElement("div");
-  sheet.className = "sheet-wrap";
-  sheet.innerHTML = `<div class="sheet stats" role="dialog" aria-modal="true" aria-label="사용 통계"><div class="grab"></div><h3>사용 통계</h3><p class="st-note">불러오는 중…</p></div>`;
-  document.body.appendChild(sheet);
-  sheet.addEventListener("click", (e) => {
-    const t = (e.target as HTMLElement).closest<HTMLElement>("[data-range]");
-    if (t) return draw(t.dataset.range as "today" | "week");
-    if (e.target === sheet || (e.target as HTMLElement).closest("[data-close]")) sheet.remove();
-  });
-  const box = sheet.querySelector<HTMLElement>(".sheet")!;
-  let data: { updated: string; today: StatSum; week: StatSum } | null = null;
+async function loadStats() {
   try {
     const r = await fetch(`./stats.json?t=${Date.now()}`, { cache: "no-store" });
-    if (r.ok) data = await r.json();
+    statsUi.data = r.ok ? await r.json() : null;
   } catch {
-    /* 네트워크 오류면 아래 안내 */
+    statsUi.data = null;
   }
+  if (view === "stats") renderStats();
+}
+
+function renderStats() {
+  view = "stats";
+  const head = (sub: string) =>
+    `<div class="bar"><button class="icon-btn" data-act="home" aria-label="홈으로">${I.back}</button><h1>사용 통계</h1><span class="st-upd">${sub}</span></div>`;
+  if (statsUi.data === undefined) {
+    $app.innerHTML = head("") + '<p class="st-note">불러오는 중…</p>';
+    loadStats();
+    return;
+  }
+  const data = statsUi.data;
+  if (!data?.ranges) {
+    $app.innerHTML = head("") + '<p class="st-note">아직 통계가 없어요. GitHub Actions가 1시간마다 만들어요.</p>';
+    return;
+  }
+  const s = data.ranges[statsUi.range];
+  const rate = (ok: number, all: number) => (all ? Math.round((ok / all) * 100) : null);
+  const delta = (cur: number, prev: number, unit = "") => {
+    const d = cur - prev;
+    return d === 0 ? '<em class="flat">–</em>' : `<em class="${d > 0 ? "up" : "down"}">${d > 0 ? "▲" : "▼"} ${Math.abs(d)}${unit}</em>`;
+  };
+  const r0 = rate(s.ok, s.solved), r1 = rate(s.prev.ok, s.prev.solved);
+  const prevName = statsUi.range === "today" ? "어제" : `지난 ${RANGE_LABEL[statsUi.range]}`;
+  const tile = (v: string | number, l: string, d: string) => `<div class="st-tile"><b class="num">${v}</b><span>${l}</span>${d}</div>`;
+  const card = (title: string, sub: string, body: string) => `<section class="st-card"><h2>${title}<small>${sub}</small></h2>${body}</section>`;
+  const barChart = (vals: number[], labels: string[], hl = -1) => {
+    const m = Math.max(1, ...vals);
+    return `<div class="st-bars">${vals.map((v, i) => `<i class="${i === hl ? "hl" : ""}" style="height:${Math.max(3, (v / m) * 100)}%" title="${labels[i]} ${v}"></i>`).join("")}</div>
+      <div class="st-axis">${labels.filter((_, i) => i === 0 || i === Math.floor(labels.length / 2) || i === labels.length - 1).map((l) => `<span>${l}</span>`).join("")}</div>`;
+  };
+  // 일별 추이: 오늘·7일은 최근 14일, 30일은 30일
+  const days = data.daily.slice(statsUi.range === "month" ? -30 : -14);
+  const dayLabel = (d: string) => `${Number(d.slice(5, 7))}/${Number(d.slice(8, 10))}`;
+  const trend = barChart(days.map((d) => d[statsUi.series]), days.map((d) => dayLabel(d.day)), days.length - 1);
+  // 사용 흐름
+  const steps: [string, number][] = [["방문", s.visitors], ["풀이 시작", s.starts], ["10문제 이상", s.progress10], ["끝까지", s.finishes]];
+  const fmax = Math.max(1, ...steps.map(([, v]) => v));
+  const funnel = `<div class="st-fun">${steps.map(([l, v]) => `<div><span>${l}</span><i style="width:calc((100% - 140px) * ${Math.max(0.02, v / fmax).toFixed(3)})"></i><b class="num">${v}</b></div>`).join("")}</div>
+    <p class="st-note">풀이 시작: 기출 ${s.startsByTab.exam} · 교재 ${s.startsByTab.book}</p>`;
+  // 오답률 높은 문항: 3명 이상 푼 문항만
+  const qs = s.questions.filter((q) => q.ok + q.wrong >= 3 && q.wrong).sort((a, b) => b.wrong / (b.ok + b.wrong) - a.wrong / (a.ok + a.wrong) || b.wrong - a.wrong).slice(0, 10);
   const qText = new Map(BANKS.flatMap((b) => b.questions).map((q) => [q.n, q.q]));
-  function draw(range: "today" | "week") {
-    if (!data) {
-      box.innerHTML = `<div class="grab"></div><h3>사용 통계</h3><p class="st-note">아직 통계가 없어요. GitHub Actions가 1시간마다 만들어요.</p><button class="btn" data-close>닫기</button>`;
-      return;
-    }
-    const s = data[range];
-    const rate = s.solved ? Math.round((s.ok / s.solved) * 100) + "%" : "–";
-    const tile = (v: string | number, l: string) => `<div class="st-tile"><b class="num">${v}</b><span>${l}</span></div>`;
-    const row = (l: string, v: string | number) => `<div class="st-row"><span>${l}</span><b class="num">${v}</b></div>`;
-    box.innerHTML = `<div class="grab"></div>
-      <h3>사용 통계</h3>
-      <div class="seg" role="tablist">${(["today", "week"] as const).map((k) => `<button role="tab" data-range="${k}" aria-selected="${k === range}">${k === "today" ? "오늘" : "최근 7일"}</button>`).join("")}</div>
-      <div class="st-tiles">${tile(s.visitors, "방문자")}${tile(s.solved, "푼 문제")}${tile(rate, "정답률")}</div>
-      <div class="st-list">
-        ${row("풀이 시작 (기출 / 교재)", `${s.starts} (${s.startsByTab.exam} / ${s.startsByTab.book})`)}
-        ${row("풀이 끝까지", s.finishes)}
-        ${row("홈 화면 앱으로 실행", s.homescreen)}
-        ${row("온보딩 완료 / 건너뜀", `${s.onboardingDone} / ${s.onboardingSkip}`)}
-        ${row("공지 열람 / kbi 클릭", `${s.noticeOpen} / ${s.noticeKbi}`)}
-      </div>
-      <div class="eyebrow" style="margin:4px 0 0">많이 틀린 문항</div>
-      ${s.topWrong.length ? `<ol class="st-wrong">${s.topWrong.map((w) => `<li><span class="num">${w.n}</span><span class="t">${esc(qText.get(w.n) ?? "")}</span><b class="num">${w.wrong}회</b></li>`).join("")}</ol>` : '<p class="st-note">아직 없어요</p>'}
-      <p class="st-note">기준 ${new Date(data.updated).toLocaleString("ko-KR", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })} · 1시간마다 갱신 · 같은 사람의 같은 동작은 몇 시간 안엔 1번으로 셈</p>
-      <button class="btn" data-close>닫기</button>`;
-  }
-  draw("today");
+  const qList = qs.length
+    ? qs.map((q) => {
+        const r = Math.round((q.wrong / (q.ok + q.wrong)) * 100);
+        return `<button class="st-q" data-sq="${q.n}"><span class="n num">${q.n}</span><span class="t">${esc(qText.get(q.n) ?? "")}</span><span class="r"><b class="num">${r}%</b> <small class="num">${q.wrong}/${q.ok + q.wrong}</small><i><u style="width:${r}%"></u></i></span></button>`;
+      }).join("")
+    : '<p class="st-note">3명 이상 푼 문항이 아직 없어요</p>';
+  // 시간대
+  const hours = barChart(s.hours, s.hours.map((_, i) => `${i}시`));
+  // 기기·실행
+  const sysTotal = s.systems.reduce((a, x) => a + x.count, 0);
+  const launchTotal = s.homescreen + s.browser;
+  const kv = (l: string, v: string) => `<div class="st-row"><span>${l}</span><b class="num">${v}</b></div>`;
+  const pct = (a: number, b: number) => (b ? Math.round((a / b) * 100) + "%" : "–");
+  const devices = `${kv("홈 화면 앱으로 실행", `${s.homescreen} (${pct(s.homescreen, launchTotal)})`)}${kv("브라우저로 실행", `${s.browser} (${pct(s.browser, launchTotal)})`)}
+    ${s.systems.map((x) => kv(esc(x.name || "기타"), `${x.count} (${pct(x.count, sysTotal)})`)).join("")}`;
+  const skips = s.onboardingSkip.map((v, i) => kv(`${i + 1}장에서 건너뜀`, String(v))).join("");
+  $app.innerHTML = `${head(`${new Date(data.updated).toLocaleString("ko-KR", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })} 기준`)}
+    <div class="chips st-range">${(Object.keys(RANGE_LABEL) as (keyof typeof RANGE_LABEL)[]).map((k) => `<button class="chip" data-srange="${k}" aria-pressed="${k === statsUi.range}">${RANGE_LABEL[k]}</button>`).join("")}</div>
+    <div class="st-tiles">
+      ${tile(s.visitors, "방문자", delta(s.visitors, s.prev.visitors))}
+      ${tile(s.solved, "푼 문제", delta(s.solved, s.prev.solved))}
+      ${tile(r0 === null ? "–" : r0 + "%", "정답률", r0 === null || r1 === null ? '<em class="flat">–</em>' : delta(r0, r1, "%p"))}
+    </div>
+    <p class="st-note">▲▼는 ${prevName} 같은 시각까지와 비교</p>
+    ${card("일별 추이", `<span class="st-series">${(["solved", "visitors"] as const).map((k) => `<button data-sseries="${k}" aria-pressed="${k === statsUi.series}">${k === "solved" ? "푼 문제" : "방문자"}</button>`).join("")}</span>`, trend)}
+    ${card("사용 흐름", "방문 → 끝까지", funnel)}
+    ${card("오답률 높은 문항", "3명 이상 푼 문항 · 탭하면 해설", `<div class="st-qs">${qList}</div>`)}
+    ${card("공부하는 시간대", "푼 문제 기준", hours)}
+    ${card("기기 · 실행 방식", "", devices)}
+    ${card("온보딩", "", kv("끝까지 봄", String(s.onboardingDone)) + skips)}
+    ${card("공지", "", kv("배너 열람", String(s.noticeOpen)) + kv("kbi 링크 클릭", `${s.noticeKbi} (${pct(s.noticeKbi, s.noticeOpen)})`))}
+    <p class="st-note">같은 사람의 같은 동작은 몇 시간 안엔 1번으로 세요. 광고 차단기를 쓰는 사람은 빠져요.</p>`;
+}
+
+/** 통계 화면에서 문항을 누르면 문제·정답·해설 시트 */
+function openStatQuestion(n: number) {
+  const q = BANKS.flatMap((b) => b.questions).find((x) => x.n === n);
+  if (!q) return;
+  const ans = q.type === "ox" ? (q.answer === 1 ? "O" : "X") : q.type === "mc" ? `${KNUM[q.answer! - 1]} ${q.choices![q.answer! - 1]}` : shortAnswer(q);
+  const sheet = document.createElement("div");
+  sheet.className = "sheet-wrap";
+  sheet.innerHTML = `<div class="sheet st-qsheet" role="dialog" aria-modal="true"><div class="grab"></div>
+    <p class="st-note">문제 ${q.n} · ${TYPE_LABEL[q.type]} · ${esc(srcText(q))}</p>
+    <h3>${esc(q.q)}</h3>
+    ${q.type === "mc" ? `<ol class="st-choices">${q.choices!.map((c, i) => `<li class="${i + 1 === q.answer ? "ok" : ""}">${KNUM[i]} ${esc(c)}</li>`).join("")}</ol>` : ""}
+    <p><b>정답</b> ${esc(ans)}</p>
+    <div class="st-exp">${expHtml(q.exp)}</div>
+    <button class="btn" data-close>닫기</button></div>`;
+  document.body.appendChild(sheet);
+  sheet.addEventListener("click", (e) => {
+    if (e.target === sheet || (e.target as HTMLElement).closest("[data-close]")) sheet.remove();
+  });
 }
 
 /* ---------- 공지: 온라인 시험 기출 캡처 공유 요청 ---------- */
@@ -398,6 +464,7 @@ function enterQuiz() {
 /** 기록에 남은 화면을 그린다. 풀이·결과는 다시 그릴 수 없어서 과목 화면으로 보낸다 */
 function showRoute(r: Route | null, fromPop = false) {
   document.querySelector(".sheet-wrap")?.remove();
+  if (r?.view === "stats") return go(renderStats);
   const b = r?.bank ? BANKS.find((x) => x.id === r.bank) : undefined;
   if (!r || r.view === "home" || !b) {
     history.replaceState({ view: "home" } satisfies Route, "");
@@ -517,6 +584,7 @@ function grade(ok: boolean) {
   it.ok = ok;
   // GoatCounter는 같은 사람·같은 이름 신호를 몇 시간 안엔 1번으로 세므로 문항 번호를 넣어 문항별로 센다(합계 = 푼 문제 수)
   track(`${ok ? "ok" : "wrong"}/q${it.q.n}`);
+  if (session.items.filter((x) => x.ok !== null).length === 10) track("progress/10");
   addToday(ok);
   const q = it.q;
   const r = st.rec[q.n] ?? { tries: 0, miss: 0, last: false };
@@ -682,6 +750,15 @@ $app.addEventListener("click", (e) => {
   if (d.act === "onboarding") return showOnboarding();
   if (d.act === "notice") return openNotice();
   if (d.act === "logo") return tapLogo();
+  if (d.srange) {
+    statsUi.range = d.srange as typeof statsUi.range;
+    return renderStats();
+  }
+  if (d.sseries) {
+    statsUi.series = d.sseries as typeof statsUi.series;
+    return renderStats();
+  }
+  if (d.sq) return openStatQuestion(Number(d.sq));
   if (d.act === "theme") {
     const order: Theme[] = ["system", "light", "dark"];
     const next = order[(order.indexOf(loadTheme()) + 1) % 3];

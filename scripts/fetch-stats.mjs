@@ -1,5 +1,6 @@
 // GoatCounter API에서 통계를 받아 public/stats.json(숨은 통계 화면용 요약)을 만든다.
 // GitHub Actions에서 GOATCOUNTER_TOKEN(통계 읽기 전용) 비밀값으로 실행. 토큰이 없으면 아무것도 하지 않는다.
+// 주의: GoatCounter는 같은 사람(세션)·같은 경로를 몇 시간 안엔 1번으로 센다. 그래서 정답/오답은 문항별 경로(ok/q12)로 보내고 합산한다.
 import { writeFileSync } from "node:fs";
 
 const TOKEN = process.env.GOATCOUNTER_TOKEN;
@@ -10,7 +11,7 @@ if (!TOKEN) {
 }
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-async function api(path, params) {
+async function api(path, params = new URLSearchParams()) {
   const url = `${BASE}${path}?${params}`;
   for (let tries = 0; ; tries++) {
     const res = await fetch(url, { headers: { Authorization: `Bearer ${TOKEN}`, "Content-Type": "application/json" } });
@@ -18,7 +19,7 @@ async function api(path, params) {
       await sleep(1000);
       continue;
     }
-    // 아직 기간 안에 데이터가 하나도 없으면 404 not found 가 온다 → 빈 결과로 처리
+    // 기간 안에 데이터가 하나도 없으면 404 not found 가 온다 → 빈 결과로 처리
     if (res.status === 404) return null;
     if (!res.ok) throw new Error(`${res.status} ${path}: ${await res.text()}`);
     await sleep(300); // 초당 4회 제한
@@ -26,7 +27,7 @@ async function api(path, params) {
   }
 }
 
-/** 기간 안의 모든 경로(화면·이벤트)별 방문자 수. exclude_paths로 페이지를 넘긴다 */
+/** 기간 안의 모든 경로(화면·이벤트)별 방문자 수 + 일별·시간별 값. exclude_paths로 페이지를 넘긴다 */
 async function allHits(start, end) {
   const out = new Map();
   for (let page = 0; page < 30; page++) {
@@ -41,13 +42,21 @@ async function allHits(start, end) {
   return [...out.values()];
 }
 
-const hourFloor = (d) => new Date(Math.floor(d.getTime() / 3600e3) * 3600e3);
+const DAY = 24 * 3600e3;
 const iso = (d) => d.toISOString().replace(/\.\d+Z$/, "Z");
+const now = new Date();
+const endHour = new Date(Math.floor(now.getTime() / 3600e3) * 3600e3 + 3600e3);
+// 한국 시간 오늘 0시
+const kstNow = new Date(now.getTime() + 9 * 3600e3);
+const todayStart = new Date(Date.UTC(kstNow.getUTCFullYear(), kstNow.getUTCMonth(), kstNow.getUTCDate()) - 9 * 3600e3);
+const kstDay = (d) => new Date(d.getTime() + 9 * 3600e3).toISOString().slice(0, 10);
+
+const isLaunch = (p) => p === "launch/homescreen" || p === "launch/browser";
+const isAnswer = (p) => /^(ok|wrong)\/q\d+$/.test(p);
 
 function summarize(hits) {
   const c = (path) => hits.find((h) => h.path === path)?.count ?? 0;
   const sum = (re) => hits.filter((h) => re.test(h.path)).reduce((a, h) => a + h.count, 0);
-  // 문항별 정답/오답: ok/q12, wrong/q12 (같은 사람·몇 시간 안 중복은 GoatCounter가 1번으로 셈)
   const per = new Map();
   for (const h of hits) {
     const m = /^(ok|wrong)\/q(\d+)$/.exec(h.path);
@@ -57,33 +66,76 @@ function summarize(hits) {
     v[m[1]] += h.count;
     per.set(n, v);
   }
-  const ok = [...per.values()].reduce((a, v) => a + v.ok, 0);
-  const wrong = [...per.values()].reduce((a, v) => a + v.wrong, 0);
+  const qs = [...per.values()].sort((a, b) => a.n - b.n);
+  const ok = qs.reduce((a, v) => a + v.ok, 0);
+  const wrong = qs.reduce((a, v) => a + v.wrong, 0);
+  // 시간대(0~23시)별 푼 문제: 문항 경로들의 hourly 합 (GoatCounter 계정의 시간대 기준)
+  const hours = Array(24).fill(0);
+  for (const h of hits) if (isAnswer(h.path)) for (const s of h.stats ?? []) (s.hourly ?? []).forEach((v, i) => (hours[i] += v));
   return {
     visitors: c("launch/homescreen") + c("launch/browser"),
     homescreen: c("launch/homescreen"),
+    browser: c("launch/browser"),
     solved: ok + wrong,
     ok,
     wrong,
     starts: sum(/^start\//),
-    finishes: sum(/^finish\//),
     startsByTab: { exam: sum(/^start\/exam\//), book: sum(/^start\/book\//) },
+    progress10: c("progress/10"),
+    finishes: sum(/^finish\//),
     onboardingDone: c("onboarding/done"),
-    onboardingSkip: sum(/^onboarding\/skip-/),
+    onboardingSkip: [1, 2, 3, 4].map((k) => c(`onboarding/skip-${k}`)),
     noticeOpen: c("notice/open"),
     noticeKbi: c("notice/kbi"),
-    topWrong: [...per.values()].filter((v) => v.wrong).sort((a, b) => b.wrong - a.wrong || a.n - b.n).slice(0, 10),
+    hours,
+    questions: qs,
   };
 }
 
-const now = new Date();
-const end = iso(new Date(hourFloor(now).getTime() + 3600e3));
-// 오늘 = 한국 시간 0시부터
-const kstMidnight = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) - 9 * 3600e3);
-const todayStart = now.getTime() - kstMidnight.getTime() >= 24 * 3600e3 ? new Date(kstMidnight.getTime() + 24 * 3600e3) : kstMidnight;
-const weekStart = new Date(todayStart.getTime() - 6 * 24 * 3600e3);
+/** 일별 추이: 문항·실행 경로의 daily 값을 날짜별로 합산 */
+function daily(hits, days) {
+  const map = new Map(days.map((d) => [d, { day: d, visitors: 0, solved: 0 }]));
+  for (const h of hits) {
+    const key = isLaunch(h.path) ? "visitors" : isAnswer(h.path) ? "solved" : null;
+    if (!key) continue;
+    for (const s of h.stats ?? []) {
+      const v = map.get(s.day);
+      if (v) v[key] += s.daily ?? 0;
+    }
+  }
+  return [...map.values()];
+}
 
-const [today, week] = [await allHits(iso(todayStart), end), await allHits(iso(weekStart), end)];
-const out = { updated: now.toISOString(), today: summarize(today), week: summarize(week) };
+async function systems(start, end) {
+  const r = await api("/stats/systems", new URLSearchParams({ start, end, limit: "6" }));
+  return (r?.stats ?? []).map((s) => ({ name: s.name, count: s.count }));
+}
+
+const me = await api("/me");
+console.log("GoatCounter 시간대:", me?.user?.settings?.timezone ?? me?.settings?.timezone ?? "(알 수 없음)");
+
+const ranges = { today: 1, week: 7, month: 30 };
+const out = { updated: now.toISOString(), ranges: {} };
+let month = null;
+for (const [key, n] of Object.entries(ranges)) {
+  const start = new Date(todayStart.getTime() - (n - 1) * DAY);
+  const prevStart = new Date(start.getTime() - n * DAY);
+  // 지난 기간은 같은 길이·같은 시각까지만 비교(오늘 오후 2시면 어제도 오후 2시까지)
+  const prevEnd = new Date(endHour.getTime() - n * DAY);
+  const cur = await allHits(iso(start), iso(endHour));
+  const prev = await allHits(iso(prevStart), iso(prevEnd));
+  const s = summarize(cur);
+  const p = summarize(prev);
+  out.ranges[key] = {
+    ...s,
+    prev: { visitors: p.visitors, solved: p.solved, ok: p.ok },
+    systems: await systems(iso(start), iso(endHour)),
+  };
+  if (key === "month") month = cur;
+}
+const days = Array.from({ length: 30 }, (_, i) => kstDay(new Date(todayStart.getTime() - (29 - i) * DAY)));
+out.daily = daily(month ?? [], days);
 writeFileSync("public/stats.json", JSON.stringify(out));
-console.log(`통계 저장: 오늘 방문 ${out.today.visitors} · 푼 문제 ${out.today.solved} / 7일 방문 ${out.week.visitors} · 푼 문제 ${out.week.solved} (경로 ${week.length}개)`);
+const t = out.ranges.today;
+console.log(`통계 저장: 오늘 방문 ${t.visitors} · 푼 문제 ${t.solved} · 문항 ${t.questions.length}개 / 30일 방문 ${out.ranges.month.visitors}`);
+console.log("일별 샘플:", JSON.stringify(out.daily.slice(-3)));
