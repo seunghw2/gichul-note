@@ -81,8 +81,6 @@ export function showOnboarding() {
     const n = Math.round(track.scrollLeft / track.clientWidth);
     if (n === i) return;
     i = n;
-    // 첫 장에 들어올 때마다 정답 카드 팝업을 처음부터 다시 재생
-    el.querySelectorAll(".onb-slide").forEach((sl, k) => sl.classList.toggle("play", k === i));
     el.querySelectorAll(".onb-dots i").forEach((d, k) => d.classList.toggle("on", k === i));
     el.querySelector(".onb-cta")!.textContent = i === SLIDES.length - 1 ? "시작하기" : "다음";
     el.querySelector<HTMLElement>(".onb-skip")!.hidden = i === SLIDES.length - 1;
@@ -93,6 +91,7 @@ export function showOnboarding() {
     } catch {
       /* 무시 */
     }
+    io.disconnect();
     el.classList.add("out");
     document.documentElement.classList.remove("onb-open");
     setTimeout(() => el.remove(), 200);
@@ -102,6 +101,17 @@ export function showOnboarding() {
     if (a === "skip") close();
     if (a === "next") (i === SLIDES.length - 1 ? close() : go(i + 1));
   });
+  // 장이 화면에 보이기 시작하면 순차 등장 애니메이션 재생, 완전히 벗어나면 초기화(돌아오면 다시 재생)
+  const io = new IntersectionObserver(
+    (entries) =>
+      entries.forEach((en) => {
+        // 옆 장과 맞닿거나 1~2px만 걸친 상태는 '안 보임'으로 친다
+        if (en.intersectionRatio >= 0.15) en.target.classList.add("play");
+        else if (en.intersectionRatio < 0.02) en.target.classList.remove("play");
+      }),
+    { root: track, threshold: [0, 0.02, 0.15] },
+  );
+  el.querySelectorAll(".onb-slide").forEach((sl) => io.observe(sl));
   track.addEventListener("scroll", sync, { passive: true });
   sync();
 }

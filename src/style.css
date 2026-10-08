@@ -284,11 +284,11 @@ html.onb-open,html.onb-open body{background:#0E3B36}
 .ob-fc .b{padding:11px 14px 13px;font-size:13px;line-height:1.5;display:grid;gap:8px}
 .ob-fc .l{font-size:11px;font-weight:600;color:#4A5753}
 .ob-fc .qt{border-left:2px solid #D5DCD4;padding-left:9px;font-size:12px}
-.play .ob-ox .o{animation:ob-press .35s ease .25s forwards}
-.play .ob-fc{animation:ob-pop 1s cubic-bezier(.25,.1,.25,1) .7s forwards}
+.play .ob-ox .o{animation:ob-press .35s ease .95s forwards}
+.play .ob-fc{animation:ob-pop 1s cubic-bezier(.25,.1,.25,1) 1.4s forwards}
 @keyframes ob-press{50%{transform:scale(.93)}to{background:#DAF1E6;box-shadow:inset 0 0 0 1.5px #1C8A5E;transform:none}}
 @keyframes ob-pop{to{opacity:1;transform:none}}
-@media (prefers-reduced-motion:reduce){.play .ob-ox .o,.play .ob-fc{animation-duration:.01s;animation-delay:0s}}
+
 /* 온보딩 03: 홈 화면 추가 단계 */
 .ob-step{display:flex;gap:10px;align-items:center;background:#fff;border-radius:12px;padding:10px 11px;margin-top:9px}.ob-step:first-child{margin-top:0}
 .ob-step .k{width:26px;height:26px;flex:none;border-radius:50%;background:#0E3B36;color:#fff;font-weight:800;font-size:12.5px;display:grid;place-items:center}
@@ -301,4 +301,19 @@ html.onb-open,html.onb-open body{background:#0E3B36}
 @media (max-height:720px){
   .onb-slide{padding-top:52px}.onb-slide h2{font-size:29px}.onb-slide p{font-size:15px;margin-top:8px}
   .ob-fc .qt{display:none}
+}
+/* 온보딩 순차 등장: 장이 보이면 라벨→제목→설명→미리보기, 미리보기 안 항목도 차례로 */
+.onb-slide>.ob-num,.onb-slide>h2,.onb-slide>p,.onb-slide>.ob-pip,.ob-seg,.ob-row,.ob-step,.ob-warn{opacity:0;transform:translateY(14px)}
+.play>.ob-num,.play>h2,.play>p,.play>.ob-pip,.play .ob-seg,.play .ob-row,.play .ob-step,.play .ob-warn{animation:ob-in .6s cubic-bezier(.2,.7,.2,1) forwards}
+.play>h2{animation-delay:.1s}.play>p{animation-delay:.2s}.play>.ob-pip{animation-delay:.3s}
+.play .ob-seg{animation-delay:.55s}
+.play .ob-row:nth-child(2),.play .ob-step:nth-child(1){animation-delay:.65s}
+.play .ob-row:nth-child(3),.play .ob-step:nth-child(2){animation-delay:.75s}
+.play .ob-row:nth-child(4),.play .ob-step:nth-child(3){animation-delay:.85s}
+.play .ob-row:nth-child(5){animation-delay:.95s}
+.play .ob-warn{animation-delay:.6s}
+@keyframes ob-in{to{opacity:1;transform:none}}
+/* 동작 줄이기 설정이면 움직임 없이 바로 최종 상태 */
+@media (prefers-reduced-motion:reduce){
+  .onb-slide *,.onb-slide>*{animation-duration:.01s!important;animation-delay:0s!important}
 }
