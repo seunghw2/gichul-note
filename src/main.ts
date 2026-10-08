@@ -305,10 +305,13 @@ async function drawUsers() {
     /* 무시 */
   }
   const askPass = (msg = "") => {
-    box.innerHTML = `<form class="st-pass"><input type="password" placeholder="통계 비밀번호" autocomplete="current-password" autocapitalize="off" autocorrect="off" spellcheck="false"><button class="btn" type="submit">열기</button></form>${msg ? `<p class="st-note" style="color:var(--bad)">${msg}</p>` : ""}`;
+    box.innerHTML = `<form class="st-pass"><input type="password" placeholder="통계 비밀번호" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"><button class="btn" type="submit">열기</button></form><label class="st-show"><input type="checkbox"> 입력한 글자 보기</label>${msg ? `<p class="st-note" style="color:var(--bad)">${msg}</p>` : ""}`;
+    box.querySelector<HTMLInputElement>(".st-show input")!.addEventListener("change", (e) => {
+      box.querySelector<HTMLInputElement>(".st-pass input")!.type = (e.target as HTMLInputElement).checked ? "text" : "password";
+    });
     box.querySelector("form")!.addEventListener("submit", (e) => {
       e.preventDefault();
-      const v = box.querySelector("input")!.value;
+      const v = box.querySelector<HTMLInputElement>(".st-pass input")!.value;
       try {
         localStorage.setItem(KEY_STORE, v);
       } catch {

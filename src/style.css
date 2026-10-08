@@ -430,3 +430,4 @@ body.has-tabs .app{padding-bottom:calc(88px + env(safe-area-inset-bottom,0px))}
 .st-users .hd{font-size:11.5px;color:var(--ink-3);font-weight:600}
 .st-users>div>:nth-child(n+3){text-align:right}
 .st-users .me{background:var(--brand-soft);border-radius:10px;font-weight:700}
+.st-show{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--ink-3);margin-top:8px}
