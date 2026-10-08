@@ -43,7 +43,7 @@ const ADD_STEPS = isAndroid
 const ADD_OTHER = isAndroid ? "아이폰은 사파리 공유 버튼에서 추가해요." : "안드로이드는 크롬 메뉴 ⋮에서 추가해요.";
 const stepsMini = ADD_STEPS.map(
   ([t, d, i], k) =>
-    `<div class="ob-step"><span class="k">${k + 1}</span><span><b>${t}</b><small>${d}</small></span>${i ? `<span class="i">${i}</span>` : '<span class="app">기출</span>'}</div>`,
+    `<div class="ob-step"><span class="k">${k + 1}</span><span><b>${t}</b><small>${d}</small></span>${i ? `<span class="i">${i}</span>` : '<span class="ob-appicon">기출</span>'}</div>`,
 ).join("");
 
 const SLIDES = [

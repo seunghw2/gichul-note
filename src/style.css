@@ -294,7 +294,7 @@ html.onb-open,html.onb-open body{background:#0E3B36}
 .ob-step .k{width:26px;height:26px;flex:none;border-radius:50%;background:#0E3B36;color:#fff;font-weight:800;font-size:12.5px;display:grid;place-items:center}
 .ob-step b{display:block;font-size:13px}.ob-step small{display:block;font-size:11px;color:#7E8A86}
 .ob-step .i{margin-left:auto;font-size:18px;color:#16211F}
-.ob-step .app{margin-left:auto;width:32px;height:32px;flex:none;white-space:nowrap;border-radius:8px;background:#0E3B36;color:#fff;font-size:9.5px;font-weight:800;display:grid;place-items:center}
+.ob-step .ob-appicon{margin-left:auto;width:32px;height:32px;flex:none;white-space:nowrap;border-radius:8px;background:#0E3B36;color:#fff;font-size:9.5px;font-weight:800;display:grid;place-items:center}
 /* 온보딩 04: 경고 */
 .ob-warn{display:block;margin-top:18px;color:#F0B455;font-weight:600}
 /* 키가 작은 폰: 글자·여백을 줄이고 카드의 원문 인용은 생략 */
