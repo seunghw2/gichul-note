@@ -101,15 +101,16 @@ export function showOnboarding() {
     if (a === "skip") close();
     if (a === "next") (i === SLIDES.length - 1 ? close() : go(i + 1));
   });
-  // 장이 화면에 보이기 시작하면 순차 등장 애니메이션 재생, 완전히 벗어나면 초기화(돌아오면 다시 재생)
+  // 장이 화면에 어느 정도 보이면 그 장의 등장 애니메이션을 한 번만 재생(다시 돌아와도 반복하지 않음)
   const io = new IntersectionObserver(
     (entries) =>
       entries.forEach((en) => {
-        // 옆 장과 맞닿거나 1~2px만 걸친 상태는 '안 보임'으로 친다
-        if (en.intersectionRatio >= 0.15) en.target.classList.add("play");
-        else if (en.intersectionRatio < 0.02) en.target.classList.remove("play");
+        if (en.intersectionRatio >= 0.15) {
+          en.target.classList.add("play");
+          io.unobserve(en.target);
+        }
       }),
-    { root: track, threshold: [0, 0.02, 0.15] },
+    { root: track, threshold: 0.15 },
   );
   el.querySelectorAll(".onb-slide").forEach((sl) => io.observe(sl));
   track.addEventListener("scroll", sync, { passive: true });
