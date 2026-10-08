@@ -195,7 +195,7 @@ function liveCard() {
         ${last ? `<div class="lv-last"><div class="lv-pair"><b class="num">${last.visitors ?? 0}명</b><b class="num">${last.solved}문제</b></div><span>${hourLabel(last)} 방문자 · 푼 문제</span></div>` : ""}
       </div>
       ${bars}
-      <p class="lv-note">막대는 시간별 푼 문제 · 누르면 그 시간 숫자 · 1시간마다 갱신</p>
+      <p class="lv-note">막대는 시간별 푼 문제 · 누르면 그 시간 숫자 · ${new Date(d.updated).toLocaleTimeString("ko-KR", { hour: "numeric", minute: "2-digit" })} 기준</p>
     </section>`;
 }
 
