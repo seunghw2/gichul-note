@@ -158,6 +158,33 @@ async function loadStats() {
   if (view === "home") renderHome();
 }
 
+/** 홈 막대를 누르면 오른쪽 위 숫자가 그 시간 값으로 바뀜. 같은 막대를 다시 누르거나 4초 지나면 원래대로 */
+let lvSel = -1;
+let lvTimer = 0;
+function pickLiveBar(i: number) {
+  const h = statsUi.data?.last24;
+  const box = document.querySelector<HTMLElement>(".lv-last");
+  if (!h || !box) return;
+  clearTimeout(lvTimer);
+  const reset = () => {
+    lvSel = -1;
+    const last = h[h.length - 1];
+    box.classList.remove("sel");
+    box.innerHTML = `<b class="num">+${last.solved}문제</b><span>최근 1시간 · ${last.hour}–${(last.hour + 1) % 24}시</span>`;
+    document.querySelectorAll(".lv-bars button").forEach((b) => b.classList.remove("sel", "dim"));
+  };
+  if (i === lvSel) return reset();
+  lvSel = i;
+  const x = h[i];
+  box.classList.add("sel");
+  box.innerHTML = `<b class="num">${x.solved}문제</b><span>${x.hour}–${(x.hour + 1) % 24}시</span>`;
+  document.querySelectorAll(".lv-bars button").forEach((b, k) => {
+    b.classList.toggle("sel", k === i);
+    b.classList.toggle("dim", k !== i);
+  });
+  lvTimer = window.setTimeout(reset, 4000);
+}
+
 /** 홈: 모두에게 보이는 '함께 공부하는 사람들' 카드 (오늘 방문자·푼 문제 + 지난 24시간 시간별 푼 문제) */
 function liveCard() {
   if (statsUi.data === undefined) {
@@ -172,7 +199,7 @@ function liveCard() {
   const m = Math.max(1, ...h.map((x) => x.solved));
   const last = h[h.length - 1];
   const bars = h.length
-    ? `<div class="lv-bars" aria-label="지난 24시간 시간별 푼 문제 수">${h.map((x, i) => `<i class="${i === h.length - 1 ? "now" : ""}" style="height:${Math.max(4, (x.solved / m) * 100)}%"></i>`).join("")}</div>
+    ? `<div class="lv-bars" aria-label="지난 24시간 시간별 푼 문제 수">${h.map((x, i) => `<button class="${i === h.length - 1 ? "now" : ""}" data-lvbar="${i}" aria-label="${x.hour}시 ${x.solved}문제"><i style="height:${Math.max(4, (x.solved / m) * 100)}%"></i></button>`).join("")}</div>
        <div class="lv-axis">${[0, 6, 12, 18, h.length - 1].map((i) => `<span>${h[i]?.hour ?? ""}시</span>`).join("")}</div>`
     : "";
   return `<div class="eyebrow">함께 공부하는 사람들</div>
@@ -180,10 +207,10 @@ function liveCard() {
       <div class="lv-nums">
         <div><b class="num">${t.visitors}</b><span>오늘 방문자</span></div>
         <div><b class="num">${t.solved}</b><span>오늘 푼 문제</span></div>
-        ${last ? `<div class="lv-last"><b class="num">+${last.solved}문제</b><span>지난 1시간</span></div>` : ""}
+        ${last ? `<div class="lv-last"><b class="num">+${last.solved}문제</b><span>최근 1시간 · ${last.hour}–${(last.hour + 1) % 24}시</span></div>` : ""}
       </div>
       ${bars}
-      <p class="lv-note">지난 24시간 시간별 푼 문제 · 1시간마다 갱신</p>
+      <p class="lv-note">시간별 푼 문제 · 막대를 누르면 그 시간 숫자 · 1시간마다 갱신</p>
     </section>`;
 }
 
@@ -786,6 +813,7 @@ $app.addEventListener("click", (e) => {
   if (d.act === "onboarding") return showOnboarding();
   if (d.act === "notice") return openNotice();
   if (d.act === "logo") return tapLogo();
+  if (d.lvbar) return pickLiveBar(Number(d.lvbar));
   if (d.srange) {
     statsUi.range = d.srange as typeof statsUi.range;
     return renderStats();

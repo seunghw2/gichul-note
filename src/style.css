@@ -355,6 +355,10 @@ html.onb-open,html.onb-open body{background:#0E3B36}
 .lv-nums b{display:block;font-size:24px}.lv-nums span{font-size:12.5px;color:var(--ink-3)}
 .lv-last{margin-left:auto;text-align:right}.lv-last b{font-size:16px;color:var(--brand)}
 .lv-bars{display:flex;align-items:flex-end;gap:2px;height:64px;margin-top:14px}
-.lv-bars i{flex:1;background:var(--brand);opacity:.75;border-radius:2px 2px 0 0}.lv-bars i.now{background:var(--mark);opacity:1}
+.lv-bars button{flex:1;height:100%;display:flex;align-items:flex-end;padding:0;min-width:0}
+.lv-bars i{display:block;width:100%;background:var(--brand);opacity:.75;border-radius:2px 2px 0 0;transition:opacity .2s,background .2s}
+.lv-bars .now i{background:var(--mark);opacity:1}
+.lv-bars .sel i{background:var(--ink);opacity:1}.lv-bars .dim i{opacity:.3}
+.lv-last.sel b{color:var(--mark)}
 .lv-axis{display:flex;justify-content:space-between;font-size:11px;color:var(--ink-3);margin-top:5px}
 .lv-note{font-size:12px;color:var(--ink-3);margin:8px 0 0}
