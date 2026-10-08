@@ -536,9 +536,7 @@ function renderHome() {
     </button>`;
   }).join("");
   $app.innerHTML = `
-    <div class="bar"><div class="brandline" style="flex:1"><span class="logo" data-act="logo">기출<b>노트</b></span></div>
-      <button class="icon-btn" data-act="onboarding" aria-label="사용법 보기">${I.help}</button>
-      <button class="icon-btn" data-act="theme" aria-label="화면 테마: ${THEME_LABEL[loadTheme()]}">${I[loadTheme() === "system" ? "auto" : loadTheme() === "light" ? "sun" : "moon"]}</button></div>
+    <div class="bar"><div class="brandline" style="flex:1"><span class="logo" data-act="logo">기출<b>노트</b></span></div></div>
     ${noticeBanner()}
     <div class="eyebrow">과목</div>
     <div style="display:grid;gap:12px">${cards}</div>
@@ -562,7 +560,7 @@ function renderSubject() {
     return p ? `<em class="resume">${p.done}/${p.total} 진행 중 · 이어서 풀 수 있어요</em>` : base;
   };
   $app.innerHTML = `
-    <div class="bar"><button class="icon-btn" data-act="home" aria-label="홈으로">${I.back}</button><h1>${esc(bank.title)}</h1></div>
+    <div class="bar"><h1>${esc(bank.title)}</h1></div>
     ${bank.questions.some((q) => inTab(q, "book")) ? `<div class="seg" role="tablist">${(Object.keys(TABS) as Tab[]).map((t) => `<button role="tab" data-tab="${t}" aria-selected="${tab() === t}">${TABS[t]}</button>`).join("")}</div>` : ""}
     <div class="subject" style="cursor:default">
       <div class="progress"><span style="width:${pct(s.done, s.total)}%"></span></div>
@@ -575,7 +573,6 @@ function renderSubject() {
       <button class="mode" data-start="wrong" ${s.wrong ? "" : "disabled"}><span class="ic">${I.redo}</span><span class="tx"><b>오답노트 다시 풀기</b><small>${sub("wrong", "맞히면 오답노트에서 빠져요")}</small></span><span class="cnt">${s.wrong}</span></button>
       <button class="mode" data-start="bm" ${s.bm ? "" : "disabled"}><span class="ic">${I.bm}</span><span class="tx"><b>북마크 풀기</b><small>${sub("bm", "다시 보고 싶은 문제만 모아 풀기")}</small></span><span class="cnt">${s.bm}</span></button>
       <button class="mode" data-start="often" ${s.often ? "" : "disabled"}><span class="ic">${I.redo}</span><span class="tx"><b>자주 틀린 문제</b><small>${sub("often", `${OFTEN}번 이상 틀린 문제만 모아 풀기`)}</small></span><span class="cnt">${s.often}</span></button>
-      <button class="mode" data-act="review"><span class="ic">${I.book}</span><span class="tx"><b>해설 훑어보기</b><small>문제·정답·해설을 카드로 빠르게 읽기</small></span><span class="cnt">${n}</span></button>
     </div>
 
     <div class="eyebrow">출제 범위</div>
@@ -920,7 +917,7 @@ function renderReview() {
   pageview("review");
   const only = (v: Only, l: string) => `<button class="chip" data-only="${v}" aria-pressed="${reviewOpts.only === v}">${l}</button>`;
   $app.innerHTML = `
-    <div class="bar"><button class="icon-btn" data-act="subject" aria-label="과목으로">${I.back}</button><h1>해설 훑어보기</h1></div>
+    <div class="bar"><h1>해설 훑어보기</h1></div>
     <label class="search">${I.search}<input id="rsearch" type="search" placeholder="키워드 검색 (예: 보험가액, ELS)" value="${esc(reviewOpts.q)}"></label>
     <div class="chips" style="margin-bottom:8px">${only("all", "전체")}${only("wrong", "오답")}${only("bm", "북마크")}</div>
     <button class="toggle" data-hide aria-pressed="${reviewOpts.hide}" style="margin:6px 0 14px"><span style="font-size:15px">정답·해설 가리기 <span style="color:var(--ink-3)">(카드를 눌러 확인)</span></span><span class="sw"></span></button>
