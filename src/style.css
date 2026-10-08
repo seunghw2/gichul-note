@@ -406,3 +406,4 @@ body.has-tabs .app{padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
 .more-row{display:flex;align-items:center;gap:12px;background:var(--surface);border-radius:16px;padding:14px;text-align:left;font-size:16px;box-shadow:var(--shadow)}
 .more-row .ic{width:34px;height:34px;flex:none;border-radius:10px;background:var(--brand-soft);color:var(--brand);display:grid;place-items:center}
 .more-row b{flex:1;font-weight:600}.more-row .r{color:var(--ink-3);font-size:14px}
+.tabbar[hidden]{display:none}
