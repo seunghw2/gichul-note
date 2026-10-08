@@ -263,16 +263,10 @@ html{scroll-padding-bottom:110px}
 .ob-q{font-weight:700;margin:8px 0 10px;line-height:1.45}
 .ob-ox{display:flex;gap:8px}.ob-ox div{flex:1;height:40px;border-radius:11px;border:1px solid #D5DCD4;background:#fff;display:grid;place-items:center;font-size:20px;font-weight:800}
 .ob-ox .o{color:#1C8A5E}.ob-ox .x{color:#C8463E}.ob-ox .on{background:#DAF1E6;border:1.5px solid #1C8A5E}
-.ob-res{margin-top:10px;border-radius:11px;background:#fff;border:1px solid #D5DCD4;overflow:hidden}
-.ob-res .h{background:#DAF1E6;color:#1C8A5E;font-weight:700;padding:6px 10px}.ob-res .b{padding:8px 10px;font-size:11.5px;color:#4A5753}
 .ob-seg{display:flex;background:#E8ECE7;border-radius:10px;padding:3px;font-size:11.5px;font-weight:700;text-align:center;margin-bottom:4px}
 .ob-seg div{flex:1;padding:6px 0;color:#7E8A86}.ob-seg .on{background:#fff;border-radius:8px;color:#16211F}
 .ob-row{display:flex;align-items:center;gap:8px;background:#fff;border-radius:11px;padding:9px 10px;margin-top:7px;font-weight:700;--brand:#0E3B36;--bad:#C8463E;--mark:#E3A13A;--ink-2:#4A5753}
 .ob-row .n{margin-left:auto;color:#7E8A86}
-.ob-icons{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:8px 6px}
-.ob-icons i{aspect-ratio:1;border-radius:13px;background:#D3D9D5}.ob-icons i:nth-child(2){background:#DCD3CA}.ob-icons i:nth-child(3){background:#CAD5DE}
-.ob-icons b{aspect-ratio:1;border-radius:13px;background:#0E3B36;color:#fff;font-size:13px;display:grid;place-items:center;box-shadow:0 0 0 3px #E3A13A}
-.ob-hint{text-align:center;font-size:11.5px;color:#4A5753;margin-top:8px}
 .onb-foot{padding:16px 22px 0;display:grid;gap:16px}
 .onb-dots{display:flex;gap:6px;justify-content:center}.onb-dots i{width:7px;height:7px;border-radius:9px;background:rgba(255,255,255,.25);transition:width .2s}
 .onb-dots i.on{width:22px;background:#fff}
@@ -280,16 +274,31 @@ html{scroll-padding-bottom:110px}
 .onb-slide h2{margin:8px 0 0}.onb-slide p{margin:12px 0 0}
 /* 온보딩 중엔 화면 아래 안전영역까지 같은 초록으로 */
 html.onb-open,html.onb-open body{background:#0E3B36}
-.ob-res .h span{float:right;color:#4A5753;font-size:11px}
-.ob-res .b{font-size:11.5px;color:#16211F;line-height:1.45;display:grid;gap:6px}
-.ob-res .l{font-size:10px;font-weight:600;color:#4A5753}
-.ob-res .qt{border-left:2px solid #D5DCD4;padding-left:7px;color:#16211F}
-.ob-res .src{font-size:10px;color:#4A5753}
 .onb-dots i{transition:width .25s,background .25s}
-.ob-store{align-items:flex-start;padding:9px 10px}.ob-store .i{width:22px;text-align:center;font-size:14px}
-.ob-store b{display:block;font-size:12.5px}.ob-store small{display:block;font-size:10.5px;font-weight:500;color:#7E8A86;margin-top:1px}
-.ob-add{display:flex;gap:10px;align-items:center;margin-top:10px;padding-top:10px;border-top:1px dashed #D5DCD4;font-size:11.5px;font-weight:700;line-height:1.4}
-.ob-add b{width:38px;height:38px;flex:none;border-radius:10px;background:#0E3B36;color:#fff;font-size:11px;display:grid;place-items:center}
-.ob-add em{font-style:normal;font-weight:500;color:#7E8A86;font-size:10.5px}
-.ob-store{margin-top:6px;padding:8px 10px}.ob-store:first-child{margin-top:0}.ob-store .i{color:#0E3B36;display:grid;place-items:center;padding-top:1px}
 .ob-pip{flex-shrink:0}
+
+/* 온보딩 01: 떠오르는 정답 카드 */
+.onb-slide:first-child .ob-pip{overflow:visible;min-height:0;padding-bottom:0;margin-bottom:20px}
+.ob-fc{position:relative;z-index:2;left:50%;width:calc(100vw - 40px);max-width:420px;margin:14px 0 -12px;translate:-50% 0;background:#fff;border-radius:16px;box-shadow:0 18px 40px rgba(0,0,0,.35);overflow:hidden;color:#16211F;word-break:keep-all;opacity:0;transform:translateY(24px) scale(.92)}
+.ob-fc .h{background:#DAF1E6;color:#1C8A5E;font-weight:700;padding:9px 14px;font-size:14px}.ob-fc .h span{float:right;color:#4A5753;font-size:12.5px}
+.ob-fc .b{padding:11px 14px 13px;font-size:13px;line-height:1.5;display:grid;gap:8px}
+.ob-fc .l{font-size:11px;font-weight:600;color:#4A5753}
+.ob-fc .qt{border-left:2px solid #D5DCD4;padding-left:9px;font-size:12px}
+.play .ob-ox .o{animation:ob-press .35s ease .25s forwards}
+.play .ob-fc{animation:ob-pop .45s cubic-bezier(.34,1.56,.64,1) .6s forwards}
+@keyframes ob-press{50%{transform:scale(.93)}to{background:#DAF1E6;box-shadow:inset 0 0 0 1.5px #1C8A5E;transform:none}}
+@keyframes ob-pop{to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.play .ob-ox .o,.play .ob-fc{animation-duration:.01s;animation-delay:0s}}
+/* 온보딩 03: 홈 화면 추가 단계 */
+.ob-step{display:flex;gap:10px;align-items:center;background:#fff;border-radius:12px;padding:10px 11px;margin-top:9px}.ob-step:first-child{margin-top:0}
+.ob-step .k{width:26px;height:26px;flex:none;border-radius:50%;background:#0E3B36;color:#fff;font-weight:800;font-size:12.5px;display:grid;place-items:center}
+.ob-step b{display:block;font-size:13px}.ob-step small{display:block;font-size:11px;color:#7E8A86}
+.ob-step .i{margin-left:auto;font-size:18px;color:#16211F}
+.ob-step .app{margin-left:auto;width:32px;height:32px;flex:none;white-space:nowrap;border-radius:8px;background:#0E3B36;color:#fff;font-size:9.5px;font-weight:800;display:grid;place-items:center}
+/* 온보딩 04: 경고 */
+.ob-warn{display:block;margin-top:18px;color:#F0B455;font-weight:600}
+/* 키가 작은 폰: 글자·여백을 줄이고 카드의 원문 인용은 생략 */
+@media (max-height:720px){
+  .onb-slide{padding-top:52px}.onb-slide h2{font-size:29px}.onb-slide p{font-size:15px;margin-top:8px}
+  .ob-fc .qt{display:none}
+}

@@ -1,4 +1,4 @@
-/* 첫 접속 온보딩: 브랜드 컬러 바탕의 넘겨보기 카드 3장. 기기에서 처음 한 번만 */
+/* 첫 접속 온보딩: 브랜드 컬러 바탕의 넘겨보기 카드 4장. 기기에서 처음 한 번만, 홈의 ? 버튼으로 다시 보기 */
 const KEY = "gichul:onboarded";
 
 export function seenOnboarding() {
@@ -12,11 +12,17 @@ export function seenOnboarding() {
 const oxMini = `
   <span class="ob-chip">OX 진위형</span>
   <div class="ob-q">자본시장법상 증권은 최대손실이 원금으로 한정된다.</div>
-  <div class="ob-ox"><div class="o on">O</div><div class="x">X</div></div>
-  <div class="ob-res"><div class="h">✓ 정답<span>정답 O</span></div><div class="b">
-    <div class="l">해설</div>증권에 대한 맞는 설명이다.
-    <div class="qt"><div class="l">원문 인용</div>증권이란 최대손실이 투자원금으로 한정되는 금융투자상품…</div>
-    <div class="src">출제원 교재 1권 p.9</div></div></div>`;
+  <div class="ob-ox"><div class="o">O</div><div class="x">X</div></div>`;
+
+/** 첫 장: 문제 아래에서 미리보기 밖으로 떠오르는 정답 카드 (장에 들어올 때마다 팝업 애니메이션) */
+const answerCard = `
+  <div class="ob-fc" aria-hidden="true">
+    <div class="h">✓ 정답<span>정답 O</span></div>
+    <div class="b">
+      <div><div class="l">해설</div>증권은 손실이 원금까지만 나는 금융투자상품이에요.<br>원금 넘게 손실이 날 수 있으면 파생상품이에요.</div>
+      <div class="qt"><div class="l">원문 인용 · 교재 1권 p.9</div>증권이란 투자자의 최대손실이 투자원금으로 한정되는 금융투자상품…</div>
+    </div>
+  </div>`;
 
 const tabMini = `
   <div class="ob-seg"><div class="on">온라인 기출</div><div>교재 문항</div></div>
@@ -30,25 +36,25 @@ const tabMini = `
     .join("")}`;
 
 /** 홈 화면 추가 방법은 기기마다 다르다: 아이폰=사파리 공유, 안드로이드=크롬 메뉴 */
-const ua = navigator.userAgent;
-const isIOS = /iP(hone|ad|od)/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-const isAndroid = /Android/.test(ua);
-const ADD_HINT = isIOS ? "공유 ⬆︎ → 홈 화면에 추가" : isAndroid ? "메뉴 ⋮ → 홈 화면에 추가" : "아이폰: 공유 ⬆︎ · 안드로이드: 메뉴 ⋮";
-
-const storeMini = `
-  ${[
-    [`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d='M7 18h10a4 4 0 0 0 .5-8A6 6 0 0 0 6 9.5 4.3 4.3 0 0 0 7 18z'/><path d='M4 4l16 16'/></svg>`, "서버 없음", "문제와 앱이 모두 이 페이지 안에"],
-    [`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx='12' cy='8' r='4'/><path d='M4 21a8 8 0 0 1 16 0'/></svg>`, "가입·로그인 없음", "열자마자 바로 풀기"],
-    [`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x='6' y='2.5' width='12' height='19' rx='2.5'/><path d='M11 18.5h2'/></svg>`, "이 기기에 저장", "사이트 데이터를 지우면 기록도 지워져요"],
-  ]
-    .map(([i, t, d]) => `<div class="ob-row ob-store"><span class="i">${i}</span><span><b>${t}</b><small>${d}</small></span></div>`)
-    .join("")}
-  <div class="ob-add"><b>기출</b><span>홈 화면에 추가하면 앱처럼<br><em>${ADD_HINT}</em></span></div>`;
+const isAndroid = /Android/.test(navigator.userAgent);
+const ADD_STEPS = isAndroid
+  ? [["메뉴 버튼", "크롬 오른쪽 위 ⋮", "⋮"], ["홈 화면에 추가", "또는 '앱 설치'", "⊞"], ["홈에서 열기", "앱처럼 전체 화면", ""]]
+  : [["공유 버튼", "사파리 아래 가운데", "⬆︎"], ["홈 화면에 추가", "목록에서 선택", "⊞"], ["홈에서 열기", "앱처럼 전체 화면", ""]];
+const ADD_OTHER = isAndroid ? "아이폰은 사파리 공유 버튼에서 추가해요." : "안드로이드는 크롬 메뉴 ⋮에서 추가해요.";
+const stepsMini = ADD_STEPS.map(
+  ([t, d, i], k) =>
+    `<div class="ob-step"><span class="k">${k + 1}</span><span><b>${t}</b><small>${d}</small></span>${i ? `<span class="i">${i}</span>` : '<span class="app">기출</span>'}</div>`,
+).join("");
 
 const SLIDES = [
-  { n: "01 · 바로 채점", h: "풀자마자<br>정답과 해설", p: "해설마다 교재 원문과 쪽수가 함께 나와요.", pip: oxMini },
-  { n: "02 · 나눠서 관리", h: "기출과 교재,<br>오답은 따로", p: "틀린 문제는 오답노트에 자동으로 담기고, 맞히면 빠져요.", pip: tabMini },
-  { n: "03 · 가입 없이", h: "로그인 없이,<br>이 기기에 저장", p: "서버 없이 동작해요. 풀이 기록은 이 기기 브라우저에만 저장돼요.", pip: storeMini },
+  { n: "01 · 바로 채점", h: "풀자마자<br>정답과 해설", p: "NotebookLM과 Claude Code로<br>교재를 대조해 쓴 해설이에요.<br>원문과 쪽수도 함께 나와요.", pip: oxMini + answerCard },
+  { n: "02 · 나눠서 관리", h: "기출과 교재,<br>오답은 따로", p: "틀린 문제는 오답노트에 자동으로,<br>맞히면 바로 빠져요.", pip: tabMini },
+  { n: "03 · 앱처럼", h: "홈 화면에<br>추가하세요", p: `세 번만 누르면 앱처럼 써요.<br>${ADD_OTHER}`, pip: stepsMini },
+  {
+    n: "04 · 서버리스",
+    h: "계정 없이,<br>이 기기에만",
+    p: '백엔드 없는 정적 웹앱(GitHub Pages)이라<br>가입·로그인 없이 바로 써요.<br>풀이 기록은 이 브라우저의<br>localStorage에만 저장돼요.<span class="ob-warn">⚠︎ 사이트 데이터를 지우면<br>기록도 함께 지워져요.</span>',
+  },
 ];
 
 export function showOnboarding() {
@@ -61,7 +67,8 @@ export function showOnboarding() {
   el.innerHTML = `
     <button class="onb-skip" data-onb="skip">건너뛰기</button>
     <div class="onb-track">${SLIDES.map(
-      (s) => `<section class="onb-slide"><div class="ob-num">${s.n}</div><h2>${s.h}</h2><p>${s.p}</p><div class="ob-pip">${s.pip}</div></section>`,
+      (s) =>
+        `<section class="onb-slide"><div class="ob-num">${s.n}</div><h2>${s.h}</h2><p>${s.p}</p>${s.pip ? `<div class="ob-pip">${s.pip}</div>` : ""}</section>`,
     ).join("")}</div>
     <div class="onb-foot"><div class="onb-dots">${SLIDES.map(() => "<i></i>").join("")}</div><button class="onb-cta" data-onb="next"></button></div>`;
   document.body.appendChild(el);
@@ -74,6 +81,8 @@ export function showOnboarding() {
     const n = Math.round(track.scrollLeft / track.clientWidth);
     if (n === i) return;
     i = n;
+    // 첫 장에 들어올 때마다 정답 카드 팝업을 처음부터 다시 재생
+    el.querySelectorAll(".onb-slide").forEach((sl, k) => sl.classList.toggle("play", k === i));
     el.querySelectorAll(".onb-dots i").forEach((d, k) => d.classList.toggle("on", k === i));
     el.querySelector(".onb-cta")!.textContent = i === SLIDES.length - 1 ? "시작하기" : "다음";
     el.querySelector<HTMLElement>(".onb-skip")!.hidden = i === SLIDES.length - 1;

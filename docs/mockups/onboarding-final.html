@@ -1,0 +1,74 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css"><style>
+*{box-sizing:border-box;margin:0;padding:0}button{border:0;background:none;font:inherit;color:inherit}
+body{background:#E4E7E2;font-family:"Pretendard Variable",Pretendard,sans-serif;color:#16211F;width:1460px;padding:32px 36px;word-break:keep-all}
+h1{font-size:24px}.sub{font-size:14px;color:#555;margin:4px 0 20px}
+.ver{display:flex;gap:24px;padding:26px 0;border-top:2px solid #c9cec7}
+.vl{width:200px;flex:none;padding-top:28px}.vl .t{display:inline-block;font-size:13px;font-weight:700;background:#0E3B36;color:#fff;padding:3px 10px;border-radius:6px}
+.vl h2{font-size:22px;line-height:1.3;margin:10px 0 8px}.vl p{font-size:13px;color:#555;line-height:1.6}
+.screens{display:flex;gap:22px}.cap{font-size:13px;font-weight:600;color:#444;text-align:center;margin-bottom:8px}
+.phone{width:393px;height:780px;border-radius:48px;background:#111;padding:9px}.scr{height:100%;border-radius:40px;overflow:hidden;position:relative}
+.onb{position:fixed;top:0;left:0;right:0;height:100vh;height:100lvh;z-index:50;background:#0E3B36;color:#fff;display:flex;flex-direction:column;overflow:hidden;padding:env(safe-area-inset-top,0px) 0 calc(20px + env(safe-area-inset-bottom,0px));animation:fade .2s ease-out}
+.onb.out{opacity:0;transition:opacity .2s}
+.onb-skip{position:absolute;top:calc(14px + env(safe-area-inset-top,0px));right:16px;z-index:1;padding:8px;font-size:15px;font-weight:600;color:rgba(255,255,255,.65)}
+.onb-track{flex:1;display:flex;min-height:0;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scrollbar-width:none;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}
+.onb-track::-webkit-scrollbar{display:none}
+.onb-slide{flex:0 0 100%;scroll-snap-align:start;scroll-snap-stop:always;padding:64px 26px 0;display:flex;flex-direction:column;min-height:0}
+.ob-num{font-size:14px;font-weight:800;letter-spacing:.08em;color:#F0B455}
+.onb-slide h2{font-size:34px;line-height:1.24;font-weight:800;letter-spacing:-.03em;margin-top:8px;text-wrap:balance}
+.onb-slide p{font-size:16.5px;line-height:1.6;color:rgba(255,255,255,.78);margin-top:10px}
+.ob-pip{width:min(250px,68vw);margin:auto auto 8px;min-height:min(300px,40vh);border-radius:26px;background:#F2F4F1;border:6px solid #082824;box-shadow:0 22px 50px rgba(0,0,0,.35);padding:16px 13px;color:#16211F;overflow:hidden;font-size:13px}
+.ob-chip{display:inline-block;font-size:11.5px;font-weight:700;padding:3px 8px;border-radius:6px;background:#E8ECE7;color:#4A5753}
+.ob-q{font-weight:700;margin:8px 0 10px;line-height:1.45}
+.ob-ox{display:flex;gap:8px}.ob-ox div{flex:1;height:40px;border-radius:11px;border:1px solid #D5DCD4;background:#fff;display:grid;place-items:center;font-size:20px;font-weight:800}
+.ob-ox .o{color:#1C8A5E}.ob-ox .x{color:#C8463E}.ob-ox .on{background:#DAF1E6;border:1.5px solid #1C8A5E}
+.ob-res{margin-top:10px;border-radius:11px;background:#fff;border:1px solid #D5DCD4;overflow:hidden}
+.ob-res .h{background:#DAF1E6;color:#1C8A5E;font-weight:700;padding:6px 10px}.ob-res .b{padding:8px 10px;font-size:11.5px;color:#4A5753}
+.ob-seg{display:flex;background:#E8ECE7;border-radius:10px;padding:3px;font-size:11.5px;font-weight:700;text-align:center;margin-bottom:4px}
+.ob-seg div{flex:1;padding:6px 0;color:#7E8A86}.ob-seg .on{background:#fff;border-radius:8px;color:#16211F}
+.ob-row{display:flex;align-items:center;gap:8px;background:#fff;border-radius:11px;padding:9px 10px;margin-top:7px;font-weight:700;--brand:#0E3B36;--bad:#C8463E;--mark:#E3A13A;--ink-2:#4A5753}
+.ob-row .n{margin-left:auto;color:#7E8A86}
+.ob-icons{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:8px 6px}
+.ob-icons i{aspect-ratio:1;border-radius:13px;background:#D3D9D5}.ob-icons i:nth-child(2){background:#DCD3CA}.ob-icons i:nth-child(3){background:#CAD5DE}
+.ob-icons b{aspect-ratio:1;border-radius:13px;background:#0E3B36;color:#fff;font-size:13px;display:grid;place-items:center;box-shadow:0 0 0 3px #E3A13A}
+.ob-hint{text-align:center;font-size:11.5px;color:#4A5753;margin-top:8px}
+.onb-foot{padding:16px 22px 0;display:grid;gap:16px}
+.onb-dots{display:flex;gap:6px;justify-content:center}.onb-dots i{width:7px;height:7px;border-radius:9px;background:rgba(255,255,255,.25);transition:width .2s}
+.onb-dots i.on{width:22px;background:#fff}
+.onb-cta{height:54px;border-radius:15px;background:#fff;color:#0E3B36;font-size:17px;font-weight:700}
+.onb-slide h2{margin:8px 0 0}.onb-slide p{margin:12px 0 0}
+/* 온보딩 중엔 화면 아래 안전영역까지 같은 초록으로 */
+html.onb-open,html.onb-open body{background:#0E3B36}
+.ob-res .h span{float:right;color:#4A5753;font-size:11px}
+.ob-res .b{font-size:11.5px;color:#16211F;line-height:1.45;display:grid;gap:6px}
+.ob-res .l{font-size:10px;font-weight:600;color:#4A5753}
+.ob-res .qt{border-left:2px solid #D5DCD4;padding-left:7px;color:#16211F}
+.ob-res .src{font-size:10px;color:#4A5753}
+.onb-dots i{transition:width .25s,background .25s}
+.ob-store{align-items:flex-start;padding:9px 10px}.ob-store .i{width:22px;text-align:center;font-size:14px}
+.ob-store b{display:block;font-size:12.5px}.ob-store small{display:block;font-size:10.5px;font-weight:500;color:#7E8A86;margin-top:1px}
+.ob-add{display:flex;gap:10px;align-items:center;margin-top:10px;padding-top:10px;border-top:1px dashed #D5DCD4;font-size:11.5px;font-weight:700;line-height:1.4}
+.ob-add b{width:38px;height:38px;flex:none;border-radius:10px;background:#0E3B36;color:#fff;font-size:11px;display:grid;place-items:center}
+.ob-add em{font-style:normal;font-weight:500;color:#7E8A86;font-size:10.5px}
+.ob-store{margin-top:6px;padding:8px 10px}.ob-store:first-child{margin-top:0}.ob-store .i{color:#0E3B36;display:grid;place-items:center;padding-top:1px}
+.ob-pip{flex-shrink:0}
+
+.onb{position:relative!important;height:100%!important;animation:none;padding:44px 0 20px}
+.onb-track{overflow:hidden}
+.onb-skip{top:52px}
+.onb-slide{padding-top:60px}
+
+.fc{position:absolute;left:24px;right:24px;bottom:150px;background:#fff;border-radius:16px;box-shadow:0 18px 40px rgba(0,0,0,.35);overflow:hidden;color:#16211F;z-index:2}
+.fh{background:#DAF1E6;color:#1C8A5E;font-weight:700;padding:8px 12px;font-size:13px}.fh span{float:right;color:#4A5753;font-size:11.5px}
+.fb{padding:10px 12px;font-size:12.5px;line-height:1.5;display:grid;gap:7px}.fb .l{font-size:10.5px;font-weight:600;color:#4A5753}
+.fq{border-left:2px solid #D5DCD4;padding-left:8px;font-size:11.5px}
+.ai{font-size:10.5px;color:#4A5753;background:#F2F4F1;border-radius:8px;padding:6px 8px}
+.anim{width:300px;flex:none;padding-top:40px;font-size:13px;line-height:1.7;color:#333}
+.anim b{display:block;font-size:15px;margin-bottom:6px}.anim ol{padding-left:18px}
+.arrow{align-self:center;font-size:28px;color:#888;margin:0 -8px}
+body{width:auto!important}
+.onb-slide p{white-space:normal;word-break:keep-all}.fb{word-break:keep-all}</style></head><body>
+<h1>온보딩 최종안 — 떠 있는 카드(3안)</h1><div class="sub">4장(01 채점 · 02 관리 · 03 홈 화면 추가 · 04 서버리스) · 옆으로 밀거나 [다음] · 첫 장은 들어올 때마다 정답 카드가 팝업처럼 떠오름</div>
+<section class="ver" style="border:0"><div class="screens"><div><div class="cap">01 · 들어온 직후</div><div class="phone"><div class="scr"><div class="onb"><button class="onb-skip">건너뛰기</button><div class="onb-track"><section class="onb-slide"><div class="ob-num">01 · 바로 채점</div><h2>풀자마자<br>정답과 해설</h2><p>NotebookLM과 Claude Code로<br>교재를 대조해 쓴 해설이에요.<br>원문과 쪽수도 함께 나와요.</p><div class="ob-pip"><span class="ob-chip">OX 진위형</span><div class="ob-q">자본시장법상 증권은 최대손실이 원금으로 한정된다.</div><div class="ob-ox"><div class="o " style="position:relative">O</div><div class="x">X</div></div><div style="height:150px"></div></div></section></div><div class="onb-foot"><div class="onb-dots"><i class="on"></i><i class=""></i><i class=""></i><i class=""></i></div><button class="onb-cta">다음</button></div></div></div></div></div><div class="arrow">→</div><div><div class="cap">01 · 0.6초 뒤 카드 팝업</div><div class="phone"><div class="scr"><div class="onb"><button class="onb-skip">건너뛰기</button><div class="onb-track"><section class="onb-slide"><div class="ob-num">01 · 바로 채점</div><h2>풀자마자<br>정답과 해설</h2><p>NotebookLM과 Claude Code로<br>교재를 대조해 쓴 해설이에요.<br>원문과 쪽수도 함께 나와요.</p><div class="fc"><div class="fh">✓ 정답 <span>정답 O</span></div><div class="fb"><div><div class="l">해설</div>증권은 손실이 투자원금까지만 나는 금융투자상품이에요.<br>원금을 넘어 손실이 날 수 있으면 파생상품으로 구분해요.</div><div class="fq"><div class="l">원문 인용 · 교재 1권 p.9</div>증권이란 투자자의 최대손실이 투자원금으로 한정되는 금융투자상품…</div></div></div><div class="ob-pip"><span class="ob-chip">OX 진위형</span><div class="ob-q">자본시장법상 증권은 최대손실이 원금으로 한정된다.</div><div class="ob-ox"><div class="o on" style="position:relative">O</div><div class="x">X</div></div><div style="height:150px"></div></div></section></div><div class="onb-foot"><div class="onb-dots"><i class="on"></i><i class=""></i><i class=""></i><i class=""></i></div><button class="onb-cta">다음</button></div></div></div></div></div>
+<div class="anim"><b>01 팝업 애니메이션</b><ol><li>장에 들어오면 O 버튼이 눌린 듯 초록으로 바뀜 (0.4초)</li><li>정답 카드가 아래에서 살짝 작게 시작해 위로 떠오르며 커짐 — 위로 24px, 크기 92%→100%, 반투명→선명</li><li>끝에서 살짝 튕기듯 멈춤 (0.45초, 스프링 곡선)</li><li>다른 장 갔다 돌아오면 다시 재생 · "동작 줄이기" 설정이면 애니메이션 없이 바로 표시</li></ol></div>
+</div></section>
+<section class="ver"><div class="screens"><div><div class="cap">02</div><div class="phone"><div class="scr"><div class="onb"><button class="onb-skip">건너뛰기</button><div class="onb-track"><section class="onb-slide"><div class="ob-num">02 · 나눠서 관리</div><h2>기출과 교재,<br>오답은 따로</h2><p>틀린 문제는 오답노트에 자동으로,<br>맞히면 바로 빠져요.</p><div class="ob-pip"><div class="ob-seg"><div class="on">온라인 기출</div><div>교재 문항</div></div><div class="ob-row"><span style="color:#0E3B36">▶</span>문제 풀기<span class="n">154</span></div><div class="ob-row"><span style="color:#C8463E">✕</span>오답노트<span class="n">12</span></div><div class="ob-row"><span style="color:#E3A13A">↻</span>자주 틀린 문제<span class="n">4</span></div><div class="ob-row"><span style="color:#4A5753">★</span>북마크<span class="n">7</span></div></div></section></div><div class="onb-foot"><div class="onb-dots"><i class=""></i><i class="on"></i><i class=""></i><i class=""></i></div><button class="onb-cta">다음</button></div></div></div></div></div><div><div class="cap">03</div><div class="phone"><div class="scr"><div class="onb"><button class="onb-skip">건너뛰기</button><div class="onb-track"><section class="onb-slide"><div class="ob-num">03 · 앱처럼</div><h2>홈 화면에<br>추가하세요</h2><p>세 번만 누르면 앱처럼 써요.<br>안드로이드는 크롬 메뉴 ⋮에서 추가해요.</p><div class="ob-pip"><div style="display:grid;gap:10px"><div style="display:flex;gap:10px;align-items:center;background:#fff;border-radius:12px;padding:10px"><span style="width:26px;height:26px;border-radius:50%;background:#0E3B36;color:#fff;font-weight:800;font-size:12px;display:grid;place-items:center;flex:none">1</span><span style="font-size:12px;font-weight:700;line-height:1.4">공유 버튼<br><span style="font-weight:500;color:#7E8A86;font-size:10.5px">사파리 아래 가운데</span></span><span style="margin-left:auto;font-size:18px">⬆︎</span></div><div style="display:flex;gap:10px;align-items:center;background:#fff;border-radius:12px;padding:10px"><span style="width:26px;height:26px;border-radius:50%;background:#0E3B36;color:#fff;font-weight:800;font-size:12px;display:grid;place-items:center;flex:none">2</span><span style="font-size:12px;font-weight:700;line-height:1.4">홈 화면에 추가<br><span style="font-weight:500;color:#7E8A86;font-size:10.5px">목록에서 선택</span></span><span style="margin-left:auto;font-size:18px">⊞</span></div><div style="display:flex;gap:10px;align-items:center;background:#fff;border-radius:12px;padding:10px"><span style="width:26px;height:26px;border-radius:50%;background:#0E3B36;color:#fff;font-weight:800;font-size:12px;display:grid;place-items:center;flex:none">3</span><span style="font-size:12px;font-weight:700;line-height:1.4">홈에서 열기<br><span style="font-weight:500;color:#7E8A86;font-size:10.5px">앱처럼 전체 화면</span></span><span style="margin-left:auto;width:28px;height:28px;border-radius:8px;background:#0E3B36;color:#fff;font-size:9px;font-weight:800;display:grid;place-items:center">기출</span></div></div></div></section></div><div class="onb-foot"><div class="onb-dots"><i></i><i></i><i class="on"></i><i></i></div><button class="onb-cta">다음</button></div></div></div></div></div><div><div class="cap">04</div><div class="phone"><div class="scr"><div class="onb"><div class="onb-track"><section class="onb-slide"><div class="ob-num">04 · 서버리스</div><h2>계정 없이,<br>이 기기에만</h2><p>백엔드 없는 정적 웹앱(GitHub Pages)이라<br>가입·로그인 없이 바로 써요.<br>풀이 기록은 이 브라우저의<br>localStorage에만 저장돼요.</p><p style="margin-top:18px;color:#F0B455;font-weight:600">⚠︎ 사이트 데이터를 지우면<br>기록도 함께 지워져요.</p></section></div><div class="onb-foot"><div class="onb-dots"><i></i><i></i><i></i><i class="on"></i></div><button class="onb-cta">시작하기</button></div></div></div></div></div></div></section></body></html>
