@@ -395,3 +395,14 @@ html.onb-open,html.onb-open body{background:#0E3B36}
 .keep p{display:flex;align-items:center;gap:10px;margin:0;font-size:14px;color:var(--ink-2);padding:3px 0}
 .keep .ic{width:26px;height:26px;flex:none;border-radius:8px;background:var(--surface-2);display:grid;place-items:center;font-size:13px}
 .keep .btn{margin-top:8px;height:46px;width:100%}
+
+/* 하단 탭바 */
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;justify-content:center;background:color-mix(in srgb,var(--surface) 94%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid var(--line);padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px))}
+.tabbar button{flex:1;max-width:120px;display:grid;justify-items:center;gap:3px;padding:6px 0;color:var(--ink-3);font-size:11.5px;font-weight:600}
+.tabbar button[aria-current="page"]{color:var(--brand)}
+body.has-tabs .app{padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+/* 더보기 */
+.more-list{display:grid;gap:8px;margin-top:4px}
+.more-row{display:flex;align-items:center;gap:12px;background:var(--surface);border-radius:16px;padding:14px;text-align:left;font-size:16px;box-shadow:var(--shadow)}
+.more-row .ic{width:34px;height:34px;flex:none;border-radius:10px;background:var(--brand-soft);color:var(--brand);display:grid;place-items:center}
+.more-row b{flex:1;font-weight:600}.more-row .r{color:var(--ink-3);font-size:14px}

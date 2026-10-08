@@ -7,7 +7,7 @@ import { I } from "./icons";
 import { addToday, clearRun, loadPrefs, loadTheme, loadToday, saveTheme, type Theme, loadRun, loadSubject, savePrefs, saveRun, saveSubject, type SavedRun, type SubjectState } from "./store";
 import type { LoadedBank, Q } from "./types";
 
-type View = "home" | "subject" | "quiz" | "end" | "review" | "stats";
+type View = "home" | "subject" | "quiz" | "end" | "review" | "stats" | "more";
 type Kind = "all" | "wrong" | "bm" | "often";
 type Only = "all" | "wrong" | "bm";
 
@@ -201,6 +201,7 @@ function liveCard() {
 
 function renderStats() {
   view = "stats";
+  syncTabbar();
   const head = (sub: string) =>
     `<div class="bar"><button class="icon-btn" data-act="home" aria-label="홈으로">${I.back}</button><h1>사용 통계</h1><span class="st-upd">${sub}</span></div>`;
   if (statsUi.data === undefined) {
@@ -339,6 +340,67 @@ function openStatQuestion(n: number) {
   });
 }
 
+/* ---------- 하단 탭바: 홈 · 문제 풀기 · 해설 훑어보기 · 더보기 (풀이·결과·통계 화면에서는 숨김) ---------- */
+type TabKey = "home" | "subject" | "review" | "more";
+const TABBAR: [TabKey, string, string][] = [
+  ["home", "홈", I.home],
+  ["subject", "문제 풀기", I.play],
+  ["review", "해설 훑어보기", I.book],
+  ["more", "더보기", I.more],
+];
+const $tabbar = document.getElementById("tabbar")!;
+function syncTabbar() {
+  const show = view === "home" || view === "subject" || view === "review" || view === "more";
+  $tabbar.hidden = !show;
+  document.body.classList.toggle("has-tabs", show);
+  if (!show) return;
+  $tabbar.innerHTML = TABBAR.map(
+    ([k, l, ic]) => `<button data-tab-go="${k}" aria-current="${view === k ? "page" : "false"}">${ic}<span>${l}</span></button>`,
+  ).join("");
+}
+/** 탭 이동: 홈이 맨 아래, 다른 탭은 홈 위에 한 칸만 쌓아서 뒤로가기(밀기)가 항상 홈으로 */
+function goTab(k: TabKey) {
+  if (k === view) return window.scrollTo({ top: 0, behavior: "smooth" });
+  if (k === "home") {
+    // 홈 위에 쌓아 둔 탭이면 뒤로, 새로고침 등으로 바로 들어온 탭이면 홈으로 바꿔치기
+    if (history.state?.fromHome) return history.back();
+    history.replaceState({ view: "home" } satisfies Route, "");
+    return go(renderHome);
+  }
+  const fromHome = view === "home" || !!history.state?.fromHome;
+  const route = { ...(k === "more" ? { view: "more" as View } : { view: k as View, bank: bank.id }), fromHome };
+  if (view === "home") history.pushState(route, "");
+  else history.replaceState(route, "");
+  go(k === "subject" ? renderSubject : k === "review" ? renderReview : renderMore);
+}
+$tabbar.addEventListener("click", (e) => {
+  const b = (e.target as HTMLElement).closest<HTMLElement>("[data-tab-go]");
+  if (b) goTab(b.dataset.tabGo as TabKey);
+});
+
+function renderMore() {
+  view = "more";
+  syncTabbar();
+  pageview("more");
+  const t = loadTheme();
+  const row = (act: string, ic: string, label: string, right = "") =>
+    `<button class="more-row" data-act="${act}"><span class="ic">${ic}</span><b>${label}</b><span class="r">${right} ›</span></button>`;
+  $app.innerHTML = `
+    <div class="bar"><h1 style="font-size:24px">더보기</h1></div>
+    <div class="more-list">
+      ${row("transfer", I.swap, "기록 옮기기")}
+      ${row("theme-more", I[t === "system" ? "auto" : t === "light" ? "sun" : "moon"], "화면 테마", THEME_LABEL[t])}
+      ${row("onboarding", I.help, "사용법 보기")}
+      ${row("notice", I.bell, "공지")}
+    </div>
+    <section class="keep" aria-label="기록 보관 안내">
+      <p><span class="ic" aria-hidden="true">📱</span>기록은 이 기기의 브라우저에만 저장돼요</p>
+      <p><span class="ic" aria-hidden="true">🗑</span>캐시·사이트 데이터를 지우면 사라져요</p>
+      <p><span class="ic" aria-hidden="true">🔁</span>기기를 바꿀 땐 먼저 기록을 옮기세요</p>
+    </section>
+    <p class="note">문제은행 ${BANKS.reduce((a, b) => a + b.questions.length, 0)}문항 · 익명 방문 통계만 수집해요</p>`;
+}
+
 /* ---------- 공지: 온라인 시험 기출 캡처 공유 요청 ---------- */
 const noticeBanner = () =>
   `<button class="notice" data-act="notice"><span class="ic">📣</span><b>온라인 시험 1,2차 문항 공유 부탁드립니다</b><span class="go">›</span></button>`;
@@ -462,6 +524,7 @@ function openNotice() {
 
 function renderHome() {
   view = "home";
+  syncTabbar();
   pageview("home");
   const cards = BANKS.map((b) => {
     const s = stats(b, loadSubject(b.id), null);
@@ -491,6 +554,7 @@ function renderHome() {
 /* ---------- 과목 ---------- */
 function renderSubject() {
   view = "subject";
+  syncTabbar();
   pageview(`subject/${tab()}`);
   const s = stats(bank, st);
   const n = filtered().length;
@@ -636,8 +700,8 @@ function startSession(kind: Kind) {
 /* ---------- 화면 기록 ----------
    화면 이동을 브라우저 기록에 남겨서 뒤로가기(제스처·버튼)가 앱 안에서 동작하게 한다.
    깊이: 홈 → 과목 → (풀이 | 결과 | 훑어보기) */
-type Route = { view: View; bank?: string; kind?: Kind; tab?: string };
-const route = (v: View): Route => ({ view: v, bank: bank.id, ...(v === "quiz" && session ? { kind: session.kind, tab: tab() } : {}) });
+type Route = { view: View; bank?: string; kind?: Kind; tab?: string; fromHome?: boolean };
+const route = (v: View): Route => ({ view: v, bank: bank.id, ...(v === "quiz" && session ? { kind: session.kind, tab: tab() } : {}), ...(view === "home" ? { fromHome: true } : {}) });
 const pushRoute = (v: View) => history.pushState(route(v), "");
 const replaceRoute = (v: View) => history.replaceState(route(v), "");
 
@@ -653,6 +717,7 @@ function enterQuiz() {
 function showRoute(r: Route | null, fromPop = false) {
   document.querySelector(".sheet-wrap")?.remove();
   if (r?.view === "stats") return go(renderStats);
+  if (r?.view === "more") return go(renderMore);
   const b = r?.bank ? BANKS.find((x) => x.id === r.bank) : undefined;
   if (!r || r.view === "home" || !b) {
     history.replaceState({ view: "home" } satisfies Route, "");
@@ -686,6 +751,7 @@ function goBack() {
 function renderQuiz() {
   if (!session) return;
   view = "quiz";
+  syncTabbar();
   pageview("quiz");
   const it = session.items[session.i];
   const q = it.q;
@@ -796,6 +862,7 @@ function renderEnd() {
   if (!session) return;
   clearRun(bank.id, runKind(session.kind));
   view = "end";
+  syncTabbar();
   pageview("end");
   const items = session.items;
   const total = items.length;
@@ -854,6 +921,7 @@ function reviewCards() {
 
 function renderReview() {
   view = "review";
+  syncTabbar();
   pageview("review");
   const only = (v: Only, l: string) => `<button class="chip" data-only="${v}" aria-pressed="${reviewOpts.only === v}">${l}</button>`;
   $app.innerHTML = `
@@ -955,6 +1023,13 @@ $app.addEventListener("click", (e) => {
     return renderStats();
   }
   if (d.sq) return openStatQuestion(Number(d.sq));
+  if (d.act === "theme-more") {
+    const order: Theme[] = ["system", "light", "dark"];
+    const next = order[(order.indexOf(loadTheme()) + 1) % 3];
+    saveTheme(next);
+    applyTheme(next);
+    return renderMore();
+  }
   if (d.act === "theme") {
     const order: Theme[] = ["system", "light", "dark"];
     const next = order[(order.indexOf(loadTheme()) + 1) % 3];
