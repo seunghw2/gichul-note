@@ -22,6 +22,9 @@ interface Item {
   text: string | null;
   /** 약술형 모범답안을 펼쳤는지 */
   shown?: boolean;
+  /** 60초 제한: 이 문항의 마감 시각(ms), 시간 초과로 채점됐는지 */
+  deadline?: number;
+  timedOut?: boolean;
 }
 
 const $app = document.getElementById("app")!;
@@ -684,7 +687,7 @@ function renderSubject() {
   const n = filtered().length;
   const chip = (k: "type", v: string, label: string) =>
     `<button class="chip" data-pref="${k}" data-val="${esc(v)}" aria-pressed="${prefs[k] === v}">${esc(label)}</button>`;
-  const tog = (k: "shuffleQ" | "shuffleC" | "bookOnlyNew", label: string) =>
+  const tog = (k: "shuffleQ" | "shuffleC" | "bookOnlyNew" | "timer", label: string) =>
     `<button class="toggle" data-tog="${k}" aria-pressed="${prefs[k]}"><span>${label}</span><span class="sw"></span></button>`;
   const sub = (kind: Kind, base: string) => {
     const p = runProgress(kind);
@@ -714,6 +717,7 @@ function renderSubject() {
         ${tab() === "book" ? tog("bookOnlyNew", `기출과 겹치는 문제 제외 (${bank.questions.filter((q) => inTab(q, "book") && inTab(q, "exam")).length})`) : ""}
         ${tog("shuffleQ", "문제 순서 섞기")}
         ${tog("shuffleC", "보기 순서 섞기")}
+        ${isAdmin() ? tog("timer", "문제당 60초 제한") : ""}
       </div>
       <div class="fcount">선택한 범위: <b class="num">${n}</b>문항</div>
     </div>`;
@@ -881,8 +885,31 @@ function goBack() {
   if (view !== "home") history.back();
 }
 
+/* ---------- 60초 제한(관리자 기기에서 토글을 켰을 때만) ---------- */
+const LIMIT = 60;
+let timerT: number | undefined;
+const timerOn = () => isAdmin() && !!prefs.timer;
+function tickTimer() {
+  const it = session?.items[session.i];
+  if (view !== "quiz" || !it || it.ok !== null || !it.deadline) return void clearInterval(timerT);
+  const left = Math.max(0, it.deadline - Date.now());
+  const sec = Math.ceil(left / 1000);
+  const box = document.querySelector<HTMLElement>(".qtimer");
+  if (box) {
+    box.classList.toggle("low", sec <= 10);
+    box.querySelector<HTMLElement>("span")!.style.width = `${(left / (LIMIT * 1000)) * 100}%`;
+    box.querySelector("b")!.textContent = `${sec}초`;
+  }
+  if (left <= 0) {
+    clearInterval(timerT);
+    it.timedOut = true;
+    grade(false);
+  }
+}
+
 function renderQuiz() {
   if (!session) return;
+  clearInterval(timerT);
   view = "quiz";
   syncTabbar();
   pageview("quiz");
@@ -931,17 +958,20 @@ function renderQuiz() {
   const ansText =
     q.type === "ox" ? (q.answer === 1 ? "O" : "X") : q.type === "mc" ? KNUM[it.order.indexOf(q.answer!)] : q.type === "short" ? shortAnswer(q) : "";
   const isBm = st.bm.includes(q.n);
+  const timed = timerOn() && !done;
+  if (timed) it.deadline ??= Date.now() + LIMIT * 1000;
   $app.innerHTML = `
     <div class="bar">
       <button class="icon-btn" data-act="subject" aria-label="그만 풀기">${I.close}</button>
       <div class="qhead" style="flex:1"><div class="progress"><span style="width:${pct(session.i + (done ? 1 : 0), total)}%"></span></div><button class="jump num" data-act="jump" aria-label="문제 번호로 이동">${session.i + 1}/${total} ▾</button></div>
     </div>
+    ${timed ? `<div class="qtimer" role="timer"><div class="tbar"><span></span></div><b class="num">${LIMIT}초</b></div>` : ""}
     <div class="qtags"><span class="tag type">${TYPE_LABEL[q.type]}</span>${session.kind !== "all" ? `<span class="tag">${LABEL[session.kind]}</span>` : ""}${missOf(q.n) ? `<span class="tag miss">틀림 ${missOf(q.n)}회</span>` : ""}</div>
     <div class="qno">${q.variantOf ? `<span class="tag var">변형 · 원본 ${q.variantOf}번</span>` : `문제 ${q.n} <span class="qsrc">· ${esc(srcText(q))}</span>`}</div>
     <div class="qtext">${esc(q.q)}</div>
     ${body}
     ${done ? `<div class="result ${correct ? "ok" : "bad"}">
-      <div class="rh">${correct ? I.check + " 정답" : I.x + " 오답"}${ansText ? `<span class="ans">정답 ${esc(ansText)}</span>` : ""}</div>
+      <div class="rh">${correct ? I.check + " 정답" : I.x + (it.timedOut ? " 시간 초과" : " 오답")}${ansText ? `<span class="ans">정답 ${esc(ansText)}</span>` : ""}</div>
       <div class="rb"><div><div class="lbl">${q.type === "essay" ? "모범답안" : "해설"}</div>${expHtml(q.exp)}</div>${quoteHtml(q)}${diffHtml(q)}
       <div class="src">${I.pg} ${esc(srcText(q))} · 출제원 ${esc(q.src)}</div></div></div>` : ""}
     <div class="qfoot">
@@ -950,6 +980,10 @@ function renderQuiz() {
       <button class="next" data-act="next" ${done ? "" : "disabled"}>${session.i === total - 1 ? "결과 보기" : "다음 문제"}</button>
     </div>`;
   window.scrollTo(0, 0);
+  if (timed) {
+    tickTimer();
+    timerT = window.setInterval(tickTimer, 200);
+  }
 }
 
 /** 약술형에 적어 둔 내 답안 */
@@ -1195,7 +1229,7 @@ $app.addEventListener("click", (e) => {
     savePrefs(prefs);
     return renderSubject();
   }
-  if (d.tog === "shuffleQ" || d.tog === "shuffleC" || d.tog === "bookOnlyNew") {
+  if (d.tog === "shuffleQ" || d.tog === "shuffleC" || d.tog === "bookOnlyNew" || d.tog === "timer") {
     prefs[d.tog] = !prefs[d.tog];
     savePrefs(prefs);
     return renderSubject();

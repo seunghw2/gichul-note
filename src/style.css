@@ -453,3 +453,10 @@ body.has-tabs .app{padding-bottom:calc(88px + env(safe-area-inset-bottom,0px))}
 .diff .lbl{color:var(--ink-2)}
 .seg button{white-space:nowrap;padding-inline:4px}
 @media (max-width:420px){.seg button{font-size:14px}}
+/* 60초 제한 (관리자) */
+.qtimer{display:flex;align-items:center;gap:10px;margin:2px 0 12px}
+.qtimer .tbar{flex:1;height:8px;border-radius:99px;background:var(--surface-2);overflow:hidden}
+.qtimer .tbar span{display:block;height:100%;width:100%;border-radius:99px;background:var(--brand);transition:width .2s linear}
+.qtimer b{font-size:15px;min-width:42px;text-align:right;color:var(--ink-2)}
+.qtimer.low .tbar span{background:var(--bad)}
+.qtimer.low b{color:var(--bad)}
