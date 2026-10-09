@@ -926,9 +926,30 @@ const LIMITS = [0, 30, 45, 60];
 const limitSec = () => prefs.timerSec ?? (prefs.timer ? 60 : 0);
 let timerT: number | undefined;
 const timerOn = () => isAdmin() && limitSec() > 0;
+/** 타이머를 멈춘 시각: 폰 홈 화면·다른 앱으로 가거나 풀이 화면을 벗어나면 기록하고, 돌아오면 그만큼 마감을 미룬다 */
+let pausedAt: number | null = null;
+function pauseTimers() {
+  if (pausedAt === null) pausedAt = Date.now();
+}
+function resumeTimers() {
+  if (pausedAt === null) return;
+  const gap = Date.now() - pausedAt;
+  pausedAt = null;
+  const it = session?.items[session.i];
+  if (it?.deadline && it.ok === null) it.deadline += gap;
+  if (expDl) expDl.at += gap;
+}
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) return pauseTimers();
+  resumeTimers(); // 숨겨진 동안 interval은 돌기만 하고 아무것도 안 했으므로 그대로 이어진다
+});
 function tickTimer() {
   const it = session?.items[session.i];
-  if (view !== "quiz" || !it || it.ok !== null || !it.deadline) return void clearInterval(timerT);
+  if (document.hidden) return;
+  if (view !== "quiz" || !it || it.ok !== null || !it.deadline) {
+    if (view !== "quiz") pauseTimers();
+    return void clearInterval(timerT);
+  }
   const left = Math.max(0, it.deadline - Date.now());
   const sec = Math.ceil(left / 1000);
   const box = document.querySelector<HTMLElement>(".qtimer:not(.exp)");
@@ -952,7 +973,11 @@ let expDl: { i: number; at: number; limit: number } | null = null;
 let expT: number | undefined;
 function tickExp() {
   const box = document.querySelector<HTMLElement>(".qtimer.exp");
-  if (view !== "quiz" || !session || !expDl || expDl.i !== session.i || !box) return void clearInterval(expT);
+  if (document.hidden) return;
+  if (view !== "quiz" || !session || !expDl || expDl.i !== session.i || !box) {
+    if (view !== "quiz") pauseTimers();
+    return void clearInterval(expT);
+  }
   const left = Math.max(0, expDl.at - Date.now());
   const sec = Math.ceil(left / 1000);
   box.classList.toggle("low", sec <= 15);
@@ -969,6 +994,7 @@ function renderQuiz() {
   if (!session) return;
   clearInterval(timerT);
   clearInterval(expT);
+  resumeTimers();
   if (expDl && expDl.i !== session.i) expDl = null;
   view = "quiz";
   syncTabbar();
@@ -1088,7 +1114,8 @@ function grade(ok: boolean) {
   if (ok) st.wrong = st.wrong.filter((n) => n !== q.n);
   saveSubject(bank.id, st);
   persistRun();
-  if (expOn()) expDl = { i: session.i, at: Date.now() + prefs.expSec! * 1000, limit: prefs.expSec! };
+  // 시간 초과(손대지 않음)로 채점된 문제는 자동으로 넘기지 않는다: 자리를 비운 사이 연달아 오답 처리되는 것을 막음
+  if (expOn() && !it.timedOut) expDl = { i: session.i, at: Date.now() + prefs.expSec! * 1000, limit: prefs.expSec! };
   renderQuiz();
   if (ok && wasWrong) toast("오답노트에서 뺐어요");
   const res = document.querySelector(".result");
