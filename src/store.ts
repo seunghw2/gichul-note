@@ -20,6 +20,8 @@ export interface Prefs {
   bookOnlyNew: boolean;
   /** (예전) 문제당 60초 제한 켜기 — timerSec로 옮겨짐 */
   timer?: boolean;
+  /** '문제 풀기'를 아직 안 푼 문제(기록 없음)만으로 */
+  onlyUnsolved?: boolean;
   /** 관리자 기기 전용: 문제당 시간 제한(초). 0 = 끔 */
   timerSec?: number;
 }

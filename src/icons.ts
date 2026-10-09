@@ -17,7 +17,6 @@ export const I = {
   auto: s('<circle cx="12" cy="12" r="8.5"/><path d="M12 3.5v17a8.5 8.5 0 0 0 0-17z" fill="currentColor"/>', 21),
   back: s('<path d="M15 18l-6-6 6-6"/>', 22),
   close: s('<path d="M6 6l12 12M18 6L6 18"/>', 22),
-  fresh: s('<circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/>', 20),
   play: s('<path d="M8 5.5v13l10.5-6.5z"/>', 20, 'fill="currentColor"'),
   redo: s('<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/>'),
   book: s('<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5"/><path d="M9 8h6"/>'),

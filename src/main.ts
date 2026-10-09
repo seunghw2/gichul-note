@@ -9,7 +9,7 @@ import { addToday, clearRun, loadPrefs, loadTheme, loadToday, saveTheme, type Th
 import type { LoadedBank, Q } from "./types";
 
 type View = "home" | "subject" | "quiz" | "end" | "review" | "stats" | "more" | "people";
-type Kind = "all" | "wrong" | "bm" | "often" | "unsolved";
+type Kind = "all" | "wrong" | "bm" | "often";
 type Only = "all" | "wrong" | "bm";
 
 interface Item {
@@ -33,7 +33,7 @@ const $app = document.getElementById("app")!;
 const $toast = document.getElementById("toast")!;
 
 const KNUM = ["①", "②", "③", "④", "⑤"];
-const LABEL: Record<Kind, string> = { all: "문제 풀기", wrong: "오답노트", bm: "북마크", often: "자주 틀린 문제", unsolved: "안 푼 문제" };
+const LABEL: Record<Kind, string> = { all: "문제 풀기", wrong: "오답노트", bm: "북마크", often: "자주 틀린 문제" };
 /** 자주 틀린 문제 기준(틀린 횟수) */
 const OFTEN = 2;
 const TYPE_LABEL: Record<Q["type"], string> = { ox: "OX 진위형", mc: "4지선다", short: "단답형", essay: "약술형" };
@@ -89,7 +89,10 @@ const tab = (): Tab => (prefs.tab === "book" || prefs.tab === "variant" ? prefs.
 const visible = (b: LoadedBank, t: Tab | null = tab()) =>
   t ? b.questions.filter((q) => inTab(q, t) && !(t === "book" && prefs.bookOnlyNew && inTab(q, "exam"))) : b.questions;
 /** 진행 중 풀이는 탭마다 따로 저장(온라인 기출은 기존 키 유지) */
-const runKind = (kind: Kind) => (tab() === "exam" ? kind : `${tab()}-${kind}`);
+const runKind = (kind: Kind) => {
+  const k = kind === "all" && prefs.onlyUnsolved ? "unsolved" : kind; // 전체/안 푼 문제만은 이어풀기를 따로 저장
+  return tab() === "exam" ? k : `${tab()}-${k}`;
+};
 const missOf = (n: number) => st.rec[n]?.miss ?? 0;
 
 function stats(b: LoadedBank, s: SubjectState, t: Tab | null = tab()) {
@@ -101,9 +104,11 @@ function stats(b: LoadedBank, s: SubjectState, t: Tab | null = tab()) {
   const ok = recs.filter((r) => r.last).length;
   const often = vis.filter((q) => (s.rec[q.n]?.miss ?? 0) >= OFTEN).length;
   const tries = recs.reduce((a, r) => a + (r.tries ?? 0), 0); // 다시 푼 것까지 모든 채점 횟수(누적)
-  return { total, done, tries, rate: done ? Math.round((ok / done) * 100) : null, wrong: s.wrong.filter((n) => ns.has(n)).length, bm: s.bm.filter((n) => ns.has(n)).length, often, unsolved: total - done };
+  return { total, done, tries, rate: done ? Math.round((ok / done) * 100) : null, wrong: s.wrong.filter((n) => ns.has(n)).length, bm: s.bm.filter((n) => ns.has(n)).length, often };
 }
 
+/** '문제 풀기'에 나오는 문항: 출제 범위 + ('안 푼 문제만'이면) 기록 없는 문항만 */
+const playPool = () => (prefs.onlyUnsolved ? filtered().filter((q) => !st.rec[q.n]) : filtered());
 const filtered = () => {
   return visible(bank).filter((q) => prefs.type === "all" || q.type === prefs.type);
 };
@@ -434,7 +439,7 @@ function extraCards(s: StatRange, kv: (l: string, v: string) => string, card: (t
        <div class="st-leg"><span><i style="background:var(--mark)"></i>처음 온 사람 ${nv}</span><span><i style="background:var(--brand)"></i>다시 온 사람 ${rv}</span></div>
        <p class="st-note">3일 이상 연속으로 온 사람 ${s.streak3 ?? 0}명</p>`
     : '<p class="st-note">아직 데이터가 없어요</p>';
-  const MODE: Record<string, string> = { all: "문제 풀기", unsolved: "안 푼 문제", wrong: "오답노트", bm: "북마크", often: "자주 틀린 문제" };
+  const MODE: Record<string, string> = { all: "문제 풀기", wrong: "오답노트", bm: "북마크", often: "자주 틀린 문제" };
   const modes = Object.keys(MODE).map((k) => kv(MODE[k], `${s.modes?.[k]?.start ?? 0}회 → ${s.modes?.[k]?.finish ?? 0}회`)).join("");
   return `${card("새 방문 vs 다시 온 사람", "", split)}
     ${card("모드별 사용", "시작 → 끝까지", modes)}`;
@@ -686,12 +691,10 @@ function renderSubject() {
   syncTabbar();
   pageview(`subject/${tab()}`);
   const s = stats(bank, st);
-  const n = filtered().length;
-  /** 일부를 푼 뒤 아직 안 푼 문제(새로 추가된 문제 포함)가 남았을 때만 맨 위에 보인다 */
-  const unsolvedCard = s.done > 0 && s.unsolved > 0;
+  const n = playPool().length;
   const chip = (k: "type", v: string, label: string) =>
     `<button class="chip" data-pref="${k}" data-val="${esc(v)}" aria-pressed="${prefs[k] === v}">${esc(label)}</button>`;
-  const tog = (k: "shuffleQ" | "shuffleC" | "bookOnlyNew", label: string) =>
+  const tog = (k: "shuffleQ" | "shuffleC" | "bookOnlyNew" | "onlyUnsolved", label: string) =>
     `<button class="toggle" data-tog="${k}" aria-pressed="${prefs[k]}"><span>${label}</span><span class="sw"></span></button>`;
   const sub = (kind: Kind, base: string) => {
     const p = runProgress(kind);
@@ -708,8 +711,7 @@ function renderSubject() {
 
     <div class="eyebrow">학습하기</div>
     <div class="modes">
-      ${unsolvedCard ? `<button class="mode primary" data-start="unsolved"><span class="ic">${I.fresh}</span><span class="tx"><b>안 푼 문제 풀기</b><small>${sub("unsolved", "새로 추가된 문제 등 아직 안 푼 문제만")}</small></span><span class="cnt">${s.unsolved}</span></button>` : ""}
-      <button class="mode${unsolvedCard ? "" : " primary"}" data-start="all"><span class="ic">${I.play}</span><span class="tx"><b>문제 풀기</b><small>${sub("all", "한 문제씩 풀고 바로 정답·해설 확인")}</small></span><span class="cnt">${n}</span></button>
+      <button class="mode primary" data-start="all" ${n ? "" : "disabled"}><span class="ic">${I.play}</span><span class="tx"><b>문제 풀기</b><small>${sub("all", prefs.onlyUnsolved ? (n ? "아직 안 푼 문제만 풀어요" : "안 푼 문제를 모두 풀었어요 · 토글을 끄면 전체 풀기") : "한 문제씩 풀고 바로 정답·해설 확인")}</small></span><span class="cnt">${n}</span></button>
       <button class="mode" data-start="wrong" ${s.wrong ? "" : "disabled"}><span class="ic">${I.redo}</span><span class="tx"><b>오답노트 다시 풀기</b><small>${sub("wrong", "맞히면 오답노트에서 빠져요")}</small></span><span class="cnt">${s.wrong}</span></button>
       <button class="mode" data-start="bm" ${s.bm ? "" : "disabled"}><span class="ic">${I.bm}</span><span class="tx"><b>북마크 풀기</b><small>${sub("bm", "다시 보고 싶은 문제만 모아 풀기")}</small></span><span class="cnt">${s.bm}</span></button>
       <button class="mode" data-start="often" ${s.often ? "" : "disabled"}><span class="ic">${I.redo}</span><span class="tx"><b>자주 틀린 문제</b><small>${sub("often", `${OFTEN}번 이상 틀린 문제만 모아 풀기`)}</small></span><span class="cnt">${s.often}</span></button>
@@ -720,6 +722,7 @@ function renderSubject() {
       <div class="frow"><label>유형</label><div class="chips">${chip("type", "all", "전체")}${(["ox", "mc", "short", "essay"] as const).filter((t) => visible(bank).some((q) => q.type === t)).map((t) => chip("type", t, TYPE_LABEL[t])).join("")}</div></div>
       ${isAdmin() ? `<div class="frow"><label>시간 제한</label><div class="chips">${LIMITS.map((v) => `<button class="chip" data-limit="${v}" aria-pressed="${limitSec() === v}">${v ? `${v}초` : "끔"}</button>`).join("")}</div></div>` : ""}
       <div class="ftoggles">
+        ${tog("onlyUnsolved", `안 푼 문제만 풀기 (${filtered().filter((q) => !st.rec[q.n]).length})`)}
         ${tab() === "book" ? tog("bookOnlyNew", `기출과 겹치는 문제 제외 (${bank.questions.filter((q) => inTab(q, "book") && inTab(q, "exam")).length})`) : ""}
         ${tog("shuffleQ", "문제 순서 섞기")}
         ${tog("shuffleC", "보기 순서 섞기")}
@@ -734,20 +737,22 @@ function restoreRun(kind: Kind): { kind: Kind; items: Item[]; i: number } | null
   const r = loadRun(bank.id, runKind(kind));
   if (!r) return null;
   // '문제 풀기'는 지금 출제 범위에 맞춘다: 범위 밖 문항은 빼고, 새로 생긴 문항(문항 추가·범위 변경)은 뒤에 붙인다
-  const pool = kind === "all" ? new Set(filtered().map((q) => q.n)) : null;
+  const pool = kind === "all" ? new Set(playPool().map((q) => q.n)) : null;
   const items: Item[] = [];
   let i = -1;
   r.ns.forEach((n, idx) => {
     const q = bank.questions.find((x) => x.n === n);
-    if (!q || (pool && !pool.has(n))) return;
-    if (idx === r.i) i = items.length;
+    if (!q) return;
     const pick = r.picks[idx];
     const ok = r.oks?.[idx] ?? (pick === null ? null : pick === q.answer);
+    // '안 푼 문제만'으로 풀던 회차는 이번에 푼 문항(이제 기록이 생김)도 남긴다
+    if (pool && !pool.has(n) && !(prefs.onlyUnsolved && ok !== null)) return;
+    if (idx === r.i) i = items.length;
     items.push({ q, order: r.orders[idx], pick, ok, text: r.texts?.[idx] ?? null });
   });
   if (pool) {
     const have = new Set(items.map((it) => it.q.n));
-    let added = filtered().filter((q) => !have.has(q.n));
+    let added = playPool().filter((q) => !have.has(q.n));
     if (prefs.shuffleQ) added = shuffle(added);
     items.push(...added.map(newItem));
   }
@@ -819,9 +824,8 @@ function startSession(kind: Kind) {
   if (kind === "wrong") pool = visible(bank).filter((q) => st.wrong.includes(q.n));
   else if (kind === "bm") pool = visible(bank).filter((q) => st.bm.includes(q.n));
   else if (kind === "often") pool = visible(bank).filter((q) => missOf(q.n) >= OFTEN);
-  else if (kind === "unsolved") pool = visible(bank).filter((q) => !st.rec[q.n]);
-  else pool = filtered();
-  if (!pool.length) return toast(kind === "unsolved" ? "안 푼 문제를 모두 풀었어요" : "선택한 범위에 문제가 없어요");
+  else pool = playPool();
+  if (!pool.length) return toast(prefs.onlyUnsolved ? "안 푼 문제를 모두 풀었어요" : "선택한 범위에 문제가 없어요");
   if (prefs.shuffleQ) pool = shuffle(pool);
   session = {
     kind,
@@ -1063,7 +1067,7 @@ function renderEnd() {
     ${wrongs.length ? `<div class="eyebrow">틀린 문제</div><div class="wlist">${wrongs.map((it) => `<div class="witem"><span class="qno">${it.q.n}</span><span>${esc(it.q.q)}</span></div>`).join("")}</div>` : ""}
     <div class="btnrow">
       <button class="btn" data-act="subject">과목으로</button>
-      <button class="btn fill" data-start="${retryWrong ? "wrong" : session.kind === "unsolved" ? "all" : session.kind}">${retryWrong ? "오답만 다시" : session.kind === "unsolved" ? "전체 문제 풀기" : "한 번 더"}</button>
+      <button class="btn fill" data-start="${retryWrong ? "wrong" : session.kind}">${retryWrong ? "오답만 다시" : "한 번 더"}</button>
     </div>`;
   window.scrollTo(0, 0);
 }
@@ -1245,7 +1249,7 @@ $app.addEventListener("click", (e) => {
     savePrefs(prefs);
     return renderSubject();
   }
-  if (d.tog === "shuffleQ" || d.tog === "shuffleC" || d.tog === "bookOnlyNew") {
+  if (d.tog === "shuffleQ" || d.tog === "shuffleC" || d.tog === "bookOnlyNew" || d.tog === "onlyUnsolved") {
     prefs[d.tog] = !prefs[d.tog];
     savePrefs(prefs);
     return renderSubject();
