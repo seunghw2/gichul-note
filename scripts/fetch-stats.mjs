@@ -107,7 +107,7 @@ function summarize(hits) {
       .sort((a, b) => b.count - a.count)
       .slice(0, 10),
     devices: Object.fromEntries(hits.filter((h) => /^device\//.test(h.path)).map((h) => [h.path.slice(7), h.count])),
-    modes: Object.fromEntries(["all", "wrong", "bm", "often"].map((k) => [k, { start: sum(new RegExp(`^start/[a-z]+/${k}$`)), finish: sum(new RegExp(`^finish/[a-z]+/${k}$`)) }])),
+    modes: Object.fromEntries(["all", "unsolved", "wrong", "bm", "often"].map((k) => [k, { start: sum(new RegExp(`^start/[a-z]+/${k}$`)), finish: sum(new RegExp(`^finish/[a-z]+/${k}$`)) }])),
     questions: qs,
   };
 }
