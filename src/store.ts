@@ -13,13 +13,15 @@ export interface SubjectState {
 export interface Prefs {
   type: "all" | "ox" | "mc" | "short" | "essay";
   /** 과목 화면 탭: 온라인 시험 기출 / 교재 문항 (마지막으로 본 탭 기억) */
-  tab: "exam" | "book" | "variant";
+  tab: "exam" | "book" | "variant" | "challenge";
   shuffleQ: boolean;
   shuffleC: boolean;
   /** 교재 문항 탭에서 온라인 시험 기출과 겹치는 문항 빼기 */
   bookOnlyNew: boolean;
   /** (예전) 문제당 60초 제한 켜기 — timerSec로 옮겨짐 */
   timer?: boolean;
+  /** 설정 → 챌린지 퀴즈 활성화(챌린지 탭 보이기) */
+  challenge?: boolean;
   /** '문제 풀기'를 아직 안 푼 문제(기록 없음)만으로 */
   onlyUnsolved?: boolean;
   /** 관리자 기기 전용: 문제당 시간 제한(초). 0 = 끔 */

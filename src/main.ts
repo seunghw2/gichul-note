@@ -8,7 +8,7 @@ import { I } from "./icons";
 import { addToday, clearRun, loadPrefs, loadTheme, loadToday, saveTheme, type Theme, loadRun, loadSubject, savePrefs, saveRun, saveSubject, type SavedRun, type SubjectState } from "./store";
 import type { LoadedBank, Q } from "./types";
 
-type View = "home" | "subject" | "quiz" | "end" | "review" | "stats" | "more" | "people";
+type View = "home" | "subject" | "quiz" | "end" | "review" | "stats" | "more" | "people" | "settings";
 type Kind = "all" | "wrong" | "bm" | "often";
 type Only = "all" | "wrong" | "bm";
 
@@ -79,15 +79,21 @@ const reviewOpts: { q: string; hide: boolean; only: Only } = { q: "", hide: fals
 const BOOK = "교재 연습문제";
 /** 원본 기출을 바꿔 만든 연습용 OX 문항의 출처 이름 */
 const VAR = "변형";
-type Tab = "exam" | "book" | "variant";
-const TABS: Record<Tab, string> = { exam: "온라인 시험 기출", book: "교재 문항", variant: "변형 OX" };
+/** 교재 내용으로 새로 만든 OX 문항의 출처 이름. 설정에서 '챌린지 퀴즈'를 켠 기기에서만 보인다 */
+const CHAL = "챌린지";
+type Tab = "exam" | "book" | "variant" | "challenge";
+const TABS: Record<Tab, string> = { exam: "온라인 기출", book: "교재 문항", variant: "변형 OX", challenge: "챌린지" };
 /** 문항이 탭에 속하는지: 교재 문항 = 교재 연습문제가 출처에 있음, 온라인 기출 = 교재 외 출처가 있음(양쪽 공통 문항은 둘 다) */
 const inTab = (q: Q, t: Tab) =>
-  t === "variant" ? q.sources.includes(VAR) : t === "book" ? q.sources.includes(BOOK) : q.sources.some((x) => x !== BOOK && x !== VAR);
-const tab = (): Tab => (prefs.tab === "book" || prefs.tab === "variant" ? prefs.tab : "exam");
+  t === "challenge" ? q.sources.includes(CHAL) : t === "variant" ? q.sources.includes(VAR) : t === "book" ? q.sources.includes(BOOK) : q.sources.some((x) => x !== BOOK && x !== VAR && x !== CHAL);
+const tab = (): Tab => (prefs.tab === "book" || prefs.tab === "variant" || (prefs.tab === "challenge" && prefs.challenge) ? prefs.tab : "exam");
 /** 탭에 보이는 문항. 교재 탭은 '기출과 겹치는 문제 제외'가 켜져 있으면 교재에만 있는 문항만 */
 const visible = (b: LoadedBank, t: Tab | null = tab()) =>
-  t ? b.questions.filter((q) => inTab(q, t) && !(t === "book" && prefs.bookOnlyNew && inTab(q, "exam"))) : b.questions;
+  t === "challenge" && !prefs.challenge
+    ? []
+    : t
+      ? b.questions.filter((q) => inTab(q, t) && !(t === "book" && prefs.bookOnlyNew && inTab(q, "exam")))
+      : b.questions.filter((q) => prefs.challenge || !q.sources.includes(CHAL));
 /** 진행 중 풀이는 탭마다 따로 저장(온라인 기출은 기존 키 유지) */
 const runKind = (kind: Kind) => {
   const k = kind === "all" && prefs.onlyUnsolved ? "unsolved" : kind; // 전체/안 푼 문제만은 이어풀기를 따로 저장
@@ -474,12 +480,12 @@ const tabList = (): [TabKey, string, string][] =>
     : [["home", "홈", I.home], ["subject", "문제 풀기", I.play], ["review", "해설 훑어보기", I.book], ["more", "더보기", I.more]];
 const $tabbar = document.getElementById("tabbar")!;
 function syncTabbar() {
-  const show = view === "home" || view === "subject" || view === "review" || view === "more" || view === "stats" || view === "people";
+  const show = view === "home" || view === "subject" || view === "review" || view === "more" || view === "stats" || view === "people" || view === "settings";
   $tabbar.hidden = !show;
   document.body.classList.toggle("has-tabs", show);
   if (!show) return;
   $tabbar.innerHTML = tabList().map(
-    ([k, l, ic]) => `<button data-tab-go="${k}" aria-current="${view === k || (k === "more" && view === "people") ? "page" : "false"}">${ic}<span>${l}</span></button>`,
+    ([k, l, ic]) => `<button data-tab-go="${k}" aria-current="${view === k || (k === "more" && (view === "people" || view === "settings")) ? "page" : "false"}">${ic}<span>${l}</span></button>`,
   ).join("");
 }
 /** 탭 이동: 홈이 맨 아래, 다른 탭은 홈 위에 한 칸만 쌓아서 뒤로가기(밀기)가 항상 홈으로 */
@@ -517,18 +523,34 @@ function renderPeople() {
   window.scrollTo(0, 0);
 }
 
+/** 더보기 → 설정: 화면 테마, 챌린지 퀴즈 켜기 */
+function renderSettings() {
+  view = "settings";
+  syncTabbar();
+  pageview("settings");
+  const t = loadTheme();
+  const nChal = BANKS.reduce((a, b) => a + b.questions.filter((q) => q.sources.includes(CHAL)).length, 0);
+  $app.innerHTML = `
+    <div class="bar"><button class="icon-btn" data-act="home" aria-label="더보기로">${I.back}</button><h1>설정</h1></div>
+    <div class="more-list">
+      <button class="more-row" data-act="theme-more"><span class="ic">${I[t === "system" ? "auto" : t === "light" ? "sun" : "moon"]}</span><b>화면 테마</b><span class="r">${THEME_LABEL[t]} ›</span></button>
+    </div>
+    <button class="toggle set-tog" data-act="chal-tog" aria-pressed="${!!prefs.challenge}"><span>챌린지 퀴즈 활성화</span><span class="sw"></span></button>
+    <p class="set-note">켜면 과목 화면에 <b>챌린지</b> 탭이 생겨요. 교재에는 있지만 아직 기출에 나오지 않은 내용으로 만든 OX ${nChal}문항이에요.</p>`;
+  window.scrollTo(0, 0);
+}
+
 function renderMore() {
   view = "more";
   syncTabbar();
   pageview("more");
-  const t = loadTheme();
   const row = (act: string, ic: string, label: string, right = "") =>
     `<button class="more-row" data-act="${act}"><span class="ic">${ic}</span><b>${label}</b><span class="r">${right} ›</span></button>`;
   $app.innerHTML = `
     <div class="bar tabhead"><h1>더보기</h1></div>
     <div class="more-list">
       ${row("transfer", I.swap, "기록 옮기기")}
-      ${row("theme-more", I[t === "system" ? "auto" : t === "light" ? "sun" : "moon"], "화면 테마", THEME_LABEL[t])}
+      ${row("settings", I.gear, "설정")}
       ${row("onboarding", I.help, "사용법 보기")}
       ${row("notice", I.bell, "공지")}
       ${row("people", I.heart, "함께 만든 사람들")}
@@ -539,7 +561,7 @@ function renderMore() {
       <p><span class="ic" aria-hidden="true">🗑</span>캐시·사이트 데이터를 지우면 사라져요</p>
       <p><span class="ic" aria-hidden="true">🔁</span>기기를 바꿀 땐 먼저 기록을 옮기세요</p>
     </section>
-    <p class="note">문제은행 ${BANKS.reduce((a, b) => a + b.questions.length, 0)}문항 · 익명 방문·학습 통계(푼 문제 수 등)를 수집해요</p>`;
+    <p class="note">문제은행 ${BANKS.reduce((a, b) => a + visible(b, null).length, 0)}문항 · 익명 방문·학습 통계(푼 문제 수 등)를 수집해요</p>`;
 }
 
 /* ---------- 공지: 온라인 시험 기출 캡처 공유 요청 ---------- */
@@ -703,6 +725,7 @@ function renderSubject() {
   $app.innerHTML = `
     <div class="bar tabhead"><h1>${esc(bank.title)}</h1></div>
     ${bank.questions.some((q) => !inTab(q, "exam")) ? `<div class="seg" role="tablist">${(Object.keys(TABS) as Tab[]).filter((t) => visible(bank, t).length || t === tab()).map((t) => `<button role="tab" data-tab="${t}" aria-selected="${tab() === t}">${TABS[t]}</button>`).join("")}</div>` : ""}
+    ${tab() === "challenge" ? `<div class="varinfo">교재 내용으로 새로 만든 <b>도전용 OX</b>예요. 기출에 아직 안 나온 부분이라, 다음 시험 대비로 풀어 보세요.</div>` : ""}
     ${tab() === "variant" ? `<div class="varinfo">원본 기출을 바꿔 만든 <b>연습용 OX</b>예요. 실제 시험에 나온 문장이 아니니, 채점 후 '원본과 달라진 점'을 꼭 확인하세요.</div>` : ""}
     <div class="subject" style="cursor:default">
       <div class="progress"><span style="width:${pct(s.done, s.total)}%"></span></div>
@@ -865,6 +888,7 @@ function showRoute(r: Route | null, fromPop = false) {
   }
   if (r?.view === "more") return go(renderMore);
   if (r?.view === "people") return go(renderPeople);
+  if (r?.view === "settings") return go(renderSettings);
   const b = r?.bank ? BANKS.find((x) => x.id === r.bank) : undefined;
   if (!r || r.view === "home" || !b) {
     history.replaceState({ view: "home" } satisfies Route, "");
@@ -877,7 +901,7 @@ function showRoute(r: Route | null, fromPop = false) {
   if (r.view === "review") return go(renderReview);
   // 새로고침: 풀던 문제는 저장된 진행 상태로 그대로 다시 연다
   if (!fromPop && r.view === "quiz" && r.kind) {
-    if (r.tab) prefs.tab = r.tab === "book" || r.tab === "variant" ? r.tab : "exam";
+    if (r.tab) prefs.tab = r.tab === "book" || r.tab === "variant" || r.tab === "challenge" ? r.tab : "exam";
     session = restoreRun(r.kind);
     if (session) return go(renderQuiz);
   }
@@ -1219,12 +1243,22 @@ $app.addEventListener("click", (e) => {
     toast("관리자 모드를 껐어요");
     return renderMore();
   }
+  if (d.act === "settings") {
+    history.pushState({ view: "settings", fromHome: !!history.state?.fromHome } satisfies Route, "");
+    return go(renderSettings);
+  }
+  if (d.act === "chal-tog") {
+    prefs.challenge = !prefs.challenge;
+    savePrefs(prefs);
+    toast(prefs.challenge ? "챌린지 탭을 켰어요" : "챌린지 탭을 껐어요");
+    return renderSettings();
+  }
   if (d.act === "theme-more") {
     const order: Theme[] = ["system", "light", "dark"];
     const next = order[(order.indexOf(loadTheme()) + 1) % 3];
     saveTheme(next);
     applyTheme(next);
-    return renderMore();
+    return renderSettings();
   }
   if (d.act === "theme") {
     const order: Theme[] = ["system", "light", "dark"];
