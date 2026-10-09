@@ -20,6 +20,8 @@ export interface Prefs {
   bookOnlyNew: boolean;
   /** (예전) 문제당 60초 제한 켜기 — timerSec로 옮겨짐 */
   timer?: boolean;
+  /** 관리자 기기 전용: 채점 후 해설 보는 시간(초), 지나면 다음 문제로. 0 = 끔 */
+  expSec?: number;
   /** 설정 → 챌린지 퀴즈 활성화(챌린지 탭 보이기) */
   challenge?: boolean;
   /** '문제 풀기'를 아직 안 푼 문제(기록 없음)만으로 */

@@ -743,7 +743,8 @@ function renderSubject() {
     <div class="eyebrow">출제 범위</div>
     <div class="filters">
       <div class="frow"><label>유형</label><div class="chips">${chip("type", "all", "전체")}${(["ox", "mc", "short", "essay"] as const).filter((t) => visible(bank).some((q) => q.type === t)).map((t) => chip("type", t, TYPE_LABEL[t])).join("")}</div></div>
-      ${isAdmin() ? `<div class="frow"><label>시간 제한</label><div class="chips">${LIMITS.map((v) => `<button class="chip" data-limit="${v}" aria-pressed="${limitSec() === v}">${v ? `${v}초` : "끔"}</button>`).join("")}</div></div>` : ""}
+      ${isAdmin() ? `<div class="frow"><label>시간 제한</label><div class="chips">${LIMITS.map((v) => `<button class="chip" data-limit="${v}" aria-pressed="${limitSec() === v}">${v ? `${v}초` : "끔"}</button>`).join("")}</div></div>
+      <div class="frow"><label>해설 시간</label><div class="chips">${EXP_LIMITS.map((v) => `<button class="chip" data-explimit="${v}" aria-pressed="${(prefs.expSec ?? 0) === v}">${v ? `${v}초` : "끔"}</button>`).join("")}</div></div>` : ""}
       <div class="ftoggles">
         ${tog("onlyUnsolved", `안 푼 문제만 풀기 (${filtered().filter((q) => !st.rec[q.n]).length})`)}
         ${tab() === "book" ? tog("bookOnlyNew", `기출과 겹치는 문제 제외 (${bank.questions.filter((q) => inTab(q, "book") && inTab(q, "exam")).length})`) : ""}
@@ -930,9 +931,9 @@ function tickTimer() {
   if (view !== "quiz" || !it || it.ok !== null || !it.deadline) return void clearInterval(timerT);
   const left = Math.max(0, it.deadline - Date.now());
   const sec = Math.ceil(left / 1000);
-  const box = document.querySelector<HTMLElement>(".qtimer");
+  const box = document.querySelector<HTMLElement>(".qtimer:not(.exp)");
   if (box) {
-    box.classList.toggle("low", sec <= 10);
+    box.classList.toggle("low", sec <= 15);
     box.querySelector<HTMLElement>("span")!.style.width = `${(left / ((it.limit ?? 60) * 1000)) * 100}%`;
     box.querySelector("b")!.textContent = `${sec}초`;
   }
@@ -943,9 +944,32 @@ function tickTimer() {
   }
 }
 
+/* ---------- 해설 보는 시간 제한(관리자 기기): 채점 후 정한 시간이 지나면 다음 문제로 ---------- */
+const EXP_LIMITS = [0, 15, 30, 45, 60];
+const expOn = () => isAdmin() && (prefs.expSec ?? 0) > 0;
+/** 방금 채점한 문항(i)에서 해설 시간이 끝나는 시각 */
+let expDl: { i: number; at: number; limit: number } | null = null;
+let expT: number | undefined;
+function tickExp() {
+  const box = document.querySelector<HTMLElement>(".qtimer.exp");
+  if (view !== "quiz" || !session || !expDl || expDl.i !== session.i || !box) return void clearInterval(expT);
+  const left = Math.max(0, expDl.at - Date.now());
+  const sec = Math.ceil(left / 1000);
+  box.classList.toggle("low", sec <= 15);
+  box.querySelector<HTMLElement>("span")!.style.width = `${(left / (expDl.limit * 1000)) * 100}%`;
+  box.querySelector("b")!.textContent = `${sec}초`;
+  if (left <= 0) {
+    clearInterval(expT);
+    expDl = null;
+    document.querySelector<HTMLButtonElement>('[data-act="next"]')?.click();
+  }
+}
+
 function renderQuiz() {
   if (!session) return;
   clearInterval(timerT);
+  clearInterval(expT);
+  if (expDl && expDl.i !== session.i) expDl = null;
   view = "quiz";
   syncTabbar();
   pageview("quiz");
@@ -1013,6 +1037,7 @@ function renderQuiz() {
       <div class="rh">${correct ? I.check + " 정답" : I.x + (it.timedOut ? " 시간 초과" : " 오답")}${ansText ? `<span class="ans">정답 ${esc(ansText)}</span>` : ""}</div>
       <div class="rb"><div><div class="lbl">${q.type === "essay" ? "모범답안" : "해설"}</div>${expHtml(q.exp)}</div>${quoteHtml(q)}${diffHtml(q)}
       <div class="src">${I.pg} ${esc(srcText(q))} · 출제원 ${esc(q.src)}</div></div></div>` : ""}
+    ${done && expDl ? `<div class="qtimer exp" role="timer"><small>다음 문제까지</small><div class="tbar"><span></span></div><b class="num">${expDl.limit}초</b></div>` : ""}
     <div class="qfoot">
       <button class="pill-btn bm icon" data-flag aria-pressed="${isBm}" aria-label="북마크">${isBm ? I.bmOn : I.bm}</button>
       <button class="pill-btn prev" data-act="prev" ${session.i === 0 ? "disabled" : ""}>이전</button>
@@ -1022,6 +1047,10 @@ function renderQuiz() {
   if (timed) {
     tickTimer();
     timerT = window.setInterval(tickTimer, 200);
+  }
+  if (done && expDl) {
+    tickExp();
+    expT = window.setInterval(tickExp, 200);
   }
 }
 
@@ -1059,6 +1088,7 @@ function grade(ok: boolean) {
   if (ok) st.wrong = st.wrong.filter((n) => n !== q.n);
   saveSubject(bank.id, st);
   persistRun();
+  if (expOn()) expDl = { i: session.i, at: Date.now() + prefs.expSec! * 1000, limit: prefs.expSec! };
   renderQuiz();
   if (ok && wasWrong) toast("오답노트에서 뺐어요");
   const res = document.querySelector(".result");
@@ -1275,6 +1305,11 @@ $app.addEventListener("click", (e) => {
   }
   if (d.tab) {
     prefs.tab = d.tab as Tab;
+    savePrefs(prefs);
+    return renderSubject();
+  }
+  if (d.explimit !== undefined) {
+    prefs.expSec = Number(d.explimit);
     savePrefs(prefs);
     return renderSubject();
   }

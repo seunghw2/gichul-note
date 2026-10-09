@@ -462,3 +462,4 @@ body.has-tabs .app{padding-bottom:calc(88px + env(safe-area-inset-bottom,0px))}
 .qtimer b{font-size:15px;min-width:42px;text-align:right;color:var(--ink-2)}
 .qtimer.low .tbar span{background:var(--bad)}
 .qtimer.low b{color:var(--bad)}
+.qtimer.exp{margin:12px 0 0}.qtimer.exp small{color:var(--ink-3);font-size:13px;white-space:nowrap}
