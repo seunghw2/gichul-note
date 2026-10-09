@@ -13,7 +13,7 @@ export interface SubjectState {
 export interface Prefs {
   type: "all" | "ox" | "mc" | "short" | "essay";
   /** 과목 화면 탭: 온라인 시험 기출 / 교재 문항 (마지막으로 본 탭 기억) */
-  tab: "exam" | "book";
+  tab: "exam" | "book" | "variant";
   shuffleQ: boolean;
   shuffleC: boolean;
   /** 교재 문항 탭에서 온라인 시험 기출과 겹치는 문항 빼기 */

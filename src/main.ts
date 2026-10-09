@@ -36,6 +36,7 @@ const TYPE_SHORT: Record<Q["type"], string> = { ox: "OX", mc: "4지", short: "�
 
 const srcText = (q: Q) => q.sources.join(", ");
 const shortAnswer = (q: Q) => q.answerText ?? (q.accept ?? []).join(" / ");
+const diffHtml = (q: Q) => (q.diff ? `<div class="diff"><div class="lbl">원본 ${q.variantOf}번과 달라진 점</div>${esc(q.diff)}</div>` : "");
 const quoteHtml = (q: Q) => (q.quote ? `<blockquote class="quote"><div class="lbl">원문 인용</div>${esc(q.quote)}</blockquote>` : "");
 /** 해설·모범답안: ①②③ 앞에서 줄바꿈 */
 const expHtml = (t: string) => esc(t).replace(/\s+(?=[①-⑨])/g, "<br>");
@@ -71,16 +72,19 @@ const reviewOpts: { q: string; hide: boolean; only: Only } = { q: "", hide: fals
 
 /** 교재 연습문제 출처 이름. 이 출처만 있는 문항은 '교재 연습문제 포함'을 켰을 때만 보인다 */
 const BOOK = "교재 연습문제";
-type Tab = "exam" | "book";
-const TABS: Record<Tab, string> = { exam: "온라인 시험 기출", book: "교재 문항" };
+/** 원본 기출을 바꿔 만든 연습용 OX 문항의 출처 이름 */
+const VAR = "변형";
+type Tab = "exam" | "book" | "variant";
+const TABS: Record<Tab, string> = { exam: "온라인 시험 기출", book: "교재 문항", variant: "변형 OX" };
 /** 문항이 탭에 속하는지: 교재 문항 = 교재 연습문제가 출처에 있음, 온라인 기출 = 교재 외 출처가 있음(양쪽 공통 문항은 둘 다) */
-const inTab = (q: Q, t: Tab) => (t === "book" ? q.sources.includes(BOOK) : q.sources.some((x) => x !== BOOK));
-const tab = (): Tab => (prefs.tab === "book" ? "book" : "exam");
+const inTab = (q: Q, t: Tab) =>
+  t === "variant" ? q.sources.includes(VAR) : t === "book" ? q.sources.includes(BOOK) : q.sources.some((x) => x !== BOOK && x !== VAR);
+const tab = (): Tab => (prefs.tab === "book" || prefs.tab === "variant" ? prefs.tab : "exam");
 /** 탭에 보이는 문항. 교재 탭은 '기출과 겹치는 문제 제외'가 켜져 있으면 교재에만 있는 문항만 */
 const visible = (b: LoadedBank, t: Tab | null = tab()) =>
   t ? b.questions.filter((q) => inTab(q, t) && !(t === "book" && prefs.bookOnlyNew && inTab(q, "exam"))) : b.questions;
 /** 진행 중 풀이는 탭마다 따로 저장(온라인 기출은 기존 키 유지) */
-const runKind = (kind: Kind) => (tab() === "book" ? `book-${kind}` : kind);
+const runKind = (kind: Kind) => (tab() === "exam" ? kind : `${tab()}-${kind}`);
 const missOf = (n: number) => st.rec[n]?.miss ?? 0;
 
 function stats(b: LoadedBank, s: SubjectState, t: Tab | null = tab()) {
@@ -688,7 +692,8 @@ function renderSubject() {
   };
   $app.innerHTML = `
     <div class="bar tabhead"><h1>${esc(bank.title)}</h1></div>
-    ${bank.questions.some((q) => inTab(q, "book")) ? `<div class="seg" role="tablist">${(Object.keys(TABS) as Tab[]).map((t) => `<button role="tab" data-tab="${t}" aria-selected="${tab() === t}">${TABS[t]}</button>`).join("")}</div>` : ""}
+    ${bank.questions.some((q) => !inTab(q, "exam")) ? `<div class="seg" role="tablist">${(Object.keys(TABS) as Tab[]).filter((t) => visible(bank, t).length || t === tab()).map((t) => `<button role="tab" data-tab="${t}" aria-selected="${tab() === t}">${TABS[t]}</button>`).join("")}</div>` : ""}
+    ${tab() === "variant" ? `<div class="varinfo">원본 기출을 바꿔 만든 <b>연습용 OX</b>예요. 실제 시험에 나온 문장이 아니니, 채점 후 '원본과 달라진 점'을 꼭 확인하세요.</div>` : ""}
     <div class="subject" style="cursor:default">
       <div class="progress"><span style="width:${pct(s.done, s.total)}%"></span></div>
       ${statRow(s)}
@@ -858,7 +863,7 @@ function showRoute(r: Route | null, fromPop = false) {
   if (r.view === "review") return go(renderReview);
   // 새로고침: 풀던 문제는 저장된 진행 상태로 그대로 다시 연다
   if (!fromPop && r.view === "quiz" && r.kind) {
-    if (r.tab) prefs.tab = r.tab === "book" ? "book" : "exam";
+    if (r.tab) prefs.tab = r.tab === "book" || r.tab === "variant" ? r.tab : "exam";
     session = restoreRun(r.kind);
     if (session) return go(renderQuiz);
   }
@@ -932,12 +937,12 @@ function renderQuiz() {
       <div class="qhead" style="flex:1"><div class="progress"><span style="width:${pct(session.i + (done ? 1 : 0), total)}%"></span></div><button class="jump num" data-act="jump" aria-label="문제 번호로 이동">${session.i + 1}/${total} ▾</button></div>
     </div>
     <div class="qtags"><span class="tag type">${TYPE_LABEL[q.type]}</span>${session.kind !== "all" ? `<span class="tag">${LABEL[session.kind]}</span>` : ""}${missOf(q.n) ? `<span class="tag miss">틀림 ${missOf(q.n)}회</span>` : ""}</div>
-    <div class="qno">문제 ${q.n} <span class="qsrc">· ${esc(srcText(q))}</span></div>
+    <div class="qno">${q.variantOf ? `<span class="tag var">변형 · 원본 ${q.variantOf}번</span>` : `문제 ${q.n} <span class="qsrc">· ${esc(srcText(q))}</span>`}</div>
     <div class="qtext">${esc(q.q)}</div>
     ${body}
     ${done ? `<div class="result ${correct ? "ok" : "bad"}">
       <div class="rh">${correct ? I.check + " 정답" : I.x + " 오답"}${ansText ? `<span class="ans">정답 ${esc(ansText)}</span>` : ""}</div>
-      <div class="rb"><div><div class="lbl">${q.type === "essay" ? "모범답안" : "해설"}</div>${expHtml(q.exp)}</div>${quoteHtml(q)}
+      <div class="rb"><div><div class="lbl">${q.type === "essay" ? "모범답안" : "해설"}</div>${expHtml(q.exp)}</div>${quoteHtml(q)}${diffHtml(q)}
       <div class="src">${I.pg} ${esc(srcText(q))} · 출제원 ${esc(q.src)}</div></div></div>` : ""}
     <div class="qfoot">
       <button class="pill-btn bm icon" data-flag aria-pressed="${isBm}" aria-label="북마크">${isBm ? I.bmOn : I.bm}</button>
@@ -1037,10 +1042,10 @@ function reviewCards() {
               ? `<div class="ansline"><span class="lbl">정답</span>${esc(shortAnswer(q))}</div>`
               : "";
       return `<article class="rcard ${reviewOpts.hide ? "blur" : ""}" data-reveal>
-        <div class="rtop"><span class="qno">${q.n}</span><span class="tag type">${TYPE_SHORT[q.type]}</span>${st.wrong.includes(q.n) ? '<span class="wrongmark">오답</span>' : ""}${missOf(q.n) ? `<span class="missmark">틀림 ${missOf(q.n)}회</span>` : ""}
+        <div class="rtop"><span class="qno">${q.n}</span><span class="tag type">${TYPE_SHORT[q.type]}</span>${q.variantOf ? `<span class="tag var">원본 ${q.variantOf}번</span>` : ""}${st.wrong.includes(q.n) ? '<span class="wrongmark">오답</span>' : ""}${missOf(q.n) ? `<span class="missmark">틀림 ${missOf(q.n)}회</span>` : ""}
           <span class="flags"><button class="mini bm" data-rflag="${q.n}" aria-pressed="${isBm}" aria-label="북마크">${isBm ? I.bmOn : I.bm}</button></span></div>
         <div class="q">${esc(q.q)}</div>${opts}
-        <div class="exp"><div class="lbl">${q.type === "essay" ? "모범답안" : "해설"}</div>${expHtml(q.exp)}${quoteHtml(q)}</div>
+        <div class="exp"><div class="lbl">${q.type === "essay" ? "모범답안" : "해설"}</div>${expHtml(q.exp)}${quoteHtml(q)}${diffHtml(q)}</div>
         <div class="src">${I.pg} ${esc(srcText(q))} · ${esc(q.src)}</div>
       </article>`;
     })

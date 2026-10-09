@@ -21,6 +21,10 @@ export interface Question {
   src: string;
   /** 문제 출처(원본 PDF 이름). 여러 PDF에 나온 문제는 모두 적는다 */
   sources: string[];
+  /** 변형 문제 전용: 바탕이 된 원본 문항 번호 */
+  variantOf?: number;
+  /** 변형 문제 전용: 원본과 달라진 점(채점 후 표시) */
+  diff?: string;
 }
 
 export interface Bank {
