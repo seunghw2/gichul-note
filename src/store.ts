@@ -16,6 +16,8 @@ export interface Prefs {
   tab: "exam" | "book";
   shuffleQ: boolean;
   shuffleC: boolean;
+  /** 교재 문항 탭에서 온라인 시험 기출과 겹치는 문항 빼기 */
+  bookOnlyNew: boolean;
 }
 
 const key = (id: string) => `gichul:${id}`;
@@ -48,7 +50,7 @@ export function loadSubject(id: string): SubjectState {
 export const saveSubject = (id: string, s: SubjectState) => write(key(id), s);
 
 export function loadPrefs(): Prefs {
-  return { type: "all", tab: "exam", shuffleQ: false, shuffleC: false, ...read<Partial<Prefs>>("gichul:prefs") };
+  return { type: "all", tab: "exam", shuffleQ: false, shuffleC: false, bookOnlyNew: false, ...read<Partial<Prefs>>("gichul:prefs") };
 }
 
 export const savePrefs = (p: Prefs) => write("gichul:prefs", p);

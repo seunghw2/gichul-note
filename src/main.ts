@@ -75,7 +75,9 @@ const TABS: Record<Tab, string> = { exam: "온라인 시험 기출", book: "교�
 /** 문항이 탭에 속하는지: 교재 문항 = 교재 연습문제가 출처에 있음, 온라인 기출 = 교재 외 출처가 있음(양쪽 공통 문항은 둘 다) */
 const inTab = (q: Q, t: Tab) => (t === "book" ? q.sources.includes(BOOK) : q.sources.some((x) => x !== BOOK));
 const tab = (): Tab => (prefs.tab === "book" ? "book" : "exam");
-const visible = (b: LoadedBank, t: Tab | null = tab()) => (t ? b.questions.filter((q) => inTab(q, t)) : b.questions);
+/** 탭에 보이는 문항. 교재 탭은 '기출과 겹치는 문제 제외'가 켜져 있으면 교재에만 있는 문항만 */
+const visible = (b: LoadedBank, t: Tab | null = tab()) =>
+  t ? b.questions.filter((q) => inTab(q, t) && !(t === "book" && prefs.bookOnlyNew && inTab(q, "exam"))) : b.questions;
 /** 진행 중 풀이는 탭마다 따로 저장(온라인 기출은 기존 키 유지) */
 const runKind = (kind: Kind) => (tab() === "book" ? `book-${kind}` : kind);
 const missOf = (n: number) => st.rec[n]?.miss ?? 0;
@@ -661,7 +663,7 @@ function renderSubject() {
   const n = filtered().length;
   const chip = (k: "type", v: string, label: string) =>
     `<button class="chip" data-pref="${k}" data-val="${esc(v)}" aria-pressed="${prefs[k] === v}">${esc(label)}</button>`;
-  const tog = (k: "shuffleQ" | "shuffleC", label: string) =>
+  const tog = (k: "shuffleQ" | "shuffleC" | "bookOnlyNew", label: string) =>
     `<button class="toggle" data-tog="${k}" aria-pressed="${prefs[k]}"><span>${label}</span><span class="sw"></span></button>`;
   const sub = (kind: Kind, base: string) => {
     const p = runProgress(kind);
@@ -687,6 +689,7 @@ function renderSubject() {
     <div class="filters">
       <div class="frow"><label>유형</label><div class="chips">${chip("type", "all", "전체")}${(["ox", "mc", "short", "essay"] as const).filter((t) => visible(bank).some((q) => q.type === t)).map((t) => chip("type", t, TYPE_LABEL[t])).join("")}</div></div>
       <div class="ftoggles">
+        ${tab() === "book" ? tog("bookOnlyNew", `기출과 겹치는 문제 제외 (${bank.questions.filter((q) => inTab(q, "book") && inTab(q, "exam")).length})`) : ""}
         ${tog("shuffleQ", "문제 순서 섞기")}
         ${tog("shuffleC", "보기 순서 섞기")}
       </div>
@@ -1165,7 +1168,7 @@ $app.addEventListener("click", (e) => {
     savePrefs(prefs);
     return renderSubject();
   }
-  if (d.tog === "shuffleQ" || d.tog === "shuffleC") {
+  if (d.tog === "shuffleQ" || d.tog === "shuffleC" || d.tog === "bookOnlyNew") {
     prefs[d.tog] = !prefs[d.tog];
     savePrefs(prefs);
     return renderSubject();
