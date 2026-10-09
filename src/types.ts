@@ -25,6 +25,8 @@ export interface Question {
   variantOf?: number;
   /** 변형 문제 전용: 원본과 달라진 점(채점 후 표시) */
   diff?: string;
+  /** 원래 단답형이었다가 다른 형식으로 바꾼 문항 표시(예: "단답형 → 4지선다") */
+  conv?: string;
 }
 
 export interface Bank {

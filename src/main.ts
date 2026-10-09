@@ -69,6 +69,8 @@ function toast(msg: string) {
 
 /* ---------- 상태 ---------- */
 const prefs = loadPrefs();
+// 단답형 문항을 모두 4지선다·OX로 바꿔서, 유형을 단답형으로 골라 둔 기기는 전체로
+if (prefs.type === "short" && !BANKS.some((b) => b.questions.some((q) => q.type === "short"))) prefs.type = "all";
 let bank: LoadedBank = BANKS[0];
 let st: SubjectState = loadSubject(bank.id);
 let view: View = "home";
@@ -1062,7 +1064,7 @@ function renderQuiz() {
       <div class="qhead" style="flex:1"><div class="progress"><span style="width:${pct(session.i + (done ? 1 : 0), total)}%"></span></div><button class="jump num" data-act="jump" aria-label="문제 번호로 이동">${session.i + 1}/${total} ▾</button></div>
     </div>
     ${timed ? `<div class="qtimer" role="timer"><div class="tbar"><span></span></div><b class="num">${it.limit}초</b></div>` : ""}
-    <div class="qtags"><span class="tag type">${TYPE_LABEL[q.type]}</span>${session.kind !== "all" ? `<span class="tag">${LABEL[session.kind]}</span>` : ""}${missOf(q.n) ? `<span class="tag miss">틀림 ${missOf(q.n)}회</span>` : ""}</div>
+    <div class="qtags"><span class="tag type">${TYPE_LABEL[q.type]}</span>${q.conv ? `<span class="tag conv">${esc(q.conv)}</span>` : ""}${session.kind !== "all" ? `<span class="tag">${LABEL[session.kind]}</span>` : ""}${missOf(q.n) ? `<span class="tag miss">틀림 ${missOf(q.n)}회</span>` : ""}</div>
     <div class="qno">${q.variantOf ? `<span class="tag var">변형 · 원본 ${q.variantOf}번</span>` : `문제 ${q.n} <span class="qsrc">· ${esc(srcText(q))}</span>`}</div>
     <div class="qtext">${esc(q.q)}</div>
     ${body}
@@ -1179,7 +1181,7 @@ function reviewCards() {
               ? `<div class="ansline"><span class="lbl">정답</span>${esc(shortAnswer(q))}</div>`
               : "";
       return `<article class="rcard ${reviewOpts.hide ? "blur" : ""}" data-reveal>
-        <div class="rtop"><span class="qno">${q.n}</span><span class="tag type">${TYPE_SHORT[q.type]}</span>${q.variantOf ? `<span class="tag var">원본 ${q.variantOf}번</span>` : ""}${st.wrong.includes(q.n) ? '<span class="wrongmark">오답</span>' : ""}${missOf(q.n) ? `<span class="missmark">틀림 ${missOf(q.n)}회</span>` : ""}
+        <div class="rtop"><span class="qno">${q.n}</span><span class="tag type">${TYPE_SHORT[q.type]}</span>${q.conv ? `<span class="tag conv">${esc(q.conv)}</span>` : ""}${q.variantOf ? `<span class="tag var">원본 ${q.variantOf}번</span>` : ""}${st.wrong.includes(q.n) ? '<span class="wrongmark">오답</span>' : ""}${missOf(q.n) ? `<span class="missmark">틀림 ${missOf(q.n)}회</span>` : ""}
           <span class="flags"><button class="mini bm" data-rflag="${q.n}" aria-pressed="${isBm}" aria-label="북마크">${isBm ? I.bmOn : I.bm}</button></span></div>
         <div class="q">${esc(q.q)}</div>${opts}
         <div class="exp"><div class="lbl">${q.type === "essay" ? "모범답안" : "해설"}</div>${expHtml(q.exp)}${quoteHtml(q)}${diffHtml(q)}</div>
