@@ -772,7 +772,14 @@ function restoreRun(kind: Kind): { kind: Kind; items: Item[]; i: number } | null
     // '안 푼 문제만'으로 풀던 회차는 이번에 푼 문항(이제 기록이 생김)도 남긴다
     if (pool && !pool.has(n) && !(prefs.onlyUnsolved && ok !== null)) return;
     if (idx === r.i) i = items.length;
-    items.push({ q, order: r.orders[idx], pick, ok, text: r.texts?.[idx] ?? null });
+    // 풀던 사이에 문항이 바뀐 경우(예: OX → 4지선다, 보기 수 변경) 저장된 보기 순서가 맞지 않아 보기가 안 보인다 → 새로 만들고 그 문항은 안 푼 상태로
+    const order = r.orders[idx] ?? [];
+    const nc = q.choices?.length ?? 0;
+    if (order.length !== nc || !order.every((x) => x >= 1 && x <= nc)) {
+      items.push(newItem(q));
+      return;
+    }
+    items.push({ q, order, pick, ok, text: r.texts?.[idx] ?? null });
   });
   if (pool) {
     const have = new Set(items.map((it) => it.q.n));
