@@ -90,7 +90,8 @@ function stats(b: LoadedBank, s: SubjectState, t: Tab | null = tab()) {
   const done = recs.length;
   const ok = recs.filter((r) => r.last).length;
   const often = vis.filter((q) => (s.rec[q.n]?.miss ?? 0) >= OFTEN).length;
-  return { total, done, rate: done ? Math.round((ok / done) * 100) : null, wrong: s.wrong.filter((n) => ns.has(n)).length, bm: s.bm.filter((n) => ns.has(n)).length, often };
+  const tries = recs.reduce((a, r) => a + (r.tries ?? 0), 0); // 다시 푼 것까지 모든 채점 횟수(누적)
+  return { total, done, tries, rate: done ? Math.round((ok / done) * 100) : null, wrong: s.wrong.filter((n) => ns.has(n)).length, bm: s.bm.filter((n) => ns.has(n)).length, often };
 }
 
 const filtered = () => {
@@ -99,10 +100,10 @@ const filtered = () => {
 
 const pct = (a: number, b: number) => (b ? (a / b) * 100 : 0);
 
-function statRow(s: ReturnType<typeof stats>, wrongLabel: string) {
+function statRow(s: ReturnType<typeof stats>) {
   return `<div class="statrow">
     <div class="stat"><b>${s.done}<span class="num" style="font-size:14.5px;color:var(--ink-3)">/${s.total}</span></b><span>푼 문제</span></div>
-    <div class="stat"><b>${s.wrong}</b><span>${wrongLabel}</span></div>
+    <div class="stat"><b>${s.tries}</b><span>총 풀이</span></div>
     <div class="stat"><b>${loadToday().n}</b><span>오늘 푼 문제</span></div>
   </div>`;
 }
@@ -642,7 +643,7 @@ function renderHome() {
     return `<button class="subject" data-open="${esc(b.id)}">
       <div class="top"><div><h2>${esc(b.title)}</h2><div class="meta">${esc(b.org)} · ${s.total}문항</div><div class="meta">${esc(tabsMeta)}</div></div><span class="badge">${esc(b.round)}</span></div>
       <div class="progress" aria-label="진도"><span style="width:${pct(s.done, s.total)}%"></span></div>
-      ${statRow(s, "오답노트")}
+      ${statRow(s)}
     </button>`;
   }).join("");
   $app.innerHTML = `
@@ -674,7 +675,7 @@ function renderSubject() {
     ${bank.questions.some((q) => inTab(q, "book")) ? `<div class="seg" role="tablist">${(Object.keys(TABS) as Tab[]).map((t) => `<button role="tab" data-tab="${t}" aria-selected="${tab() === t}">${TABS[t]}</button>`).join("")}</div>` : ""}
     <div class="subject" style="cursor:default">
       <div class="progress"><span style="width:${pct(s.done, s.total)}%"></span></div>
-      ${statRow(s, "남은 오답")}
+      ${statRow(s)}
     </div>
 
     <div class="eyebrow">학습하기</div>
