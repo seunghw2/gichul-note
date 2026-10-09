@@ -2,12 +2,13 @@ import "./style.css";
 import { BANKS } from "./data";
 import { seenOnboarding, showOnboarding } from "./onboarding";
 import { anonId, backfillSolved, markActive, pageview, track, trackOnce, trackSolve } from "./stats";
+import { CONTRIBUTORS } from "./contributors";
 import { applyImport, localSummary, makeLink, readIncoming, summarize } from "./transfer";
 import { I } from "./icons";
 import { addToday, clearRun, loadPrefs, loadTheme, loadToday, saveTheme, type Theme, loadRun, loadSubject, savePrefs, saveRun, saveSubject, type SavedRun, type SubjectState } from "./store";
 import type { LoadedBank, Q } from "./types";
 
-type View = "home" | "subject" | "quiz" | "end" | "review" | "stats" | "more";
+type View = "home" | "subject" | "quiz" | "end" | "review" | "stats" | "more" | "people";
 type Kind = "all" | "wrong" | "bm" | "often";
 type Only = "all" | "wrong" | "bm";
 
@@ -459,12 +460,12 @@ const tabList = (): [TabKey, string, string][] =>
     : [["home", "홈", I.home], ["subject", "문제 풀기", I.play], ["review", "해설 훑어보기", I.book], ["more", "더보기", I.more]];
 const $tabbar = document.getElementById("tabbar")!;
 function syncTabbar() {
-  const show = view === "home" || view === "subject" || view === "review" || view === "more" || view === "stats";
+  const show = view === "home" || view === "subject" || view === "review" || view === "more" || view === "stats" || view === "people";
   $tabbar.hidden = !show;
   document.body.classList.toggle("has-tabs", show);
   if (!show) return;
   $tabbar.innerHTML = tabList().map(
-    ([k, l, ic]) => `<button data-tab-go="${k}" aria-current="${view === k ? "page" : "false"}">${ic}<span>${l}</span></button>`,
+    ([k, l, ic]) => `<button data-tab-go="${k}" aria-current="${view === k || (k === "more" && view === "people") ? "page" : "false"}">${ic}<span>${l}</span></button>`,
   ).join("");
 }
 /** 탭 이동: 홈이 맨 아래, 다른 탭은 홈 위에 한 칸만 쌓아서 뒤로가기(밀기)가 항상 홈으로 */
@@ -488,6 +489,20 @@ $tabbar.addEventListener("click", (e) => {
   if (b) goTab(b.dataset.tabGo as TabKey);
 });
 
+/** 더보기 → 함께 만든 사람들 (이니셜 목록) */
+function renderPeople() {
+  view = "people";
+  syncTabbar();
+  pageview("people");
+  $app.innerHTML = `
+    <div class="bar"><button class="icon-btn" data-act="home" aria-label="더보기로">${I.back}</button><h1>함께 만든 사람들</h1></div>
+    <p class="ppl-lead">기출노트는 이분들 덕분에 조금씩 나아지고 있어요.</p>
+    <section class="ppl">${CONTRIBUTORS.map(
+      (c) => `<div class="ppl-row"><span class="ppl-mono ${c.tone}">${esc(c.name[0])}</span><div><b>${esc(c.name)}</b><small>${esc(c.what)}</small></div><span class="ppl-tag">${esc(c.tag)}</span></div>`,
+    ).join("")}</section>`;
+  window.scrollTo(0, 0);
+}
+
 function renderMore() {
   view = "more";
   syncTabbar();
@@ -502,6 +517,7 @@ function renderMore() {
       ${row("theme-more", I[t === "system" ? "auto" : t === "light" ? "sun" : "moon"], "화면 테마", THEME_LABEL[t])}
       ${row("onboarding", I.help, "사용법 보기")}
       ${row("notice", I.bell, "공지")}
+      ${row("people", I.heart, "함께 만든 사람들")}
       ${isAdmin() ? row("admin-off", I.lock, "관리자 모드 끄기", "이 기기에서 통계 탭 숨김") : ""}
     </div>
     <section class="keep" aria-label="기록 보관 안내">
@@ -829,6 +845,7 @@ function showRoute(r: Route | null, fromPop = false) {
     return go(renderStats);
   }
   if (r?.view === "more") return go(renderMore);
+  if (r?.view === "people") return go(renderPeople);
   const b = r?.bank ? BANKS.find((x) => x.id === r.bank) : undefined;
   if (!r || r.view === "home" || !b) {
     history.replaceState({ view: "home" } satisfies Route, "");
@@ -1135,6 +1152,10 @@ $app.addEventListener("click", (e) => {
     return renderStats();
   }
   if (d.sq) return openStatQuestion(Number(d.sq));
+  if (d.act === "people") {
+    history.pushState({ view: "people", fromHome: !!history.state?.fromHome } satisfies Route, "");
+    return go(renderPeople);
+  }
   if (d.act === "admin-off") {
     try {
       localStorage.removeItem(KEY_STORE);

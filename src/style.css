@@ -436,3 +436,12 @@ body.has-tabs .app{padding-bottom:calc(88px + env(safe-area-inset-bottom,0px))}
 .adm-msg{font-size:13.5px!important;color:var(--bad)!important;min-height:1.2em;margin:0}
 .st-pass .next{height:46px;padding:0 18px;flex:none;width:auto}
 .tabbar button span{white-space:nowrap}
+
+/* 함께 만든 사람들 */
+.ppl-lead{font-size:14.5px;color:var(--ink-2);margin:2px 0 14px;line-height:1.6}
+.ppl{background:var(--surface);border-radius:18px;padding:4px 16px;box-shadow:var(--shadow)}
+.ppl-row{display:flex;align-items:center;gap:14px;padding:16px 0;border-top:1px solid var(--line)}.ppl-row:first-child{border-top:0}
+.ppl-mono{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;font-weight:800;font-size:18px;flex:none}
+.ppl-mono.brand{background:var(--brand-soft);color:var(--brand)}.ppl-mono.mark{background:var(--mark-soft);color:var(--mark)}
+.ppl-row b{display:block;font-size:17px;letter-spacing:-.01em}.ppl-row small{font-size:13px;color:var(--ink-3)}
+.ppl-tag{margin-left:auto;font-size:12px;font-weight:700;padding:4px 10px;border-radius:99px;border:1px solid var(--line);color:var(--ink-2);white-space:nowrap}

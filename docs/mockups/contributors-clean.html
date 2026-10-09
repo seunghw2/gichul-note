@@ -1,0 +1,95 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css"><style>*{box-sizing:border-box;margin:0;padding:0}
+:root{--ground:#0D1513;--surface:#16211E;--s2:#1E2B28;--line:#2A3935;--ink:#E7EEEB;--ink2:#AEBBB6;--ink3:#7C8B86;--brand:#7FC8B4;--bsoft:#1D3530;--mark:#F0B455;--msoft:#3A2E1A}
+body{background:#E4E7E2;font-family:"Pretendard Variable",Pretendard,sans-serif;width:1180px;padding:32px 36px;word-break:keep-all;color:#16211F}
+h1{font-size:24px}.sub{font-size:14px;color:#555;margin:4px 0 20px}
+.ver{display:flex;gap:24px;padding:26px 0;border-top:2px solid #c9cec7}
+.vl{width:200px;flex:none;padding-top:28px}.vl .t{display:inline-block;font-size:13px;font-weight:700;background:#0E3B36;color:#fff;padding:3px 10px;border-radius:6px}
+.vl h2{font-size:22px;line-height:1.3;margin:10px 0 8px}.vl p{font-size:13px;color:#555;line-height:1.6}
+.screens{display:flex;gap:22px}.cap{font-size:13px;font-weight:600;color:#444;text-align:center;margin-bottom:8px}
+.phone{width:340px;height:700px;border-radius:44px;background:#000;padding:9px}
+.scr{height:100%;border-radius:36px;overflow:hidden;background:var(--ground);color:var(--ink);padding:0 18px;position:relative}
+.st{height:40px;display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:600;padding:0 10px}
+.hd{display:flex;align-items:center;gap:14px;margin:10px 0 8px}.logo{font-size:24px;font-weight:700;flex:1}.logo b{color:var(--brand)}.ic{color:var(--ink2);font-size:19px}
+.today{font-size:14px;color:var(--ink2)}.eb{font-size:12px;font-weight:600;color:var(--ink3);margin:18px 0 8px;letter-spacing:.04em}
+.card{background:var(--surface);border-radius:20px;padding:16px}.top{display:flex;justify-content:space-between;gap:8px}
+.card h3{font-size:18px}.meta{font-size:12.5px;color:var(--ink3);margin-top:3px}.badge{font-size:11.5px;font-weight:600;color:var(--brand);background:var(--bsoft);padding:4px 8px;border-radius:7px;height:fit-content;white-space:nowrap}
+.pg{height:6px;border-radius:9px;background:var(--s2);margin:14px 0}.pg span{display:block;height:100%;background:var(--brand);border-radius:9px}
+.sr{display:flex}.sr div{flex:1}.sr b{font-size:19px;display:block}.sr small{font-size:12px;color:var(--ink3)}.sr span{font-size:12px;color:var(--ink3)}
+.note{font-size:12px;color:var(--ink3);margin-top:16px}
+.pin{display:inline-block;font-size:11px;font-weight:700;color:var(--mark);background:var(--msoft);padding:3px 8px;border-radius:6px}
+.nA{margin-top:14px;border-radius:16px;background:var(--msoft);border:1px solid #5a4624;padding:13px 14px}
+.nA-h{display:flex;justify-content:space-between;margin-bottom:6px}.nA .pin{background:#5a4624}.nA .x{color:var(--ink3);font-size:13px}
+.nA b{font-size:14.5px;display:block;line-height:1.4}.nA p{font-size:12.5px;color:var(--ink2);margin-top:4px;line-height:1.55}
+.nA-btn{margin-top:10px;font-size:13px;font-weight:700;color:var(--mark)}
+.nB{display:flex;gap:12px;background:var(--surface);border-radius:18px;padding:14px;border:1px dashed var(--line)}
+.nB-ic{width:38px;height:38px;flex:none;border-radius:12px;background:var(--bsoft);display:grid;place-items:center;font-size:18px}
+.nB b{font-size:14.5px}.nB p{font-size:12.5px;color:var(--ink2);margin-top:4px;line-height:1.55}
+.nB-steps{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.nB-steps span{font-size:11px;color:var(--ink2);background:var(--s2);padding:4px 8px;border-radius:99px}
+.nC{margin-top:12px;display:flex;align-items:center;gap:6px;font-size:13px;background:var(--bsoft);color:var(--ink);padding:10px 12px;border-radius:12px}.nC b{flex:1;font-weight:600}.nC span{color:var(--brand);font-size:16px}
+.dim{position:absolute;inset:0;background:rgba(0,0,0,.6)}.sheet{position:absolute;left:0;right:0;bottom:0;background:var(--surface);border-radius:24px 24px 0 0;padding:12px 20px 26px}
+.grab{width:40px;height:4px;border-radius:9px;background:var(--line);margin:0 auto 14px}
+.li{display:flex;gap:10px;align-items:center;font-size:13px;margin-top:10px;color:var(--ink)}.li span{width:22px;height:22px;flex:none;border-radius:50%;background:var(--bsoft);color:var(--brand);font-size:11.5px;font-weight:800;display:grid;place-items:center}
+.cta{margin-top:18px;height:50px;border-radius:14px;background:var(--brand);color:#0D1513;font-weight:700;display:grid;place-items:center}
+.li{align-items:flex-start;line-height:1.5}.li span{margin-top:1px}.close{margin-top:18px;height:50px;border-radius:14px;background:var(--s2);color:var(--ink);font-weight:700;display:grid;place-items:center}.rk .t div{grid-template-columns:var(--c,22px 1fr 48px 36px)!important}</style><style>
+.lead{font-size:13px;color:var(--ink2);line-height:1.65;margin:-2px 0 16px}
+/* A 미니멀 리스트 */
+.pp{display:flex;align-items:center;gap:14px;padding:16px 0;border-top:1px solid var(--line)}.pp:first-of-type{border-top:0}
+.mono{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;font-weight:800;font-size:18px;flex:none}
+.pp b{display:block;font-size:17px;letter-spacing:-.01em}.pp small{font-size:12.5px;color:var(--ink3)}
+.pp .tg{margin-left:auto;font-size:11px;font-weight:700;padding:4px 9px;border-radius:99px;border:1px solid var(--line);color:var(--ink2)}
+/* B 명함 카드 */
+.nc{position:relative;border-radius:18px;padding:18px 18px 16px;margin-bottom:12px;overflow:hidden;box-shadow:0 10px 24px rgba(0,0,0,.35)}
+.nc .k{font-size:11px;letter-spacing:.14em;font-weight:700;opacity:.75}.nc b{display:block;font-size:22px;margin-top:14px;letter-spacing:-.02em}.nc small{display:block;font-size:12.5px;opacity:.8;margin-top:2px}
+.nc .ring{position:absolute;right:-30px;top:-30px;width:120px;height:120px;border-radius:50%;border:16px solid rgba(255,255,255,.12)}
+/* C 감사의 글 */
+.ack{text-align:center;padding:26px 6px}
+.ack .q{font-size:13px;color:var(--ink2);line-height:1.8}
+.ack .rule{width:36px;height:2px;background:var(--brand);margin:22px auto}
+.ack .nm{font-size:24px;font-weight:800;letter-spacing:-.02em;margin-top:18px}
+.ack .rl{font-size:11px;letter-spacing:.18em;color:var(--brand);margin-top:4px;font-weight:700}
+.ack .sig{font-size:12px;color:var(--ink3);margin-top:26px}
+</style><style>
+.scr{padding-bottom:0!important}
+.tb{position:absolute;left:0;right:0;bottom:0;background:rgba(22,33,30,.96);border-top:1px solid var(--line);display:flex;padding:8px 6px 22px}
+.tb div{flex:1;display:grid;justify-items:center;gap:3px;font-size:10.5px;color:var(--ink3)}.tb i{font-style:normal;font-size:17px}.tb .on{color:var(--brand)}
+.hd2{font-size:22px;font-weight:700;margin:12px 0 12px}.hd2 span{color:var(--brand)}
+.c{background:var(--surface);border-radius:18px;padding:14px;margin-bottom:10px}
+.row{display:flex;align-items:center;gap:10px;background:var(--surface);border-radius:14px;padding:12px;margin-bottom:8px;font-size:13.5px}.row .ic{width:30px;height:30px;border-radius:9px;background:var(--bsoft);display:grid;place-items:center;font-size:13px;color:var(--brand)}.row b{flex:1}.row span.r{color:var(--ink3);font-size:12px}
+.row.adm{border:1px solid var(--brand)}
+.rk h4{display:flex;justify-content:space-between;font-size:14px;margin-bottom:8px}.rk h4 small{font-weight:500;color:var(--ink3);font-size:11px}
+.rk .t{display:grid;font-size:12.5px}.rk .t div{display:grid;grid-template-columns:22px 1fr 48px 36px;gap:6px;padding:7px 2px;border-top:1px solid var(--line)}.rk .t div:first-child{border:0;color:var(--ink3);font-size:11px}.rk .t div>:nth-child(n+3){text-align:right}.rk .t .me{background:var(--bsoft);border-radius:8px;font-weight:700}
+.more{font-size:12px;color:var(--brand);text-align:right;margin-top:6px}
+.dim{position:absolute;inset:0;background:rgba(0,0,0,.6)}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:var(--surface);border-radius:24px 24px 0 0;padding:12px 20px 30px}.grab{width:40px;height:4px;border-radius:9px;background:var(--line);margin:0 auto 14px}
+.sheet h3{font-size:18px;margin-bottom:6px}.sheet p{font-size:12.5px;color:var(--ink2);line-height:1.6}
+.inp{display:flex;gap:8px;margin-top:12px}.inp div{flex:1;height:46px;border-radius:12px;border:1px solid var(--line);background:var(--s2);display:flex;align-items:center;padding:0 12px;color:var(--ink2);letter-spacing:3px}.inp b{height:46px;padding:0 16px;border-radius:12px;background:var(--brand);color:#0D1513;display:grid;place-items:center;font-size:13.5px}
+.chk{font-size:12px;color:var(--ink3);margin-top:8px}
+</style><style>
+.lead{font-size:13px;color:var(--ink2);line-height:1.65;margin:-2px 0 16px}
+/* A 미니멀 리스트 */
+.pp{display:flex;align-items:center;gap:14px;padding:16px 0;border-top:1px solid var(--line)}.pp:first-of-type{border-top:0}
+.mono{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;font-weight:800;font-size:18px;flex:none}
+.pp b{display:block;font-size:17px;letter-spacing:-.01em}.pp small{font-size:12.5px;color:var(--ink3)}
+.pp .tg{margin-left:auto;font-size:11px;font-weight:700;padding:4px 9px;border-radius:99px;border:1px solid var(--line);color:var(--ink2)}
+/* B 명함 카드 */
+.nc{position:relative;border-radius:18px;padding:18px 18px 16px;margin-bottom:12px;overflow:hidden;box-shadow:0 10px 24px rgba(0,0,0,.35)}
+.nc .k{font-size:11px;letter-spacing:.14em;font-weight:700;opacity:.75}.nc b{display:block;font-size:22px;margin-top:14px;letter-spacing:-.02em}.nc small{display:block;font-size:12.5px;opacity:.8;margin-top:2px}
+.nc .ring{position:absolute;right:-30px;top:-30px;width:120px;height:120px;border-radius:50%;border:16px solid rgba(255,255,255,.12)}
+/* C 감사의 글 */
+.ack{text-align:center;padding:26px 6px}
+.ack .q{font-size:13px;color:var(--ink2);line-height:1.8}
+.ack .rule{width:36px;height:2px;background:var(--brand);margin:22px auto}
+.ack .nm{font-size:24px;font-weight:800;letter-spacing:-.02em;margin-top:18px}
+.ack .rl{font-size:11px;letter-spacing:.18em;color:var(--brand);margin-top:4px;font-weight:700}
+.ack .sig{font-size:12px;color:var(--ink3);margin-top:26px}
+</style></head><body><h1>함께 만든 사람들 — 담백한 3가지</h1><div class="sub">유치한 장식 없이, 앱 톤에 맞춰 가볍고 깔끔하게 · 누르는 동작 없음</div><section class="ver" style="border:0"><div class="screens"><div><div class="cap">1안 · 이니셜 목록</div><div class="phone"><div class="scr"><div class="st"><span>11:20</span><span>5G ▮</span></div><div class="hd2" style="display:flex;align-items:center;gap:8px"><span style="color:var(--ink2);font-size:20px">‹</span>함께 만든 사람들</div><div class="lead">기출노트는 이분들 덕분에 조금씩 나아지고 있어요.</div>
+<div class="c" style="padding:4px 16px">
+<div class="pp"><span class="mono" style="background:#1D3530;color:#7FC8B4">포</span><div><b>포세일돈</b><small>온라인 시험 문제 공유</small></div><span class="tg">문항</span></div>
+<div class="pp"><span class="mono" style="background:#3A2E1A;color:#F0B455">자</span><div><b>자마균</b><small>퀴즈 기능 제안</small></div><span class="tg">아이디어</span></div>
+</div><div class="tb"><div class=""><i>⌂</i>홈</div><div class=""><i>▶</i>문제 풀기</div><div class=""><i>▤</i>해설 훑어보기</div><div class="on"><i>•••</i>더보기</div></div></div></div></div><div><div class="cap">2안 · 명함 카드</div><div class="phone"><div class="scr"><div class="st"><span>11:20</span><span>5G ▮</span></div><div class="hd2" style="display:flex;align-items:center;gap:8px"><span style="color:var(--ink2);font-size:20px">‹</span>함께 만든 사람들</div><div class="lead">기출노트는 이분들 덕분에 조금씩 나아지고 있어요.</div>
+<div class="nc" style="background:linear-gradient(135deg,#2E6B5E,#16352F);transform:rotate(-1.5deg)"><span class="ring"></span><div class="k">CONTRIBUTOR · 문항</div><b>포세일돈</b><small>온라인 시험 문제 공유</small></div>
+<div class="nc" style="background:linear-gradient(135deg,#8A6420,#3A2E1A);transform:rotate(1.2deg)"><span class="ring"></span><div class="k">CONTRIBUTOR · 아이디어</div><b>자마균</b><small>퀴즈 기능 제안</small></div>
+<div class="tb"><div class=""><i>⌂</i>홈</div><div class=""><i>▶</i>문제 풀기</div><div class=""><i>▤</i>해설 훑어보기</div><div class="on"><i>•••</i>더보기</div></div></div></div></div><div><div class="cap">3안 · 감사의 글</div><div class="phone"><div class="scr"><div class="st"><span>11:20</span><span>5G ▮</span></div><div class="hd2" style="display:flex;align-items:center;gap:8px"><span style="color:var(--ink2);font-size:20px">‹</span>함께 만든 사람들</div><div class="c ack"><div class="q">혼자였다면 이만큼 모으지 못했을 거예요.<br>기출노트에 힘을 보태 주신 분들께 감사드려요.</div><div class="rule"></div>
+<div class="nm">포세일돈</div><div class="rl">온라인 시험 문제 공유</div>
+<div class="nm">자마균</div><div class="rl">퀴즈 기능 제안</div>
+<div class="sig">— 기출노트 드림</div></div><div class="tb"><div class=""><i>⌂</i>홈</div><div class=""><i>▶</i>문제 풀기</div><div class=""><i>▤</i>해설 훑어보기</div><div class="on"><i>•••</i>더보기</div></div></div></div></div></div></section></body></html>
