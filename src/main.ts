@@ -24,6 +24,8 @@ interface Item {
   shown?: boolean;
   /** 60초 제한: 이 문항의 마감 시각(ms), 시간 초과로 채점됐는지 */
   deadline?: number;
+  /** 이 문항에 걸린 제한 시간(초) */
+  limit?: number;
   timedOut?: boolean;
 }
 
@@ -689,7 +691,7 @@ function renderSubject() {
   const unsolvedCard = s.done > 0 && s.unsolved > 0;
   const chip = (k: "type", v: string, label: string) =>
     `<button class="chip" data-pref="${k}" data-val="${esc(v)}" aria-pressed="${prefs[k] === v}">${esc(label)}</button>`;
-  const tog = (k: "shuffleQ" | "shuffleC" | "bookOnlyNew" | "timer", label: string) =>
+  const tog = (k: "shuffleQ" | "shuffleC" | "bookOnlyNew", label: string) =>
     `<button class="toggle" data-tog="${k}" aria-pressed="${prefs[k]}"><span>${label}</span><span class="sw"></span></button>`;
   const sub = (kind: Kind, base: string) => {
     const p = runProgress(kind);
@@ -716,11 +718,11 @@ function renderSubject() {
     <div class="eyebrow">출제 범위</div>
     <div class="filters">
       <div class="frow"><label>유형</label><div class="chips">${chip("type", "all", "전체")}${(["ox", "mc", "short", "essay"] as const).filter((t) => visible(bank).some((q) => q.type === t)).map((t) => chip("type", t, TYPE_LABEL[t])).join("")}</div></div>
+      ${isAdmin() ? `<div class="frow"><label>시간 제한</label><div class="chips">${LIMITS.map((v) => `<button class="chip" data-limit="${v}" aria-pressed="${limitSec() === v}">${v ? `${v}초` : "끔"}</button>`).join("")}</div></div>` : ""}
       <div class="ftoggles">
         ${tab() === "book" ? tog("bookOnlyNew", `기출과 겹치는 문제 제외 (${bank.questions.filter((q) => inTab(q, "book") && inTab(q, "exam")).length})`) : ""}
         ${tog("shuffleQ", "문제 순서 섞기")}
         ${tog("shuffleC", "보기 순서 섞기")}
-        ${isAdmin() ? tog("timer", "문제당 60초 제한") : ""}
       </div>
       <div class="fcount">선택한 범위: <b class="num">${n}</b>문항</div>
     </div>`;
@@ -890,9 +892,11 @@ function goBack() {
 }
 
 /* ---------- 60초 제한(관리자 기기에서 토글을 켰을 때만) ---------- */
-const LIMIT = 60;
+const LIMITS = [0, 30, 45, 60];
+/** 예전 '60초 제한' 토글을 켜 둔 기기는 60초로 이어서 쓴다 */
+const limitSec = () => prefs.timerSec ?? (prefs.timer ? 60 : 0);
 let timerT: number | undefined;
-const timerOn = () => isAdmin() && !!prefs.timer;
+const timerOn = () => isAdmin() && limitSec() > 0;
 function tickTimer() {
   const it = session?.items[session.i];
   if (view !== "quiz" || !it || it.ok !== null || !it.deadline) return void clearInterval(timerT);
@@ -901,7 +905,7 @@ function tickTimer() {
   const box = document.querySelector<HTMLElement>(".qtimer");
   if (box) {
     box.classList.toggle("low", sec <= 10);
-    box.querySelector<HTMLElement>("span")!.style.width = `${(left / (LIMIT * 1000)) * 100}%`;
+    box.querySelector<HTMLElement>("span")!.style.width = `${(left / ((it.limit ?? 60) * 1000)) * 100}%`;
     box.querySelector("b")!.textContent = `${sec}초`;
   }
   if (left <= 0) {
@@ -963,13 +967,16 @@ function renderQuiz() {
     q.type === "ox" ? (q.answer === 1 ? "O" : "X") : q.type === "mc" ? KNUM[it.order.indexOf(q.answer!)] : q.type === "short" ? shortAnswer(q) : "";
   const isBm = st.bm.includes(q.n);
   const timed = timerOn() && !done;
-  if (timed) it.deadline ??= Date.now() + LIMIT * 1000;
+  if (timed && it.deadline === undefined) {
+    it.limit = limitSec();
+    it.deadline = Date.now() + it.limit * 1000;
+  }
   $app.innerHTML = `
     <div class="bar">
       <button class="icon-btn" data-act="subject" aria-label="그만 풀기">${I.close}</button>
       <div class="qhead" style="flex:1"><div class="progress"><span style="width:${pct(session.i + (done ? 1 : 0), total)}%"></span></div><button class="jump num" data-act="jump" aria-label="문제 번호로 이동">${session.i + 1}/${total} ▾</button></div>
     </div>
-    ${timed ? `<div class="qtimer" role="timer"><div class="tbar"><span></span></div><b class="num">${LIMIT}초</b></div>` : ""}
+    ${timed ? `<div class="qtimer" role="timer"><div class="tbar"><span></span></div><b class="num">${it.limit}초</b></div>` : ""}
     <div class="qtags"><span class="tag type">${TYPE_LABEL[q.type]}</span>${session.kind !== "all" ? `<span class="tag">${LABEL[session.kind]}</span>` : ""}${missOf(q.n) ? `<span class="tag miss">틀림 ${missOf(q.n)}회</span>` : ""}</div>
     <div class="qno">${q.variantOf ? `<span class="tag var">변형 · 원본 ${q.variantOf}번</span>` : `문제 ${q.n} <span class="qsrc">· ${esc(srcText(q))}</span>`}</div>
     <div class="qtext">${esc(q.q)}</div>
@@ -1233,7 +1240,12 @@ $app.addEventListener("click", (e) => {
     savePrefs(prefs);
     return renderSubject();
   }
-  if (d.tog === "shuffleQ" || d.tog === "shuffleC" || d.tog === "bookOnlyNew" || d.tog === "timer") {
+  if (d.limit !== undefined) {
+    prefs.timerSec = Number(d.limit);
+    savePrefs(prefs);
+    return renderSubject();
+  }
+  if (d.tog === "shuffleQ" || d.tog === "shuffleC" || d.tog === "bookOnlyNew") {
     prefs[d.tog] = !prefs[d.tog];
     savePrefs(prefs);
     return renderSubject();

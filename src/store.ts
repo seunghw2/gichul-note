@@ -18,8 +18,10 @@ export interface Prefs {
   shuffleC: boolean;
   /** 교재 문항 탭에서 온라인 시험 기출과 겹치는 문항 빼기 */
   bookOnlyNew: boolean;
-  /** 관리자 기기 전용: 문제당 60초 제한 */
+  /** (예전) 문제당 60초 제한 켜기 — timerSec로 옮겨짐 */
   timer?: boolean;
+  /** 관리자 기기 전용: 문제당 시간 제한(초). 0 = 끔 */
+  timerSec?: number;
 }
 
 const key = (id: string) => `gichul:${id}`;
