@@ -155,13 +155,13 @@ applyTheme(loadTheme());
 /* ---------- 숨은 통계 화면: 홈 로고를 2초 안에 5번 누르면 열림 (GitHub Actions가 1시간마다 만드는 stats.json) ---------- */
 type QStat = { n: number; ok: number; wrong: number };
 type StatRange = {
-  visitors: number; homescreen: number; browser: number; solved: number; ok: number; wrong: number;
+  visitors: number; homescreen: number; browser: number; solved: number; ok?: number; wrong?: number;
   starts: number; startsByTab: { exam: number; book: number }; progress10: number; finishes: number;
   onboardingDone: number; onboardingSkip: number[]; noticeOpen: number; noticeKbi: number;
-  hours: number[]; visitHours?: number[]; questions: QStat[]; devices?: Record<string, number>;
+  hours: number[]; visitHours?: number[]; questions?: QStat[]; devices?: Record<string, number>;
   newVisitors?: number; returning?: number; streak3?: number;
   bookmarks?: { n: number; count: number }[]; modes?: Record<string, { start: number; finish: number }>;
-  refs?: { name: string; count: number }[]; prev: { visitors: number; solved: number; ok: number };
+  refs?: { name: string; count: number }[]; prev: { visitors: number; solved: number; ok?: number };
   systems: { name: string; count: number }[];
 };
 type StatsData = {
@@ -321,12 +321,10 @@ function renderStats() {
     return;
   }
   const s = data.ranges[statsUi.range];
-  const rate = (ok: number, all: number) => (all ? Math.round((ok / all) * 100) : null);
   const delta = (cur: number, prev: number, unit = "") => {
     const d = cur - prev;
     return d === 0 ? '<em class="flat">–</em>' : `<em class="${d > 0 ? "up" : "down"}">${d > 0 ? "▲" : "▼"} ${Math.abs(d)}${unit}</em>`;
   };
-  const r0 = rate(s.ok, s.solved), r1 = rate(s.prev.ok, s.prev.solved);
   const prevName = statsUi.range === "today" ? "어제" : `지난 ${RANGE_LABEL[statsUi.range]}`;
   const tile = (v: string | number, l: string, d: string) => `<div class="st-tile"><b class="num">${v}</b><span>${l}</span>${d}</div>`;
   const card = (title: string, sub: string, body: string) => `<section class="st-card"><h2>${title}<small>${sub}</small></h2>${body}</section>`;
@@ -344,15 +342,6 @@ function renderStats() {
   const fmax = Math.max(1, ...steps.map(([, v]) => v));
   const funnel = `<div class="st-fun">${steps.map(([l, v, u]) => `<div><span>${l}</span><i style="width:calc((100% - 140px) * ${Math.max(0.02, v / fmax).toFixed(3)})"></i><b class="num">${v}${u}</b></div>`).join("")}</div>
     <p class="st-note">풀이 시작: 기출 ${s.startsByTab.exam} · 교재 ${s.startsByTab.book}</p>`;
-  // 오답률 높은 문항: 3명 이상 푼 문항만
-  const qText = new Map(BANKS.flatMap((b) => b.questions).map((q) => [q.n, q.q]));
-  const qs = s.questions.filter((q) => qText.has(q.n) && q.ok + q.wrong >= 3 && q.wrong).sort((a, b) => b.wrong / (b.ok + b.wrong) - a.wrong / (a.ok + a.wrong) || b.wrong - a.wrong).slice(0, 10);
-  const qList = qs.length
-    ? qs.map((q) => {
-        const r = Math.round((q.wrong / (q.ok + q.wrong)) * 100);
-        return `<button class="st-q" data-sq="${q.n}"><span class="n num">${q.n}</span><span class="t">${esc(qText.get(q.n) ?? "")}</span><span class="r"><b class="num">${r}%</b> <small class="num">${q.wrong}/${q.ok + q.wrong}</small><i><u style="width:${r}%"></u></i></span></button>`;
-      }).join("")
-    : '<p class="st-note">3명 이상 푼 문항이 아직 없어요</p>';
   // 시간대
   const hv = statsUi.hourSeries === "visitors" ? (s.visitHours ?? Array(24).fill(0)) : s.hours;
   const hours = barChart(hv, hv.map((_, i) => `${i}시`));
@@ -374,12 +363,10 @@ function renderStats() {
     <div class="st-tiles">
       ${tile(s.visitors, "방문자", delta(s.visitors, s.prev.visitors))}
       ${tile(s.solved, "푼 문제", delta(s.solved, s.prev.solved))}
-      ${tile(r0 === null ? "–" : r0 + "%", "정답률", r0 === null || r1 === null ? '<em class="flat">–</em>' : delta(r0, r1, "%p"))}
     </div>
     <p class="st-note">▲▼는 ${prevName} 같은 시각까지와 비교</p>
     ${card("일별 추이", `<span class="st-series">${(["solved", "visitors"] as const).map((k) => `<button data-sseries="${k}" aria-pressed="${k === statsUi.series}">${k === "solved" ? "푼 문제" : "방문자"}</button>`).join("")}</span>`, trend)}
     ${card("사용 흐름", "방문자 → 끝까지", funnel)}
-    ${card("오답률 높은 문항", "3명 이상 푼 문항 · 탭하면 해설", `<div class="st-qs">${qList}</div>`)}
     ${card("공부하는 시간대", hourToggle, hours)}
     ${card("기기 · 실행 방식", "", devices)}
     ${card("온보딩", "", kv("끝까지 봄", String(s.onboardingDone)) + skips)}
@@ -1122,8 +1109,6 @@ function grade(ok: boolean) {
   const it = session.items[session.i];
   if (it.ok !== null) return;
   it.ok = ok;
-  // GoatCounter는 같은 사람·같은 이름 신호를 몇 시간 안엔 1번으로 세므로 문항 번호를 넣어 문항별로 센다(합계 = 푼 문제 수)
-  track(`${ok ? "ok" : "wrong"}/q${it.q.n}`);
   trackSolve(it.q.n);
   markActive();
   if (session.items.filter((x) => x.ok !== null).length === 10) track("progress/10");

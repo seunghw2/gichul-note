@@ -74,7 +74,7 @@ async function allHits(start, end) {
 /** 예전 방식: 많이 나온 순으로 100개씩 최대 30쪽(3,000개)까지 */
 async function allHitsLegacy(start, end) {
   const out = new Map();
-  for (let page = 0; page < 30; page++) {
+  for (let page = 0; page < 100; page++) {
     const p = new URLSearchParams({ start, end, limit: "100" });
     if (out.size) p.set("exclude_paths", [...out.values()].map((h) => h.path_id).join(","));
     const r = await api("/stats/hits", p);
@@ -97,38 +97,35 @@ const kstDay = (d) => new Date(d.getTime() + 9 * 3600e3).toISOString().slice(0, 
 
 const isVisit = (p) => p === "visit/day";
 const isLaunch = (p) => p === "launch/homescreen" || p === "launch/browser";
-const isAnswer = (p) => /^(ok|wrong)\/q\d+$/.test(p);
+const isAnswer = (p) => /^(ok|wrong)\/q\d+$/.test(p); // 예전 문항별 신호(2026-10-10 중단)
+const isSolve = (p) => /^ua\/u[\w-]+$/.test(p); // 사람별 풀이 신호 = 푼 문제
 
 function summarize(hits) {
   const c = (path) => hits.find((h) => h.path === path)?.count ?? 0;
   const sum = (re) => hits.filter((h) => re.test(h.path)).reduce((a, h) => a + h.count, 0);
-  const per = new Map();
-  for (const h of hits) {
-    const m = /^(ok|wrong)\/q(\d+)$/.exec(h.path);
-    if (!m) continue;
-    const n = Number(m[2]);
-    const v = per.get(n) ?? { n, ok: 0, wrong: 0 };
-    v[m[1]] += h.count;
-    per.set(n, v);
+  // 푼 문제: 사람별 풀이 신호(ua/<번호>)의 합. 예전 문항별 신호(ok·wrong/q번호, 2026-10-10 중단)와 비교해 큰 값(ua는 10-08 21시부터)
+  const legacy = sum(/^(ok|wrong)\/q\d+$/);
+  const uaSum = sum(/^ua\//);
+  const solved = Math.max(uaSum, legacy);
+  if (process.env.STATS_DEBUG_ONCE !== "done") {
+    console.log(`검증: 사람별 풀이 합 ${uaSum} vs 문항별 정답+오답 ${legacy}`);
+    process.env.STATS_DEBUG_ONCE = "done";
   }
-  const qs = [...per.values()].sort((a, b) => a.n - b.n);
-  const ok = qs.reduce((a, v) => a + v.ok, 0);
-  const wrong = qs.reduce((a, v) => a + v.wrong, 0);
-  // 시간대(0~23시)별 푼 문제: 문항 경로들의 hourly 합 (GoatCounter 계정의 시간대 기준)
-  const hours = Array(24).fill(0);
+  // 시간대(0~23시)별 푼 문제·방문자 (GoatCounter 계정의 시간대 기준). 푼 문제는 ua와 예전 신호 중 큰 값
+  const hoursUa = Array(24).fill(0);
+  const hoursOld = Array(24).fill(0);
   const visitHours = Array(24).fill(0);
   for (const h of hits) {
-    const arr = isAnswer(h.path) ? hours : h.path === "visit/hour" ? visitHours : null;
+    const arr = isSolve(h.path) ? hoursUa : isAnswer(h.path) ? hoursOld : h.path === "visit/hour" ? visitHours : null;
     if (arr) for (const s of h.stats ?? []) (s.hourly ?? []).forEach((v, i) => (arr[i] += v));
   }
+  const hours = hoursUa.map((v, i) => Math.max(v, hoursOld[i]));
   return {
     // 새 신호(visit/day)가 생기기 전 기록은 예전 앱 실행 신호(launch/*)로 대신 (지금은 둘 다 기기마다 하루 1번이라 같은 값)
     visitors: Math.max(c("visit/day"), c("launch/homescreen") + c("launch/browser")),
     homescreen: c("launch/homescreen"),
     browser: c("launch/browser"),
-    solved: ok + wrong,
-    ok,
-    wrong,
+    solved,
     starts: sum(/^start\//),
     startsByTab: { exam: sum(/^start\/exam\//), book: sum(/^start\/book\//) },
     progress10: c("progress/10"),
@@ -150,15 +147,14 @@ function summarize(hits) {
       .slice(0, 10),
     devices: Object.fromEntries(hits.filter((h) => /^device\//.test(h.path)).map((h) => [h.path.slice(7), h.count])),
     modes: Object.fromEntries(["all", "wrong", "bm", "often"].map((k) => [k, { start: sum(new RegExp(`^start/[a-z]+/${k}$`)), finish: sum(new RegExp(`^finish/[a-z]+/${k}$`)) }])),
-    questions: qs,
   };
 }
 
 /** 일별 추이: 문항·실행 경로의 daily 값을 날짜별로 합산 */
 function daily(hits, days) {
-  const map = new Map(days.map((d) => [d, { day: d, visitors: 0, solved: 0, launches: 0 }]));
+  const map = new Map(days.map((d) => [d, { day: d, visitors: 0, solved: 0, old: 0, launches: 0 }]));
   for (const h of hits) {
-    const key = isVisit(h.path) ? "visitors" : isAnswer(h.path) ? "solved" : isLaunch(h.path) ? "launches" : null;
+    const key = isVisit(h.path) ? "visitors" : isSolve(h.path) ? "solved" : isAnswer(h.path) ? "old" : isLaunch(h.path) ? "launches" : null;
     if (!key) continue;
     for (const s of h.stats ?? []) {
       const v = map.get(s.day);
@@ -166,7 +162,7 @@ function daily(hits, days) {
     }
   }
   // 새 신호가 없던 날은 예전 앱 실행 신호로 대신
-  return [...map.values()].map(({ launches, ...v }) => ({ ...v, visitors: Math.max(v.visitors, launches) }));
+  return [...map.values()].map(({ launches, old, ...v }) => ({ ...v, solved: Math.max(v.solved, old), visitors: Math.max(v.visitors, launches) }));
 }
 
 async function toprefs(start, end) {
@@ -196,7 +192,7 @@ for (const [key, n] of Object.entries(ranges)) {
   const p = summarize(prev);
   out.ranges[key] = {
     ...s,
-    prev: { visitors: p.visitors, solved: p.solved, ok: p.ok },
+    prev: { visitors: p.visitors, solved: p.solved },
     systems: [],
   };
   if (key === "month") month = cur;
@@ -206,12 +202,12 @@ const lastFull = new Date(Math.floor(now.getTime() / 3600e3) * 3600e3 - 3600e3);
 const h48 = await allHits(iso(new Date(lastFull.getTime() - 47 * 3600e3)), iso(endHour));
 const byHour = new Map(); // "날짜 시" → { solved, visitors }
 for (const h of h48) {
-  const key = isAnswer(h.path) ? "solved" : h.path === "visit/hour" ? "visitors" : null;
+  const key = isSolve(h.path) ? "solved" : isAnswer(h.path) ? "old" : h.path === "visit/hour" ? "visitors" : null;
   if (!key) continue;
   for (const st of h.stats ?? [])
     (st.hourly ?? []).forEach((v, i) => {
       const k = `${st.day} ${i}`;
-      const o = byHour.get(k) ?? { solved: 0, visitors: 0 };
+      const o = byHour.get(k) ?? { solved: 0, old: 0, visitors: 0 };
       o[key] += v;
       byHour.set(k, o);
     });
@@ -220,7 +216,8 @@ out.last24 = Array.from({ length: 24 }, (_, k) => {
   const t = new Date(lastFull.getTime() - (23 - k) * 3600e3 + 9 * 3600e3); // 한국 시각
   const day = t.toISOString().slice(0, 10);
   const hour = t.getUTCHours();
-  const o = byHour.get(`${day} ${hour}`) ?? { solved: 0, visitors: 0 };
+  const o = byHour.get(`${day} ${hour}`) ?? { solved: 0, old: 0, visitors: 0 };
+  o.solved = Math.max(o.solved, o.old);
   return { hour, solved: o.solved, visitors: o.visitors };
 });
 
@@ -282,7 +279,7 @@ if (process.env.STATS_KEY) {
 } else console.log("STATS_KEY 없음 — 사용자별 표 건너뜀");
 
 const t = out.ranges.today;
-console.log(`통계 저장: 오늘 방문 ${t.visitors} · 푼 문제 ${t.solved} · 문항 ${t.questions.length}개 / 30일 방문 ${out.ranges.month.visitors}`);
+console.log(`통계 저장: 오늘 방문 ${t.visitors} · 푼 문제 ${t.solved} / 30일 방문 ${out.ranges.month.visitors}`);
 console.log("일별 샘플:", JSON.stringify(out.daily.slice(-3)));
 writeFileSync("public/stats.json", JSON.stringify(out));
 console.log("24시간:", out.last24.map((x) => `${x.hour}시 ${x.visitors}명/${x.solved}문제`).join(", "));
