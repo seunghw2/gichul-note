@@ -52,6 +52,8 @@ async function allPathIds() {
 /** 기간 안의 모든 경로별 값. 경로 ID를 100개씩 묶어 include_paths로 받아서 개수 상한·주소 길이 문제가 없다.
     (경로 목록 API가 실패하면 예전 방식으로) */
 async function allHits(start, end) {
+  // 경로 목록 방식은 실제 데이터에서 일부 경로만 잡혀(536개, 값 누락) 확인될 때까지 끔 → 예전 방식 사용
+  if (!process.env.STATS_PATHLIST) return allHitsLegacy(start, end);
   let ids;
   try {
     ids = await allPathIds();
