@@ -1,7 +1,7 @@
 import "./style.css";
 import { BANKS } from "./data";
 import { seenOnboarding, showOnboarding } from "./onboarding";
-import { anonId, backfillSolved, markActive, pageview, track, trackOnce, trackSolve } from "./stats";
+import { anonId, backfillSolved, markActive, pageview, track, trackOnce, trackSolve, sendPendingAlias } from "./stats";
 import { CONTRIBUTORS } from "./contributors";
 import { applyImport, localSummary, makeLink, readIncoming, summarize } from "./transfer";
 import { I } from "./icons";
@@ -1441,6 +1441,7 @@ const customBack = !(isIOS && !standalone);
 trackOnce(standalone ? "launch/homescreen" : "launch/browser", "day");
 trackOnce(`device/${isIOS ? "ios" : /Android/.test(navigator.userAgent) ? "android" : "pc"}-${standalone ? "app" : "web"}`, "day");
 markActive();
+sendPendingAlias();
 backfillSolved(BANKS.flatMap((b) => Object.keys(loadSubject(b.id).rec).map(Number)));
 let popAt = 0;
 let g: { x: number; y: number; mode: "back" | "pull" | null; d: number } | null = null;

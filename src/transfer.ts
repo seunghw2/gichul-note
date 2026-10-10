@@ -4,8 +4,10 @@ import { BANKS } from "./data";
 import { trackOnce } from "./stats";
 
 const PREFIX = "gichul:";
+/** 사용자 순위용 익명 번호(stats.ts와 같은 키) */
+const ID_KEY = "gichul:gc-id";
 // 통계용 '오늘 보냄' 표시와 연속 방문 기록은 기기마다 따로 있어야 하므로 옮기지 않는다
-const SKIP = /^gichul:(gc-once:|gc-streak$|stats-pass$)/;
+const SKIP = /^gichul:(gc-once:|gc-streak$|stats-pass$|gc-alias$)/;
 
 type Payload = { v: 1; t: number; d: Record<string, string> };
 type SubjectLike = { rec?: Record<string, { tries: number; miss: number; last: boolean }>; bm?: number[]; wrong?: number[] };
@@ -98,6 +100,11 @@ function mergeSubject(local: string | null, inc: string) {
 /** 합치기: 과목 기록은 합치고(푼 횟수 더함, 오답·북마크 합집합) 나머지는 이 기기에 없을 때만 채움 / 덮어쓰기: 이 기기 기록을 지우고 받은 기록으로 */
 export function applyImport(p: Payload, mode: "merge" | "overwrite") {
   const subjectKeys = new Set(BANKS.map((b) => PREFIX + b.id));
+  // 사용자 순위(숨은 통계)도 이어지게: 받은 익명 번호를 이 기기가 이어받고, 이 기기의 예전 번호는 받은 번호로 합치라고 알린다
+  const incId = p.d[ID_KEY];
+  const curId = localStorage.getItem(ID_KEY);
+  // 가져온 직후 새로고침하므로 지금 보내면 사라질 수 있다 → 저장해 두고 다음 실행 때 보낸다(stats.ts sendPendingAlias)
+  if (incId && curId && incId !== curId) localStorage.setItem("gichul:gc-alias", `alias/${curId}/${incId}`);
   if (mode === "overwrite") for (const k of Object.keys(collect())) localStorage.removeItem(k);
   for (const [k, v] of Object.entries(p.d)) {
     if (!k.startsWith(PREFIX) || SKIP.test(k)) continue;
@@ -105,5 +112,6 @@ export function applyImport(p: Payload, mode: "merge" | "overwrite") {
     if (mode === "overwrite" || cur === null) localStorage.setItem(k, v);
     else if (subjectKeys.has(k)) localStorage.setItem(k, mergeSubject(cur, v));
   }
+  if (incId) localStorage.setItem(ID_KEY, incId);
   trackOnce("transfer/import", "day");
 }

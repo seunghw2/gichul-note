@@ -191,8 +191,22 @@ if (process.env.STATS_KEY) {
   const all = await allHits(allStart, iso(endHour));
   const today = await allHits(iso(todayStart), iso(endHour));
   const week = await allHits(iso(new Date(todayStart.getTime() - 6 * DAY)), iso(endHour));
+  // 기록 옮기기로 번호를 이어받은 경우(alias/<예전 번호>/<이어받은 번호>): 예전 번호 줄을 이어받은 번호 줄에 합친다
+  const alias = new Map();
+  for (const h of all) {
+    const m = /^alias\/(u[\w-]+)\/(u[\w-]+)$/.exec(h.path);
+    if (m && m[1] !== m[2]) alias.set(m[1], m[2]);
+  }
+  const resolve = (id) => {
+    const seen = new Set([id]);
+    while (alias.has(id) && !seen.has(alias.get(id))) seen.add((id = alias.get(id)));
+    return id;
+  };
   const users = new Map();
-  const u = (id) => users.get(id) ?? users.set(id, { id, distinct: 0, today: 0, week: 0, last: "" }).get(id);
+  const u = (raw) => {
+    const id = resolve(raw);
+    return users.get(id) ?? users.set(id, { id, distinct: 0, today: 0, week: 0, last: "" }).get(id);
+  };
   for (const h of all) {
     const m = /^(ud|ua)\/(u[\w-]+)$/.exec(h.path);
     if (!m) continue;

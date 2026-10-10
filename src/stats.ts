@@ -50,6 +50,17 @@ export function trackOnce(name: string, per: "day" | "hour" | "ever") {
 
 /** 방문자 신호: 오늘 방문자(하루 1번) + 이 시간 활동한 사람(한 시간 1번)
     하루 첫 방문 때 처음 온 사람인지(visit/new) 다시 온 사람인지(visit/return), 3일 이상 연속인지(streak/3plus)도 함께 */
+/** 기록 옮기기로 익명 번호를 이어받았으면, 예전 번호 줄을 합치라는 신호를 한 번 보낸다 */
+export function sendPendingAlias() {
+  try {
+    const a = localStorage.getItem("gichul:gc-alias");
+    if (!a) return;
+    localStorage.removeItem("gichul:gc-alias");
+    track(a);
+  } catch {
+    /* 무시 */
+  }
+}
 export function markActive() {
   const today = dayStr(new Date());
   let prev: string | null = null;
