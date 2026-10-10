@@ -47,7 +47,7 @@ const quoteHtml = (q: Q) => (q.quote ? `<div class="sec"><div class="lbl">원문
 /** 용어 풀이(설정 '용어 설명 같이 보기'를 켰을 때만): 교재 정의 우선, 없으면 일반 설명 */
 const GLOSS = GLOSSARY as Record<string, { d: string; src?: string }>;
 const termsHtml = (q: Q) => {
-  const ts = prefs.showTerms ? (q.terms ?? []).filter((t) => GLOSS[t]).slice(0, 4) : [];
+  const ts = (q.terms ?? []).filter((t) => GLOSS[t]).slice(0, 4);
   return ts.length
     ? `<div class="sec"><div class="lbl">용어 풀이</div><dl class="gl">${ts.map((t) => `<dt>${esc(t)}</dt><dd>${esc(GLOSS[t].d)}${GLOSS[t].src ? ` <small>${esc(GLOSS[t].src)}</small>` : ""}</dd>`).join("")}</dl></div>`
     : "";
@@ -848,7 +848,7 @@ function renderSubject() {
   const n = playPool().length;
   const chip = (k: "type", v: string, label: string) =>
     `<button class="chip" data-pref="${k}" data-val="${esc(v)}" aria-pressed="${prefs[k] === v}">${esc(label)}</button>`;
-  const tog = (k: "shuffleQ" | "shuffleC" | "bookOnlyNew" | "onlyUnsolved" | "showTerms", label: string) =>
+  const tog = (k: "shuffleQ" | "shuffleC" | "bookOnlyNew" | "onlyUnsolved", label: string) =>
     `<button class="toggle" data-tog="${k}" aria-pressed="${prefs[k]}"><span>${label}</span><span class="sw"></span></button>`;
   const sub = (kind: Kind, base: string) => {
     const p = runProgress(kind);
@@ -882,7 +882,6 @@ function renderSubject() {
         ${tab() === "book" ? tog("bookOnlyNew", `기출과 겹치는 문제 제외 (${bank.questions.filter((q) => inTab(q, "book") && inTab(q, "exam")).length})`) : ""}
         ${tog("shuffleQ", "문제 순서 섞기")}
         ${tog("shuffleC", "보기 순서 섞기")}
-        ${tab() !== "challenge" ? tog("showTerms", "용어 설명 같이 보기") : ""}
       </div>
       <div class="fcount">선택한 범위: <b class="num">${n}</b>문항</div>
     </div>`;
@@ -1495,7 +1494,7 @@ $app.addEventListener("click", (e) => {
     savePrefs(prefs);
     return renderSubject();
   }
-  if (d.tog === "shuffleQ" || d.tog === "shuffleC" || d.tog === "bookOnlyNew" || d.tog === "onlyUnsolved" || d.tog === "showTerms") {
+  if (d.tog === "shuffleQ" || d.tog === "shuffleC" || d.tog === "bookOnlyNew" || d.tog === "onlyUnsolved") {
     prefs[d.tog] = !prefs[d.tog];
     savePrefs(prefs);
     return renderSubject();

@@ -26,8 +26,6 @@ export interface Prefs {
   challenge?: boolean;
   /** 실험실 → 타이머 기능(시간 제한·해설 시간 칩 보이기). 끄면 정해 둔 시간도 적용 안 함 */
   timerFeature?: boolean;
-  /** 채점 후 해설 아래 '용어 풀이' 같이 보기(기본 끔) */
-  showTerms?: boolean;
   /** '문제 풀기'를 아직 안 푼 문제(기록 없음)만으로 */
   onlyUnsolved?: boolean;
   /** 관리자 기기 전용: 문제당 시간 제한(초). 0 = 끔 */
