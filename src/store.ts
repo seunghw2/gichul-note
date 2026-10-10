@@ -24,6 +24,8 @@ export interface Prefs {
   expSec?: number;
   /** 설정 → 챌린지 퀴즈 활성화(챌린지 탭 보이기) */
   challenge?: boolean;
+  /** 채점 후 해설 아래 '용어 풀이' 같이 보기(기본 끔) */
+  showTerms?: boolean;
   /** '문제 풀기'를 아직 안 푼 문제(기록 없음)만으로 */
   onlyUnsolved?: boolean;
   /** 관리자 기기 전용: 문제당 시간 제한(초). 0 = 끔 */

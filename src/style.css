@@ -207,7 +207,18 @@ html,body{overscroll-behavior-y:contain}
 .model.mine{margin-bottom:10px;background:var(--surface-2);border-style:dashed;white-space:pre-wrap}
 .myans+.result,.model.mine+.result{margin-top:12px}
 .quote{margin:0;border-left:3px solid var(--line);padding:2px 0 2px 10px;font-size:14.5px;color:var(--ink-2);line-height:1.55}
-.exp .quote{margin-top:8px}
+.exp .quote{margin-top:0}
+/* 해설 아래 섹션(원문 인용·용어 풀이 등)은 구분선으로 나눠 따로 보이게 */
+.sec{border-top:1px solid var(--line);padding-top:10px}
+.exp .sec,.exp .memo,.exp .diff{margin-top:12px}
+.sec .lbl{margin-bottom:4px}
+.gl{margin:0;display:grid;gap:6px}
+.gl dt{font-weight:700;font-size:14.5px;color:var(--brand)}
+.gl dd{margin:0;font-size:14.5px;color:var(--ink-2);line-height:1.55}
+.gl dd small{color:var(--ink-3);font-size:12.5px}
+.memo{background:var(--surface-2);border-radius:10px;padding:9px 12px;font-size:13.5px;color:var(--ink-2);line-height:1.55}
+.memo b{color:var(--ink)}
+.exp .memo{background:transparent;border:1px dashed var(--line)}
 .quote{white-space:pre-line}
 /* 홈 화면 앱(전체화면)에서 상태바 아래로 내용이 들어가지 않게 */
 .app{padding-top:env(safe-area-inset-top,0px)}

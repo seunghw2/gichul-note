@@ -27,6 +27,10 @@ export interface Question {
   diff?: string;
   /** 원래 단답형이었다가 다른 형식으로 바꾼 문항 표시(예: "단답형 → 4지선다") */
   conv?: string;
+  /** 출제 메모: 문제를 바꾼 경위 등(예: 원래 4지선다 문제였음). 해설 아래 따로 표시 */
+  memo?: string;
+  /** 용어 풀이에 보여줄 용어(glossary.json 키), 문항당 최대 4개 */
+  terms?: string[];
 }
 
 export interface Bank {

@@ -7,6 +7,7 @@ import { applyImport, localSummary, makeLink, readIncoming, summarize } from "./
 import { I } from "./icons";
 import { addToday, clearRun, loadPrefs, loadTheme, loadToday, saveTheme, type Theme, loadRun, loadSubject, savePrefs, saveRun, saveSubject, type SavedRun, type SubjectState } from "./store";
 import type { LoadedBank, Q } from "./types";
+import GLOSSARY from "./data/glossary.json";
 
 type View = "home" | "subject" | "quiz" | "end" | "review" | "stats" | "more" | "people" | "settings";
 type Kind = "all" | "wrong" | "bm" | "often";
@@ -42,7 +43,18 @@ const TYPE_SHORT: Record<Q["type"], string> = { ox: "OX", mc: "4지", short: "�
 const srcText = (q: Q) => q.sources.join(", ");
 const shortAnswer = (q: Q) => q.answerText ?? (q.accept ?? []).join(" / ");
 const diffHtml = (q: Q) => (q.diff ? `<div class="diff"><div class="lbl">원본 ${q.variantOf}번과 달라진 점</div>${esc(q.diff)}</div>` : "");
-const quoteHtml = (q: Q) => (q.quote ? `<blockquote class="quote"><div class="lbl">원문 인용</div>${esc(q.quote)}</blockquote>` : "");
+const quoteHtml = (q: Q) => (q.quote ? `<div class="sec"><div class="lbl">원문 인용</div><blockquote class="quote">${esc(q.quote)}</blockquote></div>` : "");
+/** 용어 풀이(설정 '용어 설명 같이 보기'를 켰을 때만): 교재 정의 우선, 없으면 일반 설명 */
+const GLOSS = GLOSSARY as Record<string, { d: string; src?: string }>;
+const termsHtml = (q: Q) => {
+  const ts = prefs.showTerms ? (q.terms ?? []).filter((t) => GLOSS[t]).slice(0, 4) : [];
+  return ts.length
+    ? `<div class="sec"><div class="lbl">용어 풀이</div><dl class="gl">${ts.map((t) => `<dt>${esc(t)}</dt><dd>${esc(GLOSS[t].d)}${GLOSS[t].src ? ` <small>${esc(GLOSS[t].src)}</small>` : ""}</dd>`).join("")}</dl></div>`
+    : "";
+};
+const memoHtml = (q: Q) => (q.memo ? `<div class="memo"><b>출제 메모</b> · ${esc(q.memo)}</div>` : "");
+/** 해설 아래 섹션: 원문 인용 → 변형 차이 → 용어 풀이 → 출제 메모 */
+const sectionsHtml = (q: Q) => `${quoteHtml(q)}${diffHtml(q)}${termsHtml(q)}${memoHtml(q)}`;
 /** 해설·모범답안: ①②③ 앞에서 줄바꿈 */
 const expHtml = (t: string) => esc(t).replace(/\s+(?=[①-⑨])/g, "<br>");
 const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -718,7 +730,7 @@ function renderSubject() {
   const n = playPool().length;
   const chip = (k: "type", v: string, label: string) =>
     `<button class="chip" data-pref="${k}" data-val="${esc(v)}" aria-pressed="${prefs[k] === v}">${esc(label)}</button>`;
-  const tog = (k: "shuffleQ" | "shuffleC" | "bookOnlyNew" | "onlyUnsolved", label: string) =>
+  const tog = (k: "shuffleQ" | "shuffleC" | "bookOnlyNew" | "onlyUnsolved" | "showTerms", label: string) =>
     `<button class="toggle" data-tog="${k}" aria-pressed="${prefs[k]}"><span>${label}</span><span class="sw"></span></button>`;
   const sub = (kind: Kind, base: string) => {
     const p = runProgress(kind);
@@ -752,6 +764,7 @@ function renderSubject() {
         ${tab() === "book" ? tog("bookOnlyNew", `기출과 겹치는 문제 제외 (${bank.questions.filter((q) => inTab(q, "book") && inTab(q, "exam")).length})`) : ""}
         ${tog("shuffleQ", "문제 순서 섞기")}
         ${tog("shuffleC", "보기 순서 섞기")}
+        ${tab() !== "challenge" ? tog("showTerms", "용어 설명 같이 보기") : ""}
       </div>
       <div class="fcount">선택한 범위: <b class="num">${n}</b>문항</div>
     </div>`;
@@ -1070,7 +1083,7 @@ function renderQuiz() {
     ${body}
     ${done ? `<div class="result ${correct ? "ok" : "bad"}">
       <div class="rh">${correct ? I.check + " 정답" : I.x + (it.timedOut ? " 시간 초과" : " 오답")}${ansText ? `<span class="ans">정답 ${esc(ansText)}</span>` : ""}</div>
-      <div class="rb"><div><div class="lbl">${q.type === "essay" ? "모범답안" : "해설"}</div>${expHtml(q.exp)}</div>${quoteHtml(q)}${diffHtml(q)}
+      <div class="rb"><div><div class="lbl">${q.type === "essay" ? "모범답안" : "해설"}</div>${expHtml(q.exp)}</div>${sectionsHtml(q)}
       <div class="src">${I.pg} ${esc(srcText(q))} · 출제원 ${esc(q.src)}</div></div></div>` : ""}
     ${done && expDl ? `<div class="qtimer exp" role="timer"><small>다음 문제까지</small><div class="tbar"><span></span></div><b class="num">${expDl.limit}초</b></div>` : ""}
     <div class="qfoot">
@@ -1184,7 +1197,7 @@ function reviewCards() {
         <div class="rtop"><span class="qno">${q.n}</span><span class="tag type">${TYPE_SHORT[q.type]}</span>${q.conv ? `<span class="tag conv">${esc(q.conv)}</span>` : ""}${q.variantOf ? `<span class="tag var">원본 ${q.variantOf}번</span>` : ""}${st.wrong.includes(q.n) ? '<span class="wrongmark">오답</span>' : ""}${missOf(q.n) ? `<span class="missmark">틀림 ${missOf(q.n)}회</span>` : ""}
           <span class="flags"><button class="mini bm" data-rflag="${q.n}" aria-pressed="${isBm}" aria-label="북마크">${isBm ? I.bmOn : I.bm}</button></span></div>
         <div class="q">${esc(q.q)}</div>${opts}
-        <div class="exp"><div class="lbl">${q.type === "essay" ? "모범답안" : "해설"}</div>${expHtml(q.exp)}${quoteHtml(q)}${diffHtml(q)}</div>
+        <div class="exp"><div class="lbl">${q.type === "essay" ? "모범답안" : "해설"}</div>${expHtml(q.exp)}${sectionsHtml(q)}</div>
         <div class="src">${I.pg} ${esc(srcText(q))} · ${esc(q.src)}</div>
       </article>`;
     })
@@ -1354,7 +1367,7 @@ $app.addEventListener("click", (e) => {
     savePrefs(prefs);
     return renderSubject();
   }
-  if (d.tog === "shuffleQ" || d.tog === "shuffleC" || d.tog === "bookOnlyNew" || d.tog === "onlyUnsolved") {
+  if (d.tog === "shuffleQ" || d.tog === "shuffleC" || d.tog === "bookOnlyNew" || d.tog === "onlyUnsolved" || d.tog === "showTerms") {
     prefs[d.tog] = !prefs[d.tog];
     savePrefs(prefs);
     return renderSubject();
