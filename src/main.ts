@@ -151,7 +151,9 @@ function stats(b: LoadedBank, s: SubjectState, t: Tab | null = tab()) {
 /** '문제 풀기'에 나오는 문항: 출제 범위 + ('안 푼 문제만'이면) 기록 없는 문항만 */
 const playPool = () => (prefs.onlyUnsolved ? filtered().filter((q) => !st.rec[q.n]) : filtered());
 const filtered = () => {
-  return visible(bank).filter((q) => prefs.type === "all" || q.type === prefs.type);
+  // 변형 OX·챌린지는 전부 OX라 유형 거르기를 쓰지 않는다
+  const allOx = tab() === "variant" || tab() === "challenge";
+  return visible(bank).filter((q) => allOx || prefs.type === "all" || q.type === prefs.type);
 };
 
 const pct = (a: number, b: number) => (b ? (a / b) * 100 : 0);
@@ -853,7 +855,6 @@ function renderSubject() {
     ${bank.questions.some((q) => !inTab(q, "exam")) ? `<div class="seg" role="tablist">${(Object.keys(TABS) as Tab[]).filter((t) => visible(bank, t).length || t === tab()).map((t) => `<button role="tab" data-tab="${t}" aria-selected="${tab() === t}">${TABS[t]}<small class="num">${visible(bank, t).length}문항</small></button>`).join("")}</div>` : ""}
     ${tab() === "challenge" ? `<div class="varinfo">교재 내용으로 새로 만든 <b>도전용 OX</b>예요. 기출에 아직 안 나온 부분이라, 다음 시험 대비로 풀어 보세요.</div>` : ""}
     ${tab() === "variant" ? `<div class="varinfo">원본 기출을 바꿔 쓰거나 4지선다 보기를 하나씩 OX로 만든 <b>연습용 OX</b>예요. 실제 시험 문장 그대로가 아닐 수 있으니 해설을 꼭 확인하세요.</div>` : ""}
-    ${tab() === "variant" ? `<div class="chips var-src" role="group" aria-label="변형 OX 출처">${(["all", "exam", "book"] as const).map((k) => `<button class="chip" data-varsrc="${k}" aria-pressed="${varSrc() === k}">${k === "all" ? "전체" : TABS[k]} <small class="num">${bank.questions.filter((q) => inTab(q, "variant") && inVarSrc(bank, q, k)).length}</small></button>`).join("")}</div>` : ""}
     <div class="subject" style="cursor:default">
       <div class="progress"><span style="width:${pct(s.done, s.total)}%"></span></div>
       ${statRow(s)}
@@ -869,7 +870,8 @@ function renderSubject() {
 
     <div class="eyebrow">출제 범위</div>
     <div class="filters">
-      <div class="frow"><label>유형</label><div class="chips">${chip("type", "all", "전체")}${(["ox", "mc", "short", "essay"] as const).filter((t) => visible(bank).some((q) => q.type === t)).map((t) => chip("type", t, TYPE_LABEL[t])).join("")}</div></div>
+      ${tab() === "variant" ? `<div class="frow"><label>출처</label><div class="chips var-src" role="group" aria-label="변형 OX 출처">${(["all", "exam", "book"] as const).map((k) => `<button class="chip" data-varsrc="${k}" aria-pressed="${varSrc() === k}">${k === "all" ? "전체" : TABS[k]} <small class="num">${bank.questions.filter((q) => inTab(q, "variant") && inVarSrc(bank, q, k)).length}</small></button>`).join("")}</div></div>` : ""}
+      ${tab() === "variant" || tab() === "challenge" ? "" : `<div class="frow"><label>유형</label><div class="chips">${chip("type", "all", "전체")}${(["ox", "mc", "short", "essay"] as const).filter((t) => visible(bank).some((q) => q.type === t)).map((t) => chip("type", t, TYPE_LABEL[t])).join("")}</div></div>`}
       ${prefs.timerFeature ? `<div class="frow"><label>시간 제한</label><div class="chips">${LIMITS.map((v) => `<button class="chip" data-limit="${v}" aria-pressed="${limitSec() === v}">${v ? `${v}초` : "끔"}</button>`).join("")}</div></div>
       <div class="frow"><label>해설 시간</label><div class="chips">${EXP_LIMITS.map((v) => `<button class="chip" data-explimit="${v}" aria-pressed="${(prefs.expSec ?? 0) === v}">${v ? `${v}초` : "끔"}</button>`).join("")}</div></div>` : ""}
       <div class="ftoggles">
