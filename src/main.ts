@@ -3,7 +3,7 @@ import { BANKS } from "./data";
 import { seenOnboarding, showOnboarding } from "./onboarding";
 import { anonId, backfillSolved, markActive, pageview, track, trackOnce, trackSolve, sendPendingAlias } from "./stats";
 import { CONTRIBUTORS } from "./contributors";
-import { applyImport, localSummary, makeLink, readIncoming, summarize } from "./transfer";
+import { applyImport, localSummary, makeLink, readIncoming, readPasted, summarize } from "./transfer";
 import { I } from "./icons";
 import { addToday, clearRun, loadPrefs, loadTheme, loadToday, saveTheme, type Theme, loadRun, loadSubject, savePrefs, saveRun, saveSubject, type SavedRun, type SubjectState } from "./store";
 import type { LoadedBank, Q } from "./types";
@@ -588,12 +588,17 @@ function openTransfer() {
       ${typeof navigator.share === "function" ? '<button class="next" data-tr="share">링크 보내기 (카톡 나와의 채팅)</button>' : ""}
       <button class="btn" data-tr="copy">링크 복사</button>
       <p class="tr-warn">⚠︎ 링크를 받은 사람은 이 기록을 가져갈 수 있어요. 나에게만 보내세요.</p>
+      <button class="tr-link" data-tr="paste">받은 링크를 붙여넣어 가져오기 ›</button>
     </div>`;
   document.body.appendChild(sheet);
   sheet.addEventListener("click", async (e) => {
     const b = (e.target as HTMLElement).closest<HTMLElement>("[data-tr]");
     if (!b && e.target === sheet) return sheet.remove();
     if (!b) return;
+    if (b.dataset.tr === "paste") {
+      sheet.remove();
+      return openPaste(false);
+    }
     const url = await makeLink();
     trackOnce("transfer/send", "day");
     if (b.dataset.tr === "share") {
@@ -623,6 +628,11 @@ async function checkIncoming(): Promise<boolean> {
     toast("링크가 잘려서 가져올 수 없어요. 링크 전체를 다시 열어 주세요");
     return true;
   }
+  showIncoming(p);
+  return true;
+}
+
+function showIncoming(p: Exclude<Awaited<ReturnType<typeof readIncoming>>, null | "error">) {
   const inc = summarize(p.d);
   const cur = localSummary();
   const hasLocal = cur.solved + cur.wrong + cur.bm > 0;
@@ -660,7 +670,88 @@ async function checkIncoming(): Promise<boolean> {
       location.reload();
     } else el.remove();
   });
-  return true;
+}
+
+/* ---------- 아이폰 홈 화면 앱: 사파리와 저장 공간이 따로라 처음엔 기록이 비어 보인다 → 붙여넣기로 가져오기 안내 ---------- */
+const HS_OFF = "gichul:hs-hint-off";
+function hsHintOn() {
+  if (!(isIOS && standalone)) return false;
+  try {
+    if (localStorage.getItem(HS_OFF)) return false;
+  } catch {
+    return false;
+  }
+  const x = localSummary();
+  return x.solved + x.wrong + x.bm === 0;
+}
+function hsHintOff() {
+  try {
+    localStorage.setItem(HS_OFF, "1");
+  } catch {
+    /* 무시 */
+  }
+}
+const hsBanner = () =>
+  hsHintOn()
+    ? `<div class="hs-hint"><button class="hs-main" data-act="hs-open"><span class="ic">📲</span><span><b>사파리에서 풀던 기록이 있나요?</b><small>홈 화면 앱은 기록이 따로라 비어 보여요. 눌러서 가져오기</small></span></button><button class="hs-x" data-act="hs-close" aria-label="닫기">✕</button></div>`
+    : "";
+
+/** 링크 붙여넣기 시트. hs=true면 홈 화면 앱 안내 문구 */
+function openPaste(hs: boolean) {
+  const sheet = document.createElement("div");
+  sheet.className = "sheet-wrap";
+  sheet.innerHTML = `
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="ps-title">
+      <div class="grab"></div>
+      <h3 id="ps-title">${hs ? "사파리 기록 가져오기" : "받은 링크로 가져오기"}</h3>
+      ${
+        hs
+          ? `<p>홈 화면 앱과 사파리는 기록을 따로 저장해요. 사파리 기록은 그대로 있으니 한 번만 옮겨 주세요.</p>
+             <ol class="nsteps">
+               <li><span>1</span>사파리에서 기출노트 열기</li>
+               <li><span>2</span>더보기 › 기록 옮기기 › <b>링크 복사</b></li>
+               <li><span>3</span>이 앱으로 돌아와 아래 <b>붙여넣기</b></li>
+             </ol>`
+          : `<p>다른 기기에서 복사한 기록 옮기기 링크를 붙여넣으세요.</p>`
+      }
+      <textarea class="ps-in" rows="2" placeholder="여기에 링크를 붙여넣어도 돼요" aria-label="기록 옮기기 링크"></textarea>
+      <button class="next" data-ps="paste">붙여넣기</button>
+      ${hs ? '<button class="btn" data-ps="off">기록이 없어요 · 다시 안 보기</button>' : ""}
+    </div>`;
+  document.body.appendChild(sheet);
+  const $in = sheet.querySelector<HTMLTextAreaElement>(".ps-in")!;
+  const tryText = async (text: string) => {
+    const p = await readPasted(text);
+    if (!p) return toast("기록 옮기기 링크가 아니에요"), false;
+    if (p === "error") return toast("링크가 잘렸어요. 다시 복사해 주세요"), false;
+    sheet.remove();
+    trackOnce(hs ? "transfer/paste-hs" : "transfer/paste", "day");
+    showIncoming(p);
+    return true;
+  };
+  $in.addEventListener("input", () => {
+    if (/#import=/.test($in.value)) void tryText($in.value);
+  });
+  sheet.addEventListener("click", async (e) => {
+    const b = (e.target as HTMLElement).closest<HTMLElement>("[data-ps]");
+    if (!b && e.target === sheet) return sheet.remove();
+    if (!b) return;
+    if (b.dataset.ps === "off") {
+      hsHintOff();
+      sheet.remove();
+      if (view === "home") renderHome();
+      return;
+    }
+    if ($in.value.trim()) return void tryText($in.value);
+    try {
+      const text = await navigator.clipboard.readText();
+      if (text) return void tryText(text);
+    } catch {
+      /* 읽기 막힘 → 칸에 직접 붙여넣기 */
+    }
+    $in.focus();
+    toast("칸을 길게 눌러 붙여넣어 주세요");
+  });
 }
 
 function openNotice() {
@@ -704,6 +795,7 @@ function renderHome() {
   }).join("");
   $app.innerHTML = `
     <div class="bar tabhead"><div class="brandline" style="flex:1"><span class="logo" data-act="logo">기출<b>노트</b></span></div></div>
+    ${hsBanner()}
     ${noticeBanner()}
     <div class="eyebrow">과목</div>
     <div style="display:grid;gap:12px">${cards}</div>
@@ -1282,6 +1374,11 @@ $app.addEventListener("click", (e) => {
   if (d.act === "onboarding") return showOnboarding();
   if (d.act === "notice") return openNotice();
   if (d.act === "transfer") return openTransfer();
+  if (d.act === "hs-open") return openPaste(true);
+  if (d.act === "hs-close") {
+    hsHintOff();
+    return renderHome();
+  }
   if (d.act === "logo") return tapLogo();
   if (d.lvbar) return pickLiveBar(Number(d.lvbar));
   if (d.shour) {

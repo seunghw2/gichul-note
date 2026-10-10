@@ -485,3 +485,9 @@ body.has-tabs .app{padding-bottom:calc(88px + env(safe-area-inset-bottom,0px))}
 .qtimer.low .tbar span{background:var(--bad)}
 .qtimer.low b{color:var(--bad)}
 .qtimer.exp{margin:12px 0 0}.qtimer.exp small{color:var(--ink-3);font-size:13px;white-space:nowrap}
+.hs-hint{display:flex;align-items:stretch;margin-top:10px;border-radius:14px;background:var(--mark-soft);overflow:hidden}
+.hs-main{flex:1;display:flex;align-items:center;gap:10px;padding:12px 4px 12px 14px;text-align:left;color:var(--ink)}
+.hs-main span:last-child{display:grid;gap:2px}.hs-main b{font-size:15px;font-weight:700}.hs-main small{font-size:12.5px;color:var(--ink-2)}
+.hs-x{padding:0 14px;color:var(--ink-3);font-size:15px}
+.ps-in{width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--surface-2);color:var(--ink);font:inherit;font-size:14px;resize:none}
+.tr-link{align-self:center;color:var(--brand);font-size:14px;padding:6px}

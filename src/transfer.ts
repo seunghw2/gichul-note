@@ -69,6 +69,17 @@ export async function makeLink() {
   return `${location.origin}${location.pathname}#import=${code}`;
 }
 
+/** 붙여넣은 글(링크 전체 또는 일부)에서 #import= 코드를 찾아 푼다. 없으면 null */
+export async function readPasted(text: string): Promise<Payload | null | "error"> {
+  const m = /#import=([\w-]+)/.exec(text.trim());
+  if (!m) return null;
+  try {
+    return await decode(m[1]);
+  } catch {
+    return "error";
+  }
+}
+
 /** 주소에 #import= 가 있으면 꺼내고 주소에서는 지운다 */
 export async function readIncoming(): Promise<Payload | null | "error"> {
   const m = /^#import=(.+)$/.exec(location.hash);
