@@ -789,9 +789,11 @@ function renderHome() {
   pageview("home");
   const cards = BANKS.map((b) => {
     const s = stats(b, loadSubject(b.id), null);
-    const tabsMeta = (Object.keys(TABS) as Tab[]).filter((t) => visible(b, t).length).map((t) => `${TABS[t]} ${visible(b, t).length}`).join(" · ");
+    // 홈 카드에는 필터(교재 새 문항만·변형 출처)와 상관없는 탭별 전체 수를 보여준다
+    const tabAll = (t: Tab) => (t === "challenge" && !prefs.challenge ? 0 : b.questions.filter((q) => inTab(q, t)).length);
+    const tabsMeta = (Object.keys(TABS) as Tab[]).filter((t) => tabAll(t)).map((t) => `<span class="nw">${esc(TABS[t])} ${tabAll(t)}</span>`).join(" · ");
     return `<button class="subject" data-open="${esc(b.id)}">
-      <div class="top"><div><h2>${esc(b.title)}</h2><div class="meta">${esc(b.org)} · ${s.total}문항</div><div class="meta">${esc(tabsMeta)}</div></div><span class="badge">${esc(b.round)}</span></div>
+      <div class="top"><div><h2>${esc(b.title)}</h2><div class="meta">${esc(b.org)} · ${s.total}문항</div><div class="meta">${tabsMeta}</div></div><span class="badge">${esc(b.round)}</span></div>
       <div class="progress" aria-label="진도"><span style="width:${pct(s.done, s.total)}%"></span></div>
       ${statRow(s)}
     </button>`;
