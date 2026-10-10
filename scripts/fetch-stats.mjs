@@ -263,6 +263,8 @@ if (process.env.STATS_KEY) {
   // 순위: 누적 풀이 횟수(다시 푼 것 포함). 사용자별 풀이 신호(ua)는 2026-10-08 21시부터라 그 전 풀이는 '처음 푼 문항' 수로 보정
   for (const r of users.values()) r.total = Math.max(r.total, r.distinct);
   const rows = [...users.values()].sort((a, b) => b.total - a.total || b.week - a.week);
+  // 실험실 '사용자 순위' 탭용 공개 순위: 익명 번호와 풀이 수만(암호화 안 함). 관리자 확인용 암호화 표는 아래에 그대로
+  out.ranking = rows.map(({ id, total, today, week, last }) => ({ id, total, today, week, last }));
   const { webcrypto } = await import("node:crypto");
   const salt = webcrypto.getRandomValues(new Uint8Array(16));
   const iv = webcrypto.getRandomValues(new Uint8Array(12));
@@ -275,7 +277,7 @@ if (process.env.STATS_KEY) {
   const data = new Uint8Array(await webcrypto.subtle.encrypt({ name: "AES-GCM", iv }, key, new TextEncoder().encode(JSON.stringify(rows))));
   const b64 = (x) => Buffer.from(x).toString("base64");
   out.users = { salt: b64(salt), iv: b64(iv), data: b64(data) };
-  console.log(`사용자별: ${rows.length}명 (암호화)`);
+  console.log(`사용자별: ${rows.length}명 (암호화) · 공개 순위 ${out.ranking.length}명`);
 } else console.log("STATS_KEY 없음 — 사용자별 표 건너뜀");
 
 const t = out.ranges.today;

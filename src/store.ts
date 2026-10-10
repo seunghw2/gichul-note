@@ -24,6 +24,8 @@ export interface Prefs {
   expSec?: number;
   /** 설정 → 챌린지 퀴즈 활성화(챌린지 탭 보이기) */
   challenge?: boolean;
+  /** 실험실 → 사용자 순위: 하단에 '순위' 탭 */
+  ranking?: boolean;
   /** 실험실 → 타이머 기능(시간 제한·해설 시간 칩 보이기). 끄면 정해 둔 시간도 적용 안 함 */
   timerFeature?: boolean;
   /** '문제 풀기'를 아직 안 푼 문제(기록 없음)만으로 */

@@ -9,7 +9,7 @@ import { addToday, clearRun, loadPrefs, loadTheme, loadToday, saveTheme, type Th
 import type { LoadedBank, Q } from "./types";
 import GLOSSARY from "./data/glossary.json";
 
-type View = "home" | "subject" | "quiz" | "end" | "review" | "stats" | "more" | "people" | "settings";
+type View = "home" | "subject" | "quiz" | "end" | "review" | "stats" | "rank" | "more" | "people" | "settings";
 type Kind = "all" | "wrong" | "bm" | "often";
 type Only = "all" | "wrong" | "bm";
 
@@ -269,6 +269,7 @@ async function loadStats() {
     renderStats();
     window.scrollTo(0, y);
   }
+  if (view === "rank") renderRank();
   if (view === "home") renderHome();
 }
 
@@ -365,7 +366,6 @@ function renderStats() {
     : kv("홈 화면 앱", `${s.homescreen}명`) + kv("브라우저", `${s.browser}명`) + '<p class="st-note">기기 구분은 오늘부터 집계돼요</p>';
   const skips = s.onboardingSkip.map((v, i) => kv(`${i + 1}장에서 건너뜀`, String(v))).join("");
   $app.innerHTML = `${head(`${new Date(data.updated).toLocaleString("ko-KR", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })} 기준`)}
-    ${card("사용자 순위", "푼 문제(누적) 순 · 익명 번호", '<div id="st-users"><p class="st-note">불러오는 중…</p></div>')}
     <div class="chips st-range" style="margin-top:16px">${(Object.keys(RANGE_LABEL) as (keyof typeof RANGE_LABEL)[]).map((k) => `<button class="chip" data-srange="${k}" aria-pressed="${k === statsUi.range}">${RANGE_LABEL[k]}</button>`).join("")}</div>
     <div class="st-tiles">
       ${tile(s.visitors, "방문자", delta(s.visitors, s.prev.visitors))}
@@ -380,69 +380,43 @@ function renderStats() {
     ${card("공지", "", kv("배너 열람", String(s.noticeOpen)) + kv("kbi 링크 클릭", `${s.noticeKbi} (${pct(s.noticeKbi, s.noticeOpen)})`))}
     ${extraCards(s, kv, card)}
     <p class="st-note">방문자·공지·온보딩은 기기마다 하루 1번(시간대는 한 시간에 1번), 푼 문제·풀이는 전부 셉니다. 7일·30일 방문자는 하루 방문자의 합이에요. 광고 차단기 사용자는 빠져요.</p>`;
-  drawUsers();
 }
 
 /* 사용자별 표: stats.json의 users는 STATS_KEY(비밀번호)로 암호화(PBKDF2 + AES-GCM) — 이 폰에서 한 번 입력하면 기억 */
-type UserRow = { id: string; total?: number; distinct: number; today: number; week: number; last: string };
 const KEY_STORE = "gichul:stats-pass";
-let usersCache: { data: string; pass: string; rows: UserRow[] } | null = null;
 const b64 = (s: string) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
-async function decryptUsers(enc: { salt: string; iv: string; data: string }, pass: string): Promise<UserRow[]> {
+async function decryptUsers(enc: { salt: string; iv: string; data: string }, pass: string): Promise<unknown[]> {
   const base = await crypto.subtle.importKey("raw", new TextEncoder().encode(pass.trim().normalize("NFC")), "PBKDF2", false, ["deriveKey"]);
   const key = await crypto.subtle.deriveKey({ name: "PBKDF2", salt: b64(enc.salt), iterations: 100000, hash: "SHA-256" }, base, { name: "AES-GCM", length: 256 }, false, ["decrypt"]);
   const plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv: b64(enc.iv) }, key, b64(enc.data));
   return JSON.parse(new TextDecoder().decode(plain));
 }
-async function drawUsers() {
-  const box = document.getElementById("st-users");
-  const enc = (statsUi.data as unknown as { users?: { salt: string; iv: string; data: string } })?.users;
-  if (!box) return;
-  if (!enc) {
-    box.innerHTML = '<p class="st-note">아직 데이터가 없어요 (비밀값 STATS_KEY 설정 후 다음 갱신부터)</p>';
+/** 실험실 '사용자 순위' 탭: stats.json의 공개 순위(익명 번호·풀이 수) */
+type RankRow = { id: string; total: number; today: number; week: number; last: string };
+function renderRank() {
+  view = "rank";
+  syncTabbar();
+  pageview("rank");
+  const data = statsUi.data as (StatsData & { ranking?: RankRow[] }) | null | undefined;
+  const head = (sub: string) => `<div class="bar tabhead"><h1>사용자 순위</h1><span class="st-upd">${sub}</span></div>`;
+  if (data === undefined || (data === null && statsLoading)) {
+    $app.innerHTML = head("") + '<p class="st-note">불러오는 중…</p>';
+    loadStats();
     return;
   }
-  let pass = "";
-  try {
-    pass = localStorage.getItem(KEY_STORE) ?? "";
-  } catch {
-    /* 무시 */
-  }
-  const askPass = (msg = "") => {
-    box.innerHTML = `<form class="st-pass"><input type="password" placeholder="통계 비밀번호" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"><button class="btn" type="submit">열기</button></form><label class="st-show"><input type="checkbox"> 입력한 글자 보기</label>${msg ? `<p class="st-note" style="color:var(--bad)">${msg}</p>` : ""}`;
-    box.querySelector<HTMLInputElement>(".st-show input")!.addEventListener("change", (e) => {
-      box.querySelector<HTMLInputElement>(".st-pass input")!.type = (e.target as HTMLInputElement).checked ? "text" : "password";
-    });
-    box.querySelector("form")!.addEventListener("submit", (e) => {
-      e.preventDefault();
-      const v = box.querySelector<HTMLInputElement>(".st-pass input")!.value;
-      try {
-        localStorage.setItem(KEY_STORE, v);
-      } catch {
-        /* 무시 */
-      }
-      drawUsers();
-    });
-  };
-  if (!pass) return askPass();
-  let rows: UserRow[];
-  try {
-    rows = usersCache?.data === enc.data && usersCache.pass === pass ? usersCache.rows : await decryptUsers(enc, pass);
-    usersCache = { data: enc.data, pass, rows };
-  } catch {
-    try {
-      localStorage.removeItem(KEY_STORE);
-    } catch {
-      /* 무시 */
-    }
-    return askPass("비밀번호가 맞지 않아요");
-  }
+  const rows = data?.ranking ?? [];
   const me = anonId();
-  box.innerHTML = rows.length
-    ? `<div class="st-users"><div class="hd"><span>#</span><span>번호</span><span>푼 문제</span><span>오늘</span><span>7일</span><span>최근</span></div>
-       ${rows.map((r, i) => `<div class="${r.id === me ? "me" : ""}"><span class="num">${i + 1}</span><span>${r.id === me ? "나" : esc(r.id)}</span><b class="num">${r.total ?? r.distinct}</b><span class="num">${r.today}</span><span class="num">${r.week}</span><span>${esc(r.last.slice(5).replace("-", "/"))}</span></div>`).join("")}</div>
-       <p class="st-note">푼 문제·오늘·7일 = 푼 횟수(다시 푼 것 포함) · 기기 기준</p>`
-    : '<p class="st-note">아직 없어요</p>';
+  const mine = rows.findIndex((r) => r.id === me);
+  $app.innerHTML = `${head(data ? `${new Date(data.updated).toLocaleString("ko-KR", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })} 기준` : "")}
+    ${mine >= 0 ? `<div class="rk-me"><span>내 순위</span><b class="num">${mine + 1}위</b><small>${rows.length}명 중 · 푼 문제 ${rows[mine].total}</small></div>` : '<p class="st-note">문제를 풀면 다음 갱신(1시간마다) 때 순위에 올라요.</p>'}
+    <section class="st-card"><h2>푼 문제 순<small>익명 번호 · 누적</small></h2>
+    ${
+      rows.length
+        ? `<div class="st-users"><div class="hd"><span>#</span><span>번호</span><span>푼 문제</span><span>오늘</span><span>7일</span><span>최근</span></div>
+       ${rows.map((r, i) => `<div class="${r.id === me ? "me" : ""}"><span class="num">${i + 1}</span><span>${r.id === me ? "나" : esc(r.id)}</span><b class="num">${r.total}</b><span class="num">${r.today}</span><span class="num">${r.week}</span><span>${esc(r.last.slice(5).replace("-", "/"))}</span></div>`).join("")}</div>
+       <p class="st-note">푼 문제·오늘·7일 = 푼 횟수(다시 푼 것 포함) · 기기 기준 · 1시간마다 갱신</p>`
+        : '<p class="st-note">아직 순위 데이터가 없어요</p>'
+    }</section>`;
 }
 
 /** 통계 화면 추가 카드: 새/재방문, 1인당, 유형·기출/교재 정답률, 커버리지, 모드별, 북마크, 유입 */
@@ -480,15 +454,17 @@ function openStatQuestion(n: number) {
 }
 
 /* ---------- 하단 탭바: 홈 · 문제 풀기 · 해설 훑어보기 · 더보기 (풀이·결과·통계 화면에서는 숨김) ---------- */
-type TabKey = "home" | "subject" | "review" | "stats" | "more";
-/** 관리자 기기는 5칸(통계 추가, '해설 훑어보기'는 '해설'로 줄임) */
-const tabList = (): [TabKey, string, string][] =>
-  isAdmin()
-    ? [["home", "홈", I.home], ["subject", "문제 풀기", I.play], ["review", "해설", I.book], ["stats", "통계", I.chart], ["more", "더보기", I.more]]
-    : [["home", "홈", I.home], ["subject", "문제 풀기", I.play], ["review", "해설 훑어보기", I.book], ["more", "더보기", I.more]];
+type TabKey = "home" | "subject" | "review" | "rank" | "stats" | "more";
+/** 순위(실험실에서 켬)·통계(관리자) 탭이 붙으면 '해설 훑어보기'는 '해설'로 줄임 */
+const tabList = (): [TabKey, string, string][] => {
+  const extra: [TabKey, string, string][] = [];
+  if (prefs.ranking) extra.push(["rank", "순위", I.trophy]);
+  if (isAdmin()) extra.push(["stats", "통계", I.chart]);
+  return [["home", "홈", I.home], ["subject", "문제 풀기", I.play], ["review", extra.length ? "해설" : "해설 훑어보기", I.book], ...extra, ["more", "더보기", I.more]];
+};
 const $tabbar = document.getElementById("tabbar")!;
 function syncTabbar() {
-  const show = view === "home" || view === "subject" || view === "review" || view === "more" || view === "stats" || view === "people" || view === "settings";
+  const show = view === "home" || view === "subject" || view === "review" || view === "more" || view === "stats" || view === "rank" || view === "people" || view === "settings";
   $tabbar.hidden = !show;
   document.body.classList.toggle("has-tabs", show);
   if (!show) return;
@@ -506,11 +482,11 @@ function goTab(k: TabKey) {
     return go(renderHome);
   }
   const fromHome = view === "home" || !!history.state?.fromHome;
-  const route = { ...(k === "more" || k === "stats" ? { view: k as View } : { view: k as View, bank: bank.id }), fromHome };
+  const route = { ...(k === "more" || k === "stats" || k === "rank" ? { view: k as View } : { view: k as View, bank: bank.id }), fromHome };
   if (view === "home") history.pushState(route, "");
   else history.replaceState(route, "");
-  if (k === "stats") loadStats(); // 있던 데이터로 바로 보여주고, 뒤에서 최신 파일 확인
-  go(k === "subject" ? renderSubject : k === "review" ? renderReview : k === "stats" ? renderStats : renderMore);
+  if (k === "stats" || k === "rank") loadStats(); // 있던 데이터로 바로 보여주고, 뒤에서 최신 파일 확인
+  go(k === "subject" ? renderSubject : k === "review" ? renderReview : k === "stats" ? renderStats : k === "rank" ? renderRank : renderMore);
 }
 $tabbar.addEventListener("click", (e) => {
   const b = (e.target as HTMLElement).closest<HTMLElement>("[data-tab-go]");
@@ -544,6 +520,7 @@ function renderSettings() {
     <p class="lab-lead">${I.flask} 아직 다듬는 중인 기능이에요. 켜 보고 불편하면 언제든 끌 수 있어요.</p>
     <div class="lab-card">
       ${lab("chal-tog", !!prefs.challenge, "챌린지 퀴즈", `교재로 만든 OX ${nChal}문항 · 과목 화면에 '챌린지' 탭이 생겨요`)}
+      ${lab("rank-tog", !!prefs.ranking, "사용자 순위", "하단에 '순위' 탭이 생겨요 · 푼 문제 수로 매긴 익명 순위(1시간마다 갱신)")}
       ${lab("timer-tog", !!prefs.timerFeature, "타이머 기능", "출제 범위에 '시간 제한'(문제당 30~60초)과 '해설 시간'(채점 후 15~60초 뒤 자동으로 다음 문제) 칩이 생겨요")}
     </div>`;
   window.scrollTo(0, 0);
@@ -1027,6 +1004,14 @@ function showRoute(r: Route | null, fromPop = false) {
     loadStats();
     return go(renderStats);
   }
+  if (r?.view === "rank") {
+    if (!prefs.ranking) {
+      history.replaceState({ view: "home" } satisfies Route, "");
+      return go(renderHome);
+    }
+    loadStats();
+    return go(renderRank);
+  }
   if (r?.view === "more") return go(renderMore);
   if (r?.view === "people") return go(renderPeople);
   if (r?.view === "settings") return go(renderSettings);
@@ -1451,6 +1436,12 @@ $app.addEventListener("click", (e) => {
     prefs.challenge = !prefs.challenge;
     savePrefs(prefs);
     toast(prefs.challenge ? "챌린지 탭을 켰어요" : "챌린지 탭을 껐어요");
+    return renderSettings();
+  }
+  if (d.act === "rank-tog") {
+    prefs.ranking = !prefs.ranking;
+    savePrefs(prefs);
+    toast(prefs.ranking ? "하단에 순위 탭이 생겼어요" : "순위 탭을 껐어요");
     return renderSettings();
   }
   if (d.act === "timer-tog") {
