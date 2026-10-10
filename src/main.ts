@@ -157,6 +157,11 @@ function applyTheme(t: Theme) {
   else document.documentElement.dataset.theme = t;
 }
 applyTheme(loadTheme());
+/** 지금 화면이 다크인지: 직접 고른 값, 아직 안 골랐으면(시스템) 폰 설정 */
+const isDark = () => {
+  const t = loadTheme();
+  return t === "dark" || (t === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
+};
 
 /* ---------- 홈 ---------- */
 /* ---------- 숨은 통계 화면: 홈 로고를 2초 안에 5번 누르면 열림 (GitHub Actions가 1시간마다 만드는 stats.json) ---------- */
@@ -519,6 +524,7 @@ function renderSettings() {
     <div class="bar"><button class="icon-btn" data-act="home" aria-label="더보기로">${I.back}</button><h1>실험실</h1></div>
     <p class="lab-lead">${I.flask} 아직 다듬는 중인 기능이에요. 켜 보고 불편하면 언제든 끌 수 있어요.</p>
     <div class="lab-card">
+      ${lab("dark-tog", isDark(), "다크 모드", "켜면 다크, 끄면 라이트 모드 · 한 번도 바꾸지 않았다면 폰 설정을 따라요")}
       ${lab("chal-tog", !!prefs.challenge, "챌린지 퀴즈", `교재로 만든 OX ${nChal}문항 · 과목 화면에 '챌린지' 탭이 생겨요`)}
       ${lab("rank-tog", !!prefs.ranking, "사용자 순위", "하단에 '순위' 탭이 생겨요 · 푼 문제 수로 매긴 익명 순위(1시간마다 갱신)")}
       ${lab("timer-tog", !!prefs.timerFeature, "타이머 기능", "출제 범위에 '시간 제한'(문제당 30~60초)과 '해설 시간'(채점 후 15~60초 뒤 자동으로 다음 문제) 칩이 생겨요")}
@@ -532,15 +538,12 @@ function renderMore() {
   pageview("more");
   const row = (act: string, ic: string, label: string, right = "") =>
     `<button class="more-row" data-act="${act}"><span class="ic">${ic}</span><b>${label}</b><span class="r">${right} ›</span></button>`;
-  const t = loadTheme();
   $app.innerHTML = `
     <div class="bar tabhead"><h1>더보기</h1></div>
     <div class="more-list">
       ${row("transfer", I.swap, "기록 옮기기")}
-      ${row("theme-more", I[t === "system" ? "auto" : t === "light" ? "sun" : "moon"], "화면 테마", THEME_LABEL[t])}
       ${row("settings", I.flask, "실험실")}
       ${row("onboarding", I.help, "사용법 보기")}
-      ${row("notice", I.bell, "공지")}
       ${row("people", I.heart, "함께 만든 사람들")}
       ${isAdmin() ? row("admin-off", I.lock, "관리자 모드 끄기", "이 기기에서 통계 탭 숨김") : ""}
     </div>
@@ -1450,12 +1453,12 @@ $app.addEventListener("click", (e) => {
     toast(prefs.timerFeature ? "출제 범위에 타이머가 생겼어요" : "타이머 기능을 껐어요");
     return renderSettings();
   }
-  if (d.act === "theme-more") {
-    const order: Theme[] = ["system", "light", "dark"];
-    const next = order[(order.indexOf(loadTheme()) + 1) % 3];
+  if (d.act === "dark-tog") {
+    const next: Theme = isDark() ? "light" : "dark";
     saveTheme(next);
     applyTheme(next);
-    return renderMore();
+    toast(THEME_LABEL[next]);
+    return renderSettings();
   }
   if (d.act === "theme") {
     const order: Theme[] = ["system", "light", "dark"];
