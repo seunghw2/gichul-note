@@ -32,6 +32,8 @@ export interface Question {
   /** 용어 풀이에 보여줄 용어(glossary.json 키), 문항당 최대 4개 */
   terms?: string[];
   /** 해설·원문이 ①②③④로 보기 번호를 가리킴 → 보기를 섞으면 화면 번호로 바꿔 보여 준다 */
+  /** 4지선다 원본의 몇 번 보기를 OX로 만든 변형인지(1~4) */
+  fromChoice?: number;
   choiceRef?: ("exp" | "quote")[];
 }
 

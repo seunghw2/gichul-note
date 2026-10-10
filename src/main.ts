@@ -852,7 +852,7 @@ function renderSubject() {
     <div class="bar tabhead"><h1>${esc(bank.title)}</h1></div>
     ${bank.questions.some((q) => !inTab(q, "exam")) ? `<div class="seg" role="tablist">${(Object.keys(TABS) as Tab[]).filter((t) => visible(bank, t).length || t === tab()).map((t) => `<button role="tab" data-tab="${t}" aria-selected="${tab() === t}">${TABS[t]}<small class="num">${visible(bank, t).length}문항</small></button>`).join("")}</div>` : ""}
     ${tab() === "challenge" ? `<div class="varinfo">교재 내용으로 새로 만든 <b>도전용 OX</b>예요. 기출에 아직 안 나온 부분이라, 다음 시험 대비로 풀어 보세요.</div>` : ""}
-    ${tab() === "variant" ? `<div class="varinfo">원본 기출을 바꿔 만든 <b>연습용 OX</b>예요. 실제 시험에 나온 문장이 아니니, 채점 후 '원본과 달라진 점'을 꼭 확인하세요.</div>` : ""}
+    ${tab() === "variant" ? `<div class="varinfo">원본 기출을 바꿔 쓰거나 4지선다 보기를 하나씩 OX로 만든 <b>연습용 OX</b>예요. 실제 시험 문장 그대로가 아닐 수 있으니 해설을 꼭 확인하세요.</div>` : ""}
     ${tab() === "variant" ? `<div class="chips var-src" role="group" aria-label="변형 OX 출처">${(["all", "exam", "book"] as const).map((k) => `<button class="chip" data-varsrc="${k}" aria-pressed="${varSrc() === k}">${k === "all" ? "전체" : TABS[k]} <small class="num">${bank.questions.filter((q) => inTab(q, "variant") && inVarSrc(bank, q, k)).length}</small></button>`).join("")}</div>` : ""}
     <div class="subject" style="cursor:default">
       <div class="progress"><span style="width:${pct(s.done, s.total)}%"></span></div>
@@ -1199,7 +1199,7 @@ function renderQuiz() {
     </div>
     ${timed ? `<div class="qtimer" role="timer"><div class="tbar"><span></span></div><b class="num">${it.limit}초</b></div>` : ""}
     <div class="qtags"><span class="tag type">${TYPE_LABEL[q.type]}</span>${q.conv ? `<span class="tag conv">${esc(q.conv)}</span>` : ""}${session.kind !== "all" ? `<span class="tag">${LABEL[session.kind]}</span>` : ""}${missOf(q.n) ? `<span class="tag miss">틀림 ${missOf(q.n)}회</span>` : ""}</div>
-    <div class="qno">${q.variantOf ? `<span class="tag var">변형 · 원본 ${q.variantOf}번</span>` : `문제 ${q.n} <span class="qsrc">· ${esc(srcText(q))}</span>`}</div>
+    <div class="qno">${q.variantOf ? `<span class="tag var">변형 · 원본 ${q.variantOf}번${q.fromChoice ? ` 보기 ${KNUM[q.fromChoice - 1]}` : ""}</span>` : `문제 ${q.n} <span class="qsrc">· ${esc(srcText(q))}</span>`}</div>
     <div class="qtext">${esc(q.q)}</div>
     ${body}
     ${done ? `<div class="result ${correct ? "ok" : "bad"}">
@@ -1313,7 +1313,7 @@ function reviewCards() {
               ? `<div class="ansline"><span class="lbl">정답</span>${esc(shortAnswer(q))}</div>`
               : "";
       return `<article class="rcard ${reviewOpts.hide ? "blur" : ""}" data-reveal>
-        <div class="rtop"><span class="qno">${q.n}</span><span class="tag type">${TYPE_SHORT[q.type]}</span>${q.conv ? `<span class="tag conv">${esc(q.conv)}</span>` : ""}${q.variantOf ? `<span class="tag var">원본 ${q.variantOf}번</span>` : ""}${st.wrong.includes(q.n) ? '<span class="wrongmark">오답</span>' : ""}${missOf(q.n) ? `<span class="missmark">틀림 ${missOf(q.n)}회</span>` : ""}
+        <div class="rtop"><span class="qno">${q.n}</span><span class="tag type">${TYPE_SHORT[q.type]}</span>${q.conv ? `<span class="tag conv">${esc(q.conv)}</span>` : ""}${q.variantOf ? `<span class="tag var">원본 ${q.variantOf}번${q.fromChoice ? ` ${KNUM[q.fromChoice - 1]}` : ""}</span>` : ""}${st.wrong.includes(q.n) ? '<span class="wrongmark">오답</span>' : ""}${missOf(q.n) ? `<span class="missmark">틀림 ${missOf(q.n)}회</span>` : ""}
           <span class="flags"><button class="mini bm" data-rflag="${q.n}" aria-pressed="${isBm}" aria-label="북마크">${isBm ? I.bmOn : I.bm}</button></span></div>
         <div class="q">${esc(q.q)}</div>${opts}
         <div class="exp"><div class="lbl">${q.type === "essay" ? "모범답안" : "해설"}</div>${expHtml(q.exp)}${sectionsHtml(q)}</div>
