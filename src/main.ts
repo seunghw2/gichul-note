@@ -804,6 +804,35 @@ function renderHome() {
 }
 
 /* ---------- 과목 ---------- */
+/** 처음 한 번: 다른 문제 종류 탭이 있다는 걸 말풍선으로 알려 준다. 아무 데나 누르면 닫힘 */
+const TIP_KEY = "gichul:tab-tip";
+function maybeTabTip() {
+  const seg = $app.querySelector<HTMLElement>(".seg");
+  const to = seg?.querySelector<HTMLElement>('[aria-selected="false"]');
+  if (!seg || !to || document.querySelector(".tip, .onb, .sheet-wrap")) return;
+  try {
+    if (localStorage.getItem(TIP_KEY)) return;
+    localStorage.setItem(TIP_KEY, "1");
+  } catch {
+    return;
+  }
+  const others = [...seg.querySelectorAll<HTMLElement>('[aria-selected="false"]')].map((b) => b.firstChild?.textContent ?? "").join(" · ");
+  const r = to.getBoundingClientRect();
+  const w = 236, left = Math.min(Math.max(12, r.left + r.width / 2 - w / 2), innerWidth - w - 12);
+  seg.classList.add("tip-on");
+  document.body.insertAdjacentHTML(
+    "beforeend",
+    `<div class="tip-dim"></div><div class="tip" role="status" style="top:${r.bottom + scrollY + 12}px;left:${left}px;--ax:${r.left + r.width / 2 - left}px">여기서 문제 종류를 바꿀 수 있어요<small>${esc(others)}도 풀어 보세요</small></div>`,
+  );
+  const close = () => {
+    document.querySelectorAll(".tip, .tip-dim").forEach((x) => x.remove());
+    seg.classList.remove("tip-on");
+    document.removeEventListener("click", close, true);
+  };
+  document.addEventListener("click", close, true);
+  trackOnce("tip/tab", "day");
+}
+
 function renderSubject() {
   view = "subject";
   syncTabbar();
@@ -820,7 +849,7 @@ function renderSubject() {
   };
   $app.innerHTML = `
     <div class="bar tabhead"><h1>${esc(bank.title)}</h1></div>
-    ${bank.questions.some((q) => !inTab(q, "exam")) ? `<div class="seg" role="tablist">${(Object.keys(TABS) as Tab[]).filter((t) => visible(bank, t).length || t === tab()).map((t) => `<button role="tab" data-tab="${t}" aria-selected="${tab() === t}">${TABS[t]}</button>`).join("")}</div>` : ""}
+    ${bank.questions.some((q) => !inTab(q, "exam")) ? `<div class="seg" role="tablist">${(Object.keys(TABS) as Tab[]).filter((t) => visible(bank, t).length || t === tab()).map((t) => `<button role="tab" data-tab="${t}" aria-selected="${tab() === t}">${TABS[t]}<small class="num">${visible(bank, t).length}문항</small></button>`).join("")}</div>` : ""}
     ${tab() === "challenge" ? `<div class="varinfo">교재 내용으로 새로 만든 <b>도전용 OX</b>예요. 기출에 아직 안 나온 부분이라, 다음 시험 대비로 풀어 보세요.</div>` : ""}
     ${tab() === "variant" ? `<div class="varinfo">원본 기출을 바꿔 만든 <b>연습용 OX</b>예요. 실제 시험에 나온 문장이 아니니, 채점 후 '원본과 달라진 점'을 꼭 확인하세요.</div>` : ""}
     <div class="subject" style="cursor:default">
@@ -850,6 +879,7 @@ function renderSubject() {
       </div>
       <div class="fcount">선택한 범위: <b class="num">${n}</b>문항</div>
     </div>`;
+  maybeTabTip();
 }
 
 /* ---------- 풀이 ---------- */
