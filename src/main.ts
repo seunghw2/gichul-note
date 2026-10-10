@@ -55,7 +55,7 @@ const termsHtml = (q: Q) => {
 const memoHtml = (q: Q) => (q.memo ? `<div class="memo"><b>출제 메모</b> · ${esc(q.memo)}</div>` : "");
 /** 해설 아래 섹션: 원문 인용 → 변형 차이 → 용어 풀이 → 출제 메모 */
 const sectionsHtml = (q: Q) => `${quoteHtml(q)}${diffHtml(q)}${termsHtml(q)}${memoHtml(q)}`;
-/** 해설·모범답안: ①②③ 앞에서 줄바꿈 */
+/** 해설·모범답안: 줄바꿈(\n)은 문단으로, ①②③ 앞에서도 줄바꿈 */
 /** 보기를 섞었을 때, 해설·원문 속 '③은…' 같은 원래 보기 번호를 화면에 보이는 번호로 바꾼 문항 */
 const KN = "①②③④";
 function viewQ(q: Q, order: number[]): Q {
@@ -63,7 +63,7 @@ function viewQ(q: Q, order: number[]): Q {
   const fix = (t: string) => t.replace(/[①②③④]/g, (c) => KN[order.indexOf(KN.indexOf(c) + 1)] ?? c);
   return { ...q, exp: q.choiceRef.includes("exp") ? fix(q.exp) : q.exp, quote: q.quote && q.choiceRef.includes("quote") ? fix(q.quote) : q.quote };
 }
-const expHtml = (t: string) => esc(t).replace(/\s+(?=[①-⑨])/g, "<br>");
+const expHtml = (t: string) => esc(t).replace(/[ \t]*\n[ \t]*/g, "<br>").replace(/[ \t]+(?=[①-⑨])/g, "<br>");
 const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 const esc = (s: string | number) =>
