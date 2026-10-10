@@ -29,8 +29,48 @@ async function api(path, params = new URLSearchParams()) {
   }
 }
 
-/** 기간 안의 모든 경로(화면·이벤트)별 방문자 수 + 일별·시간별 값. exclude_paths로 페이지를 넘긴다 */
+/** 사이트의 모든 경로 ID 목록(통계 없이 이름만). after 커서로 끝까지 넘겨서 개수 상한이 없다 */
+let pathIds = null;
+async function allPathIds() {
+  if (pathIds) return pathIds;
+  const ids = [];
+  let after = 0;
+  for (let page = 0; page < 500; page++) {
+    const p = new URLSearchParams({ limit: "200" });
+    if (after) p.set("after", String(after));
+    const r = await api("/paths", p);
+    const list = r?.paths ?? [];
+    list.forEach((x) => ids.push(x.id));
+    if (!r?.more || !list.length) break;
+    after = list[list.length - 1].id;
+  }
+  pathIds = ids;
+  console.log(`경로 ${ids.length}개`);
+  return ids;
+}
+
+/** 기간 안의 모든 경로별 값. 경로 ID를 100개씩 묶어 include_paths로 받아서 개수 상한·주소 길이 문제가 없다.
+    (경로 목록 API가 실패하면 예전 방식으로) */
 async function allHits(start, end) {
+  let ids;
+  try {
+    ids = await allPathIds();
+  } catch (e) {
+    console.log("경로 목록 실패 → 예전 방식:", e.message);
+    return allHitsLegacy(start, end);
+  }
+  if (!ids.length) return allHitsLegacy(start, end);
+  const out = new Map();
+  for (let i = 0; i < ids.length; i += 100) {
+    const p = new URLSearchParams({ start, end, limit: "100", include_paths: ids.slice(i, i + 100).join(",") });
+    const r = await api("/stats/hits", p);
+    for (const h of r?.hits ?? []) if (!out.has(h.path)) out.set(h.path, h);
+  }
+  return [...out.values()];
+}
+
+/** 예전 방식: 많이 나온 순으로 100개씩 최대 30쪽(3,000개)까지 */
+async function allHitsLegacy(start, end) {
   const out = new Map();
   for (let page = 0; page < 30; page++) {
     const p = new URLSearchParams({ start, end, limit: "100" });
@@ -205,13 +245,14 @@ if (process.env.STATS_KEY) {
   const users = new Map();
   const u = (raw) => {
     const id = resolve(raw);
-    return users.get(id) ?? users.set(id, { id, distinct: 0, today: 0, week: 0, last: "" }).get(id);
+    return users.get(id) ?? users.set(id, { id, total: 0, distinct: 0, today: 0, week: 0, last: "" }).get(id);
   };
   for (const h of all) {
     const m = /^(ud|ua)\/(u[\w-]+)$/.exec(h.path);
     if (!m) continue;
     const r = u(m[2]);
     if (m[1] === "ud") r.distinct += h.count;
+    else r.total += h.count; // 다시 푼 것까지 포함한 누적 풀이 횟수
     for (const st of h.stats ?? []) if ((st.daily ?? 0) > 0 && st.day > r.last) r.last = st.day;
   }
   for (const [list, key] of [[today, "today"], [week, "week"]]) {
@@ -220,7 +261,9 @@ if (process.env.STATS_KEY) {
       if (m) u(m[1])[key] += h.count;
     }
   }
-  const rows = [...users.values()].sort((a, b) => b.distinct - a.distinct || b.week - a.week);
+  // 순위: 누적 풀이 횟수(다시 푼 것 포함). 사용자별 풀이 신호(ua)는 2026-10-08 21시부터라 그 전 풀이는 '처음 푼 문항' 수로 보정
+  for (const r of users.values()) r.total = Math.max(r.total, r.distinct);
+  const rows = [...users.values()].sort((a, b) => b.total - a.total || b.week - a.week);
   const { webcrypto } = await import("node:crypto");
   const salt = webcrypto.getRandomValues(new Uint8Array(16));
   const iv = webcrypto.getRandomValues(new Uint8Array(12));

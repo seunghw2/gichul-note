@@ -390,7 +390,7 @@ function renderStats() {
 }
 
 /* 사용자별 표: stats.json의 users는 STATS_KEY(비밀번호)로 암호화(PBKDF2 + AES-GCM) — 이 폰에서 한 번 입력하면 기억 */
-type UserRow = { id: string; distinct: number; today: number; week: number; last: string };
+type UserRow = { id: string; total?: number; distinct: number; today: number; week: number; last: string };
 const KEY_STORE = "gichul:stats-pass";
 let usersCache: { data: string; pass: string; rows: UserRow[] } | null = null;
 const b64 = (s: string) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
@@ -446,8 +446,8 @@ async function drawUsers() {
   const me = anonId();
   box.innerHTML = rows.length
     ? `<div class="st-users"><div class="hd"><span>#</span><span>번호</span><span>푼 문제</span><span>오늘</span><span>7일</span><span>최근</span></div>
-       ${rows.map((r, i) => `<div class="${r.id === me ? "me" : ""}"><span class="num">${i + 1}</span><span>${r.id === me ? "나" : esc(r.id)}</span><b class="num">${r.distinct}</b><span class="num">${r.today}</span><span class="num">${r.week}</span><span>${esc(r.last.slice(5).replace("-", "/"))}</span></div>`).join("")}</div>
-       <p class="st-note">푼 문제 = 서로 다른 문항(누적) · 오늘·7일 = 푼 횟수(다시 푼 것 포함) · 기기 기준</p>`
+       ${rows.map((r, i) => `<div class="${r.id === me ? "me" : ""}"><span class="num">${i + 1}</span><span>${r.id === me ? "나" : esc(r.id)}</span><b class="num">${r.total ?? r.distinct}</b><span class="num">${r.today}</span><span class="num">${r.week}</span><span>${esc(r.last.slice(5).replace("-", "/"))}</span></div>`).join("")}</div>
+       <p class="st-note">푼 문제·오늘·7일 = 푼 횟수(다시 푼 것 포함) · 기기 기준</p>`
     : '<p class="st-note">아직 없어요</p>';
 }
 
