@@ -31,6 +31,8 @@ export interface Question {
   memo?: string;
   /** 용어 풀이에 보여줄 용어(glossary.json 키), 문항당 최대 4개 */
   terms?: string[];
+  /** 해설·원문이 ①②③④로 보기 번호를 가리킴 → 보기를 섞으면 화면 번호로 바꿔 보여 준다 */
+  choiceRef?: ("exp" | "quote")[];
 }
 
 export interface Bank {

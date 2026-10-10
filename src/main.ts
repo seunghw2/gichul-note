@@ -56,6 +56,13 @@ const memoHtml = (q: Q) => (q.memo ? `<div class="memo"><b>출제 메모</b> · 
 /** 해설 아래 섹션: 원문 인용 → 변형 차이 → 용어 풀이 → 출제 메모 */
 const sectionsHtml = (q: Q) => `${quoteHtml(q)}${diffHtml(q)}${termsHtml(q)}${memoHtml(q)}`;
 /** 해설·모범답안: ①②③ 앞에서 줄바꿈 */
+/** 보기를 섞었을 때, 해설·원문 속 '③은…' 같은 원래 보기 번호를 화면에 보이는 번호로 바꾼 문항 */
+const KN = "①②③④";
+function viewQ(q: Q, order: number[]): Q {
+  if (!q.choiceRef || order.every((v, i) => v === i + 1)) return q;
+  const fix = (t: string) => t.replace(/[①②③④]/g, (c) => KN[order.indexOf(KN.indexOf(c) + 1)] ?? c);
+  return { ...q, exp: q.choiceRef.includes("exp") ? fix(q.exp) : q.exp, quote: q.quote && q.choiceRef.includes("quote") ? fix(q.quote) : q.quote };
+}
 const expHtml = (t: string) => esc(t).replace(/\s+(?=[①-⑨])/g, "<br>");
 const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -1195,7 +1202,7 @@ function renderQuiz() {
     ${body}
     ${done ? `<div class="result ${correct ? "ok" : "bad"}">
       <div class="rh">${correct ? I.check + " 정답" : I.x + (it.timedOut ? " 시간 초과" : " 오답")}${ansText ? `<span class="ans">정답 ${esc(ansText)}</span>` : ""}</div>
-      <div class="rb"><div><div class="lbl">${q.type === "essay" ? "모범답안" : "해설"}</div>${expHtml(q.exp)}</div>${sectionsHtml(q)}
+      <div class="rb"><div><div class="lbl">${q.type === "essay" ? "모범답안" : "해설"}</div>${expHtml(viewQ(q, it.order).exp)}</div>${sectionsHtml(viewQ(q, it.order))}
       <div class="src">${I.pg} ${esc(srcText(q))} · 출제원 ${esc(q.src)}</div></div></div>` : ""}
     ${done && expDl ? `<div class="qtimer exp" role="timer"><small>다음 문제까지</small><div class="tbar"><span></span></div><b class="num">${expDl.limit}초</b></div>` : ""}
     <div class="qfoot">
