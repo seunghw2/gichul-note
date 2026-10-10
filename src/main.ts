@@ -537,20 +537,21 @@ function renderPeople() {
   window.scrollTo(0, 0);
 }
 
-/** 더보기 → 설정: 화면 테마, 챌린지 퀴즈 켜기 */
+/** 더보기 → 실험실: 아직 다듬는 기능을 기기별로 켜고 끈다(챌린지 퀴즈, 타이머 기능) */
 function renderSettings() {
   view = "settings";
   syncTabbar();
   pageview("settings");
-  const t = loadTheme();
   const nChal = BANKS.reduce((a, b) => a + b.questions.filter((q) => q.sources.includes(CHAL)).length, 0);
+  const lab = (act: string, on: boolean, title: string, desc: string) =>
+    `<button class="toggle lab-tog" data-act="${act}" aria-pressed="${on}"><span class="t"><b>${title}</b><small>${desc}</small></span><span class="sw"></span></button>`;
   $app.innerHTML = `
-    <div class="bar"><button class="icon-btn" data-act="home" aria-label="더보기로">${I.back}</button><h1>설정</h1></div>
-    <div class="more-list">
-      <button class="more-row" data-act="theme-more"><span class="ic">${I[t === "system" ? "auto" : t === "light" ? "sun" : "moon"]}</span><b>화면 테마</b><span class="r">${THEME_LABEL[t]} ›</span></button>
-    </div>
-    <button class="toggle set-tog" data-act="chal-tog" aria-pressed="${!!prefs.challenge}"><span>챌린지 퀴즈 활성화</span><span class="sw"></span></button>
-    <p class="set-note">켜면 과목 화면에 <b>챌린지</b> 탭이 생겨요. 교재에는 있지만 아직 기출에 나오지 않은 내용으로 만든 OX ${nChal}문항이에요.</p>`;
+    <div class="bar"><button class="icon-btn" data-act="home" aria-label="더보기로">${I.back}</button><h1>실험실</h1></div>
+    <p class="lab-lead">${I.flask} 아직 다듬는 중인 기능이에요. 켜 보고 불편하면 언제든 끌 수 있어요.</p>
+    <div class="lab-card">
+      ${lab("chal-tog", !!prefs.challenge, "챌린지 퀴즈", `교재로 만든 OX ${nChal}문항 · 과목 화면에 '챌린지' 탭이 생겨요`)}
+      ${lab("timer-tog", !!prefs.timerFeature, "타이머 기능", "출제 범위에 '시간 제한'(문제당 30~60초)과 '해설 시간'(채점 후 15~60초 뒤 자동으로 다음 문제) 칩이 생겨요")}
+    </div>`;
   window.scrollTo(0, 0);
 }
 
@@ -560,11 +561,13 @@ function renderMore() {
   pageview("more");
   const row = (act: string, ic: string, label: string, right = "") =>
     `<button class="more-row" data-act="${act}"><span class="ic">${ic}</span><b>${label}</b><span class="r">${right} ›</span></button>`;
+  const t = loadTheme();
   $app.innerHTML = `
     <div class="bar tabhead"><h1>더보기</h1></div>
     <div class="more-list">
       ${row("transfer", I.swap, "기록 옮기기")}
-      ${row("settings", I.gear, "설정")}
+      ${row("theme-more", I[t === "system" ? "auto" : t === "light" ? "sun" : "moon"], "화면 테마", THEME_LABEL[t])}
+      ${row("settings", I.flask, "실험실")}
       ${row("onboarding", I.help, "사용법 보기")}
       ${row("notice", I.bell, "공지")}
       ${row("people", I.heart, "함께 만든 사람들")}
@@ -757,7 +760,7 @@ function renderSubject() {
     <div class="eyebrow">출제 범위</div>
     <div class="filters">
       <div class="frow"><label>유형</label><div class="chips">${chip("type", "all", "전체")}${(["ox", "mc", "short", "essay"] as const).filter((t) => visible(bank).some((q) => q.type === t)).map((t) => chip("type", t, TYPE_LABEL[t])).join("")}</div></div>
-      ${isAdmin() ? `<div class="frow"><label>시간 제한</label><div class="chips">${LIMITS.map((v) => `<button class="chip" data-limit="${v}" aria-pressed="${limitSec() === v}">${v ? `${v}초` : "끔"}</button>`).join("")}</div></div>
+      ${prefs.timerFeature ? `<div class="frow"><label>시간 제한</label><div class="chips">${LIMITS.map((v) => `<button class="chip" data-limit="${v}" aria-pressed="${limitSec() === v}">${v ? `${v}초` : "끔"}</button>`).join("")}</div></div>
       <div class="frow"><label>해설 시간</label><div class="chips">${EXP_LIMITS.map((v) => `<button class="chip" data-explimit="${v}" aria-pressed="${(prefs.expSec ?? 0) === v}">${v ? `${v}초` : "끔"}</button>`).join("")}</div></div>` : ""}
       <div class="ftoggles">
         ${tog("onlyUnsolved", `안 푼 문제만 풀기 (${filtered().filter((q) => !st.rec[q.n]).length})`)}
@@ -947,7 +950,7 @@ const LIMITS = [0, 30, 45, 60];
 /** 예전 '60초 제한' 토글을 켜 둔 기기는 60초로 이어서 쓴다 */
 const limitSec = () => prefs.timerSec ?? (prefs.timer ? 60 : 0);
 let timerT: number | undefined;
-const timerOn = () => isAdmin() && limitSec() > 0;
+const timerOn = () => !!prefs.timerFeature && limitSec() > 0;
 /** 타이머를 멈춘 시각: 폰 홈 화면·다른 앱으로 가거나 풀이 화면을 벗어나면 기록하고, 돌아오면 그만큼 마감을 미룬다 */
 let pausedAt: number | null = null;
 function pauseTimers() {
@@ -989,7 +992,7 @@ function tickTimer() {
 
 /* ---------- 해설 보는 시간 제한(관리자 기기): 채점 후 정한 시간이 지나면 다음 문제로 ---------- */
 const EXP_LIMITS = [0, 15, 30, 45, 60];
-const expOn = () => isAdmin() && (prefs.expSec ?? 0) > 0;
+const expOn = () => !!prefs.timerFeature && (prefs.expSec ?? 0) > 0;
 /** 방금 채점한 문항(i)에서 해설 시간이 끝나는 시각 */
 let expDl: { i: number; at: number; limit: number } | null = null;
 let expT: number | undefined;
@@ -1332,12 +1335,18 @@ $app.addEventListener("click", (e) => {
     toast(prefs.challenge ? "챌린지 탭을 켰어요" : "챌린지 탭을 껐어요");
     return renderSettings();
   }
+  if (d.act === "timer-tog") {
+    prefs.timerFeature = !prefs.timerFeature;
+    savePrefs(prefs);
+    toast(prefs.timerFeature ? "출제 범위에 타이머가 생겼어요" : "타이머 기능을 껐어요");
+    return renderSettings();
+  }
   if (d.act === "theme-more") {
     const order: Theme[] = ["system", "light", "dark"];
     const next = order[(order.indexOf(loadTheme()) + 1) % 3];
     saveTheme(next);
     applyTheme(next);
-    return renderSettings();
+    return renderMore();
   }
   if (d.act === "theme") {
     const order: Theme[] = ["system", "light", "dark"];

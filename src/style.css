@@ -420,6 +420,13 @@ body.has-tabs .app{padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
 .more-row{display:flex;align-items:center;gap:12px;background:var(--surface);border-radius:16px;padding:14px;text-align:left;font-size:16px;box-shadow:var(--shadow)}
 .more-row .ic{width:34px;height:34px;flex:none;border-radius:10px;background:var(--brand-soft);color:var(--brand);display:grid;place-items:center}
 .more-row b{flex:1;font-weight:600}.more-row .r{color:var(--ink-3);font-size:14px}
+.lab-lead{display:flex;gap:8px;align-items:flex-start;margin:0 0 12px;background:var(--surface-2);border-radius:12px;padding:10px 12px;font-size:14px;color:var(--ink-2);line-height:1.5}
+.lab-lead svg{flex:none;color:var(--brand);margin-top:1px}
+.lab-card{background:var(--surface);border-radius:16px;padding:2px 14px;box-shadow:var(--shadow)}
+.lab-tog{padding:14px 0;border-bottom:1px solid var(--line);align-items:center}
+.lab-tog:last-child{border-bottom:0}
+.lab-tog .t{display:grid;gap:3px}.lab-tog b{font-size:16px;font-weight:600}
+.lab-tog small{font-size:13px;color:var(--ink-3);line-height:1.45}
 .set-tog{margin-top:14px;background:var(--surface);border-radius:16px;padding:16px 14px;font-size:16px;font-weight:600;box-shadow:var(--shadow)}
 .set-note{margin:10px 4px 0;color:var(--ink-3);font-size:14px;line-height:1.55}
 .tabbar[hidden]{display:none}
