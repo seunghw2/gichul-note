@@ -1,4 +1,5 @@
-/* 첫 접속 온보딩: 브랜드 컬러 바탕의 넘겨보기 카드 4장. 기기에서 처음 한 번만, 홈의 ? 버튼으로 다시 보기 */
+/* 첫 접속 온보딩: 브랜드 컬러 바탕의 넘겨보기 카드 5장. 기기에서 처음 한 번만, 홈의 ? 버튼으로 다시 보기 */
+import { BANKS } from "./data";
 import { trackOnce } from "./stats";
 const KEY = "gichul:onboarded";
 
@@ -15,20 +16,35 @@ const oxMini = `
   <div class="ob-q">자본시장법상 증권은 최대손실이 원금으로 한정된다.</div>
   <div class="ob-ox"><div class="o">O</div><div class="x">X</div></div>`;
 
-/** 첫 장: 문제 아래에서 미리보기 밖으로 떠오르는 정답 카드 (장에 들어올 때마다 팝업 애니메이션) */
+/** 01: OX 아래 4지선다 한 문제(정답 보기가 초록으로) */
+const mcMini = `
+  <div class="ob-mc"><span class="ob-chip">4지선다</span>
+  <div class="ob-q">퇴직보험계약을 포함하는 보험업법상 보험상품은?</div>
+  ${["생명보험상품", "손해보험상품", "제3보험상품", "전문보험상품"].map((c, k) => `<div class="c${k ? "" : " ok"}"><span>${k + 1}</span>${c}</div>`).join("")}</div>`;
+
+/** 02: 채점 후 나오는 정답 카드(해설·원문 인용·용어 풀이) */
 const answerCard = `
-  <div class="ob-fc" aria-hidden="true">
+  <div class="ob-fc in" aria-hidden="true">
     <div class="h">✓ 정답<span>정답 O</span></div>
     <div class="b">
       <div><div class="l">해설</div>증권은 손실이 원금까지만 나는 금융투자상품이에요.<br>원금 넘게 손실이 날 수 있으면 파생상품이에요.</div>
       <div class="qt"><div class="l">원문 인용 · 교재 1권 p.9</div>증권이란 투자자의 최대손실이 투자원금으로 한정되는 금융투자상품…</div>
+      <div class="ob-gl"><div class="l">용어 풀이</div><b>파생상품</b> 원금보다 더 큰 손실이 날 수 있는 금융투자상품</div>
     </div>
   </div>`;
 
+/** 탭별 문항 수(main.ts의 탭 규칙과 같음): 교재 = 교재 연습문제, 변형 = 변형 OX, 기출 = 그 밖의 출처(챌린지 제외) */
+const SRC_SKIP = ["교재 연습문제", "변형", "챌린지"];
+const qs = BANKS.flatMap((b) => b.questions);
+const TAB_N = {
+  exam: qs.filter((q) => q.sources.some((x) => !SRC_SKIP.includes(x))).length,
+  book: qs.filter((q) => q.sources.includes("교재 연습문제")).length,
+  variant: qs.filter((q) => q.sources.includes("변형")).length,
+};
 const tabMini = `
-  <div class="ob-seg"><div class="on">온라인 기출</div><div>교재 문항</div></div>
+  <div class="ob-tabs">${[["온라인 기출", TAB_N.exam], ["교재 문항", TAB_N.book], ["변형 OX", TAB_N.variant]].map(([t, n], k) => `<div${k ? "" : ' class="on"'}>${t}<small>${n}문항</small></div>`).join("")}</div>
   ${[
-    ["▶", "문제 풀기", "154", "var(--brand)"],
+    ["▶", "문제 풀기", String(TAB_N.exam), "var(--brand)"],
     ["✕", "오답노트", "12", "var(--bad)"],
     ["↻", "자주 틀린 문제", "4", "var(--mark)"],
     ["★", "북마크", "7", "var(--ink-2)"],
@@ -48,14 +64,15 @@ const stepsMini = ADD_STEPS.map(
 ).join("");
 
 const SLIDES = [
-  { n: "01 · 바로 채점", h: "교재로 검증한<br>해설 한 장", p: "NotebookLM과 Claude Code로<br>교재를 대조해 쓴 해설이에요.<br>원문과 쪽수도 함께 나와요.", pip: oxMini + answerCard },
-  { n: "02 · 나눠서 관리", h: "기출과 교재,<br>오답은 따로", p: "틀린 문제는 오답노트에 자동으로,<br>맞히면 바로 빠져요.", pip: tabMini },
-  { n: "03 · 앱처럼", h: "홈 화면에<br>추가하세요", p: `세 번만 누르면 앱처럼 써요.<br>${ADD_OTHER}`, pip: stepsMini },
+  { n: "01 · 바로 채점", h: "한 문제씩,<br>누르면 바로 채점", p: "OX와 4지선다를 한 문제씩 풀어요.<br>답을 누르는 순간 정답이 나와요.", pip: oxMini + mcMini },
+  { n: "02 · 해설", h: "교재로 검증한<br>해설 한 장", p: "NotebookLM과 Claude Code로<br>교재를 대조해 쓴 해설이에요.<br>원문과 쪽수, 용어 풀이도 함께 나와요.", pip: answerCard },
+  { n: "03 · 나눠서 관리", h: "기출, 교재,<br>변형 OX까지", p: "위쪽 탭을 눌러 문제 종류를 바꿔요.<br>틀린 문제는 오답노트에 자동으로,<br>맞히면 바로 빠져요.", pip: tabMini },
   {
     n: "04 · 서버리스",
     h: "계정 없이,<br>이 기기에만",
-    p: '백엔드 없는 정적 웹앱(GitHub Pages)이라<br>가입·로그인 없이 바로 써요.<br>풀이 기록은 이 브라우저의<br>localStorage에만 저장돼요.<br>익명 방문·학습 통계만 GoatCounter로 수집해요.<span class="ob-warn">⚠︎ 사이트 데이터를 지우면<br>기록도 함께 지워져요.</span>',
+    p: '백엔드 없는 정적 웹앱(GitHub Pages)이라<br>가입·로그인 없이 바로 써요.<br>풀이 기록은 이 브라우저의<br>localStorage에만 저장돼요.<br>익명 방문·학습 통계만 GoatCounter로 수집해요.<br>다른 기기·홈 화면 앱으로는<br>더보기 › 기록 옮기기로 옮겨요.<span class="ob-warn">⚠︎ 사이트 데이터를 지우면<br>기록도 함께 지워져요.</span>',
   },
+  { n: "05 · 앱처럼", h: "홈 화면에<br>추가하세요", p: `세 번만 누르면 앱처럼 써요.<br>${ADD_OTHER}`, pip: stepsMini },
 ];
 
 export function showOnboarding() {
