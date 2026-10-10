@@ -108,12 +108,26 @@ const TABS: Record<Tab, string> = { exam: "온라인 기출", book: "교재 문�
 const inTab = (q: Q, t: Tab) =>
   t === "challenge" ? q.sources.includes(CHAL) : t === "variant" ? q.sources.includes(VAR) : t === "book" ? q.sources.includes(BOOK) : q.sources.some((x) => x !== BOOK && x !== VAR && x !== CHAL);
 const tab = (): Tab => (prefs.tab === "book" || prefs.tab === "variant" || (prefs.tab === "challenge" && prefs.challenge) ? prefs.tab : "exam");
-/** 탭에 보이는 문항. 교재 탭은 '기출과 겹치는 문제 제외'가 켜져 있으면 교재에만 있는 문항만 */
+/** 변형 OX의 출처 = 원본 문항의 탭(온라인 기출·교재 문항). 양쪽 공통 원본에서 만든 변형은 둘 다 */
+const byN = new Map<string, Map<number, Q>>();
+const origOf = (b: LoadedBank, q: Q) => {
+  let m = byN.get(b.id);
+  if (!m) byN.set(b.id, (m = new Map(b.questions.map((x) => [x.n, x]))));
+  return q.variantOf ? m.get(q.variantOf) : undefined;
+};
+type VarSrc = "all" | "exam" | "book";
+const varSrc = (): VarSrc => (prefs.varSrc === "exam" || prefs.varSrc === "book" ? prefs.varSrc : "all");
+const inVarSrc = (b: LoadedBank, q: Q, s: VarSrc) => {
+  if (s === "all") return true;
+  const o = origOf(b, q);
+  return !!o && inTab(o, s);
+};
+/** 탭에 보이는 문항. 교재 탭은 '기출과 겹치는 문제 제외'가 켜져 있으면 교재에만 있는 문항만, 변형 탭은 고른 출처만 */
 const visible = (b: LoadedBank, t: Tab | null = tab()) =>
   t === "challenge" && !prefs.challenge
     ? []
     : t
-      ? b.questions.filter((q) => inTab(q, t) && !(t === "book" && prefs.bookOnlyNew && inTab(q, "exam")))
+      ? b.questions.filter((q) => inTab(q, t) && !(t === "book" && prefs.bookOnlyNew && inTab(q, "exam")) && !(t === "variant" && !inVarSrc(b, q, varSrc())))
       : b.questions.filter((q) => prefs.challenge || !q.sources.includes(CHAL));
 /** 진행 중 풀이는 탭마다 따로 저장(온라인 기출은 기존 키 유지) */
 const runKind = (kind: Kind) => {
@@ -839,6 +853,7 @@ function renderSubject() {
     ${bank.questions.some((q) => !inTab(q, "exam")) ? `<div class="seg" role="tablist">${(Object.keys(TABS) as Tab[]).filter((t) => visible(bank, t).length || t === tab()).map((t) => `<button role="tab" data-tab="${t}" aria-selected="${tab() === t}">${TABS[t]}<small class="num">${visible(bank, t).length}문항</small></button>`).join("")}</div>` : ""}
     ${tab() === "challenge" ? `<div class="varinfo">교재 내용으로 새로 만든 <b>도전용 OX</b>예요. 기출에 아직 안 나온 부분이라, 다음 시험 대비로 풀어 보세요.</div>` : ""}
     ${tab() === "variant" ? `<div class="varinfo">원본 기출을 바꿔 만든 <b>연습용 OX</b>예요. 실제 시험에 나온 문장이 아니니, 채점 후 '원본과 달라진 점'을 꼭 확인하세요.</div>` : ""}
+    ${tab() === "variant" ? `<div class="chips var-src" role="group" aria-label="변형 OX 출처">${(["all", "exam", "book"] as const).map((k) => `<button class="chip" data-varsrc="${k}" aria-pressed="${varSrc() === k}">${k === "all" ? "전체" : TABS[k]} <small class="num">${bank.questions.filter((q) => inTab(q, "variant") && inVarSrc(bank, q, k)).length}</small></button>`).join("")}</div>` : ""}
     <div class="subject" style="cursor:default">
       <div class="progress"><span style="width:${pct(s.done, s.total)}%"></span></div>
       ${statRow(s)}
@@ -1470,6 +1485,11 @@ $app.addEventListener("click", (e) => {
   }
   if (d.pref === "type") {
     prefs.type = d.val as typeof prefs.type;
+    savePrefs(prefs);
+    return renderSubject();
+  }
+  if (d.varsrc) {
+    prefs.varSrc = d.varsrc as VarSrc;
     savePrefs(prefs);
     return renderSubject();
   }
