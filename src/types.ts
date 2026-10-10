@@ -17,6 +17,8 @@ export interface Question {
   exp: string;
   /** 해설에 덧붙이는 교재 원문 인용(정답지 자료) */
   quote?: string;
+  /** 원문 인용의 교재 쪽수(출제원과 다를 때만) */
+  quoteSrc?: string;
   /** 출제원(교재 장·절·쪽) */
   src: string;
   /** 문제 출처(원본 PDF 이름). 여러 PDF에 나온 문제는 모두 적는다 */

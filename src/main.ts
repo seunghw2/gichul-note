@@ -43,7 +43,7 @@ const TYPE_SHORT: Record<Q["type"], string> = { ox: "OX", mc: "4지", short: "�
 const srcText = (q: Q) => q.sources.join(", ");
 const shortAnswer = (q: Q) => q.answerText ?? (q.accept ?? []).join(" / ");
 const diffHtml = (q: Q) => (q.diff ? `<div class="diff"><div class="lbl">원본 ${q.variantOf}번과 달라진 점</div>${esc(q.diff)}</div>` : "");
-const quoteHtml = (q: Q) => (q.quote ? `<div class="sec"><div class="lbl">원문 인용</div><blockquote class="quote">${esc(q.quote)}</blockquote></div>` : "");
+const quoteHtml = (q: Q) => (q.quote ? `<div class="sec"><div class="lbl">원문 인용${q.quoteSrc ? ` <small class="qsrc">${esc(q.quoteSrc)}</small>` : ""}</div><blockquote class="quote">${esc(q.quote)}</blockquote></div>` : "");
 /** 용어 풀이(설정 '용어 설명 같이 보기'를 켰을 때만): 교재 정의 우선, 없으면 일반 설명 */
 const GLOSS = GLOSSARY as Record<string, { d: string; src?: string }>;
 const termsHtml = (q: Q) => {
