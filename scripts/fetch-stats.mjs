@@ -16,9 +16,19 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 async function api(path, params = new URLSearchParams()) {
   const url = `${BASE}${path}?${params}`;
   for (let tries = 0; ; tries++) {
-    const res = await fetch(url, { headers: { Authorization: `Bearer ${TOKEN}`, "Content-Type": "application/json" } });
-    if (res.status === 429 && tries < 5) {
-      await sleep(1000);
+    let res;
+    try {
+      res = await fetch(url, { headers: { Authorization: `Bearer ${TOKEN}`, "Content-Type": "application/json" }, signal: AbortSignal.timeout(30000) });
+    } catch (e) {
+      // 일시적 네트워크 오류(fetch failed·시간초과)는 잠깐 쉬고 다시 시도 — 한 번 실패로 stats.json 전체가 빠지지 않게
+      if (tries < 6) {
+        await sleep(2000 * (tries + 1));
+        continue;
+      }
+      throw e;
+    }
+    if ((res.status === 429 || res.status >= 500) && tries < 6) {
+      await sleep(res.status === 429 ? 1000 : 2000 * (tries + 1));
       continue;
     }
     // 기간 안에 데이터가 하나도 없으면 404 not found 가 온다 → 빈 결과로 처리
