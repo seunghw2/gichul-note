@@ -86,7 +86,19 @@ async function allHitsLegacy(start, end) {
   const out = new Map();
   for (let page = 0; page < 100; page++) {
     const p = new URLSearchParams({ start, end, limit: "100" });
-    if (out.size) p.set("exclude_paths", [...out.values()].map((h) => h.path_id).join(","));
+    const exclude = [...out.values()].map((h) => h.path_id).join(",");
+    // 제외 목록이 길어지면 주소가 32KB를 넘어 서버가 연결을 끊는다 → 남은 경로는 100개씩 직접 지정해서 받는다
+    if (exclude.length > 20000) {
+      const seen = new Set([...out.values()].map((h) => h.path_id));
+      const rest = (await allPathIds()).filter((id) => !seen.has(id));
+      for (let i = 0; i < rest.length; i += 100) {
+        const q = new URLSearchParams({ start, end, limit: "100", include_paths: rest.slice(i, i + 100).join(",") });
+        const rr = await api("/stats/hits", q);
+        for (const h of rr?.hits ?? []) if (!out.has(h.path)) out.set(h.path, h);
+      }
+      break;
+    }
+    if (exclude) p.set("exclude_paths", exclude);
     const r = await api("/stats/hits", p);
     if (!r) break;
     const fresh = (r.hits ?? []).filter((h) => !out.has(h.path));
