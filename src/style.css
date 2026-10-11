@@ -388,8 +388,8 @@ html.onb-open,html.onb-open body{background:#0E3B36}
 
 /* 홈: 함께 공부하는 사람들 */
 .lv{background:var(--surface);border-radius:20px;padding:16px;box-shadow:var(--shadow)}
-.lv-nums{display:flex;gap:22px;align-items:flex-end}
-.lv-nums b{display:block;font-size:24px}.lv-nums span{font-size:12.5px;color:var(--ink-3)}
+.lv-nums{display:flex;flex-wrap:wrap;gap:12px 22px;align-items:flex-end}
+.lv-nums b{display:block;font-size:24px;white-space:nowrap}.lv-nums span{font-size:12.5px;color:var(--ink-3);white-space:nowrap}
 .lv-last{margin-left:auto;text-align:right}.lv-pair{display:flex;gap:10px;justify-content:flex-end}.lv-pair b{font-size:18px;color:var(--mark)}
 .lv-bars{display:flex;align-items:flex-end;gap:2px;height:64px;margin-top:14px}
 .lv-bars button{flex:1;height:100%;display:flex;align-items:flex-end;padding:0;min-width:0}

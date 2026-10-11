@@ -160,7 +160,7 @@ const pct = (a: number, b: number) => (b ? (a / b) * 100 : 0);
 
 function statRow(s: ReturnType<typeof stats>) {
   return `<div class="statrow">
-    <div class="stat"><b>${s.done}<span class="num" style="font-size:14.5px;color:var(--ink-3)">/${s.total}</span></b><span>푼 문제</span></div>
+    <div class="stat"><b>${s.done}<span class="num" style="font-size:14.5px;color:var(--ink-3)">/${s.total.toLocaleString()}</span></b><span>푼 문제</span></div>
     <div class="stat"><b>${s.tries}</b><span>총 풀이</span></div>
     <div class="stat"><b>${loadToday().n}</b><span>오늘 푼 문제</span></div>
   </div>`;
@@ -303,7 +303,7 @@ function pickLiveBar(i: number) {
   if (!h?.[i] || !box) return;
   lvSel = i;
   const x = h[i];
-  box.innerHTML = `<div class="lv-pair"><b class="num">${x.visitors ?? 0}명</b><b class="num">${x.solved}문제</b></div><span>${hourLabel(x)} 방문자 · 푼 문제</span>`;
+  box.innerHTML = `<div class="lv-pair"><b class="num">${(x.visitors ?? 0).toLocaleString()}명</b><b class="num">${x.solved.toLocaleString()}문제</b></div><span>${hourLabel(x)} 방문자 · 푼 문제</span>`;
   document.querySelectorAll(".lv-bars button").forEach((b, k) => b.classList.toggle("sel", k === i));
 }
 
@@ -326,9 +326,9 @@ function liveCard() {
   return `<div class="eyebrow">함께 공부하는 사람들</div>
     <section class="lv">
       <div class="lv-nums">
-        <div><b class="num">${t.visitors}</b><span>오늘 방문자</span></div>
-        <div><b class="num">${t.solved}</b><span>오늘 푼 문제</span></div>
-        ${last ? `<div class="lv-last"><div class="lv-pair"><b class="num">${last.visitors ?? 0}명</b><b class="num">${last.solved}문제</b></div><span>${hourLabel(last)} 방문자 · 푼 문제</span></div>` : ""}
+        <div><b class="num">${t.visitors.toLocaleString()}</b><span>오늘 방문자</span></div>
+        <div><b class="num">${t.solved.toLocaleString()}</b><span>오늘 푼 문제</span></div>
+        ${last ? `<div class="lv-last"><div class="lv-pair"><b class="num">${(last.visitors ?? 0).toLocaleString()}명</b><b class="num">${last.solved.toLocaleString()}문제</b></div><span>${hourLabel(last)} 방문자 · 푼 문제</span></div>` : ""}
       </div>
       ${bars}
       <p class="lv-note">막대는 시간별 푼 문제 · 누르면 그 시간 숫자 · ${new Date(d.updated).toLocaleTimeString("ko-KR", { hour: "numeric", minute: "2-digit" })} 기준</p>
@@ -793,7 +793,7 @@ function renderHome() {
     const tabAll = (t: Tab) => (t === "challenge" && !prefs.challenge ? 0 : b.questions.filter((q) => inTab(q, t)).length);
     const tabsMeta = (Object.keys(TABS) as Tab[]).filter((t) => tabAll(t)).map((t) => `<span class="nw">${esc(TABS[t])} ${tabAll(t)}</span>`).join(" · ");
     return `<button class="subject" data-open="${esc(b.id)}">
-      <div class="top"><div><h2>${esc(b.title)}</h2><div class="meta">${esc(b.org)} · ${s.total}문항</div><div class="meta">${tabsMeta}</div></div><span class="badge">${esc(b.round)}</span></div>
+      <div class="top"><div><h2>${esc(b.title)}</h2><div class="meta">${esc(b.org)} · <span class="nw">${s.total.toLocaleString()}문항</span></div><div class="meta">${tabsMeta}</div></div><span class="badge">${esc(b.round)}</span></div>
       <div class="progress" aria-label="진도"><span style="width:${pct(s.done, s.total)}%"></span></div>
       ${statRow(s)}
     </button>`;
